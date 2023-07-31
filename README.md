@@ -1,6 +1,7 @@
 # About this project
 ## Reference
 - https://qiita.com/m_ina/items/4e86833e22c0a5bde9bb
+- Directory: https://zenn.dev/sakito/articles/af87061a5016e6
 
 # Getting Started with Create React App
 
