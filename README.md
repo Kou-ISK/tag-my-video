@@ -1,4 +1,7 @@
 # About this project
+
+# Training electron and react
+
 ## Reference
 - https://qiita.com/m_ina/items/4e86833e22c0a5bde9bb
 
