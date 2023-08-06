@@ -13,8 +13,10 @@ const createWidnow = () => {
         }
     })
     if (isDev) {
+        console.log('Running in development');
         mainWindow.loadURL("http://localhost:3000/index.html")
     } else {
+        console.log('Running in production');
         mainWindow.loadURL(mainURL)
     }
     mainWindow.on('closed', () => {

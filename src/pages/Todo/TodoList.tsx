@@ -6,7 +6,7 @@ export const TodoList = ({ todoList }: { todoList: Todo[] }) => {
         <>
             {todoList.length !== 0 && (
                 todoList.map((todo) => (
-                    <TodoItem contentName={todo.contentName} isDone={todo.isDone} deadline={todo.deadline} />
+                    <TodoItem id={todo.id} contentName={todo.contentName} isDone={todo.isDone} deadline={todo.deadline} />
                 ))
             )
             }

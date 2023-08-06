@@ -6,6 +6,7 @@ import { Todo } from './pages/Todo/Todo';
 import { Header } from './components/Header';
 
 function App() {
+  // TODO Localで立ち上げられない問題に対処する
   return (
     <>
       <HashRouter>

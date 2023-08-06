@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Todo } from "../types/Todo";
 
 export const useTodos = () => {
-    // TODO トグル用メソッドを作成
-    // TODO データの管理をどこで行うかを決める(db.json?)
     const [todoList, setTodoList] = useState<Todo[]>([]);
+    // TODO データの永続化を行うかを決める
+    const toggleTodoStatus = (id: string, isDone: boolean) => {
+        const updatedTodoList = todoList.map((todo) =>
+            todo.id === id ? { ...todo, isDone } : todo
+        );
+        setTodoList(updatedTodoList);
+    }
 }
