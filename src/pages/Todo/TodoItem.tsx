@@ -1,5 +1,6 @@
-import { Button, Grid } from "@mui/material";
+import { Button, Grid, SvgIcon } from "@mui/material";
 import { Todo } from "../../types/Todo";
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 
 export const TodoItem = ({ todo, toggleTodoStatus, deleteTodoItem }: {
     todo: Todo,
@@ -21,6 +22,7 @@ export const TodoItem = ({ todo, toggleTodoStatus, deleteTodoItem }: {
                     </Button>
                 </Grid>
                 <p>{todo.deadline.toString()}</p>
+                <SvgIcon component={DeleteOutlineOutlinedIcon} onClick={() => deleteTodoItem(todo.id)}></SvgIcon>
             </Grid>
         </>
     );
