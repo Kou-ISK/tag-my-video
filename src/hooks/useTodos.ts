@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Todo } from "../types/Todo";
+import { Todo } from '../types/Todo';
+import { TodoItem } from "../pages/Todo/TodoItem";
+import { ulid } from 'ulid';
 
 export const useTodos = () => {
     const [todoList, setTodoList] = useState<Todo[]>([]);
@@ -35,7 +37,10 @@ export const useTodos = () => {
     }
 
     //　実装する
-    const addTodoItem = () => {
+    const addTodoItem = (contentName: string, deadline: Date) => {
+        const newTodoItem = { id: ulid(), contentName: contentName, isDone: false, deadline: deadline }
+        const updatedTodoList = todoList.push(newTodoItem);
+        setTodoList(updatedTodoList);
     }
 
     return { todoList, setTodoList, toggleTodoStatus, deleteTodoItem };
