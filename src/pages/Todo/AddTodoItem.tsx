@@ -1,12 +1,41 @@
-import { useState } from "react"
+import { Button } from "@mui/material";
+import { useState } from "react";
+import DatePicker from 'react-datepicker';
 
-const AddTodoItem = (
+export const AddTodoItem = (
     { addTodoItem }:
         { addTodoItem: (contentName: string, deadline: Date) => void }
 ) => {
     const [contentName, setContentName] = useState('');
-    const [deadline, setDeadline] = useState(new Date());
+    const today = new Date();
+    const [deadline, setDeadline] = useState<Date | null>(today);
+
+
+    const addTodo = () => {
+        if (contentName != null && contentName !== '' && deadline != null) {
+            addTodoItem(contentName, deadline);
+            setContentName('');
+            setDeadline(null);
+        }
+    }
+    // TODO 表示崩れに対応する
     return (
-        <input type="text" value={contentName} />
+        <>
+            <label htmlFor="contentName">タスク名</label>
+            <input
+                type="text"
+                value={contentName}
+                onChange={(e) => setContentName(e.currentTarget.value)}
+                name='contentName'
+            />
+            <label htmlFor="deadline">期限</label>
+            <DatePicker
+                selected={deadline}
+                onChange={(date) => setDeadline(date || today)}
+                dateFormat='yyyy/MM/dd'
+            />
+            <br />
+            <Button onClick={addTodo}>作成</Button>
+        </>
     )
 }
