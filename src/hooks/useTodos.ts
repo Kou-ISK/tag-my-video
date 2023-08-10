@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Todo } from '../types/Todo';
-import { TodoItem } from "../pages/Todo/TodoItem";
 import { ulid } from 'ulid';
 
 export const useTodos = () => {
@@ -38,10 +37,9 @@ export const useTodos = () => {
 
     //　実装する
     const addTodoItem = (contentName: string, deadline: Date) => {
-        const newTodoItem = { id: ulid(), contentName: contentName, isDone: false, deadline: deadline }
-        const updatedTodoList = todoList.push(newTodoItem);
-        setTodoList(updatedTodoList);
+        const newTodoItem = [{ id: ulid(), contentName: contentName, isDone: false, deadline: deadline }];
+        setTodoList([...todoList, ...newTodoItem]);
     }
 
-    return { todoList, setTodoList, toggleTodoStatus, deleteTodoItem };
+    return { todoList, setTodoList, toggleTodoStatus, deleteTodoItem, addTodoItem };
 }
