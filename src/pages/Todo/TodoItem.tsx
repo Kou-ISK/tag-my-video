@@ -13,9 +13,7 @@ export const TodoItem = ({ todo, toggleTodoStatus, deleteTodoItem }: {
     return (
         <>
             <Grid container>
-                <Grid>
-                    <p>{todo.contentName}</p>
-                </Grid>
+                <p>{todo.contentName}</p>
                 <Grid>
                     <Button onClick={toggleIsDone} color={todo.isDone ? "success" : "error"}>
                         {todo.isDone ? "完了" : "未完"}
