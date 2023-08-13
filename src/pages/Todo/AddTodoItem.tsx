@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import { useState } from "react";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -23,21 +23,23 @@ export const AddTodoItem = (
     // TODO 表示崩れに対応する
     return (
         <>
-            <label htmlFor="contentName">タスク名</label>
-            <input
-                type="text"
-                value={contentName}
-                onChange={(e) => setContentName(e.currentTarget.value)}
-                name='contentName'
-            />
-            <label htmlFor="deadline">期限</label>
-            <DatePicker
-                selected={deadline}
-                onChange={(date) => setDeadline(date || today)}
-                dateFormat='yyyy/MM/dd'
-            />
-            <br />
-            <Button onClick={addTodo}>作成</Button>
+            <Box margin={"2vw"} border={"solid"} borderRadius={3}>
+                <h2>Todo作成</h2>
+                <label htmlFor="contentName">タスク名</label>
+                <input
+                    type="text"
+                    value={contentName}
+                    onChange={(e) => setContentName(e.currentTarget.value)}
+                    name='contentName'
+                />
+                <label htmlFor="deadline">期限</label>
+                <DatePicker
+                    selected={deadline}
+                    onChange={(date) => setDeadline(date || today)}
+                    dateFormat='yyyy/MM/dd'
+                />
+                <Button onClick={addTodo}>作成</Button>
+            </Box>
         </>
     )
 }

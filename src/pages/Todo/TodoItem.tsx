@@ -1,4 +1,4 @@
-import { Button, Card, Grid, Icon, IconButton, Stack, SvgIcon } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { Todo } from "../../types/Todo";
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 
@@ -12,20 +12,18 @@ export const TodoItem = ({ todo, toggleTodoStatus, deleteTodoItem }: {
     };
     return (
         <>
-            <Stack>
-                <Grid container>
-                    <p style={{ verticalAlign: 'middle' }}>{todo.contentName}</p>
-                    <Button onClick={toggleIsDone} color={todo.isDone ? "success" : "error"} >
-                        {todo.isDone ? "完了" : "未完"}
-                    </Button>
-                    <p style={{ verticalAlign: 'top' }}>{todo.deadline.toString()}</p>
-                    <Button
-                        variant='text'
-                        endIcon={<DeleteOutlineOutlinedIcon />}
-                        onClick={() => deleteTodoItem(todo.id)}
-                    >削除</Button>
-                </Grid >
-            </Stack>
+            <Box display={"flex"} flexDirection={"row"} justifyContent={"space-around"}>
+                <p style={{ verticalAlign: 'middle' }}>{todo.contentName}</p>
+                <Button onClick={toggleIsDone} color={todo.isDone ? "success" : "error"} variant='outlined'>
+                    {todo.isDone ? "完了" : "未完"}
+                </Button>
+                <p style={{ verticalAlign: 'top' }}>{todo.deadline.toString()}</p>
+                <Button
+                    variant='outlined'
+                    endIcon={<DeleteOutlineOutlinedIcon />}
+                    onClick={() => deleteTodoItem(todo.id)}
+                >削除</Button>
+            </Box>
         </>
     );
 };
