@@ -1,5 +1,4 @@
 import { app, BrowserWindow } from 'electron'
-import isDev = require('electron-is-dev')
 import * as path from 'path'
 
 const mainURL = `file:${__dirname}/../../index.html`
@@ -12,21 +11,7 @@ const createWidnow = () => {
             preload: path.join(__dirname, "preload.js")
         }
     })
-    if (isDev) {
-        console.log('Running in development');
-        mainWindow.loadURL("http://localhost:3000/index.html")
-    } else {
-        console.log('Running in production');
-        mainWindow.loadURL(mainURL)
-    }
-    mainWindow.on('closed', () => {
-        mainWindow = null;
-    });
-    if (isDev) {
-        require('electron-reload')(__dirname, {
-            electron: require(`${__dirname}/../node_modules/electron`)
-        });
-    }
+    mainWindow.loadURL(mainURL)
 }
 
 app.whenReady().then(() => {

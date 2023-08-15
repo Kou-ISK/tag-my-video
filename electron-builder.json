@@ -1,0 +1,9 @@
+{
+    "extends": null,
+    "mac": {
+        "target": "dmg"
+    },
+    "directories": {
+        "buildResources": "public"
+    }
+}
