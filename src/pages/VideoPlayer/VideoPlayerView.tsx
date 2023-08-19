@@ -1,42 +1,35 @@
-import React, { useEffect, useRef } from "react";
-import videojs from "video.js";
-import Player from "video.js/dist/types/player";
+// VideoPlayerView.tsx
 
-type VideoPlayerViewProps = {
+import { useEffect } from 'react';
+import videojs from 'video.js';
+import { Player } from 'videojs';
+
+interface VideoPlayerViewProps {
     id: string;
     filePath: string;
-    player: Player | null;
-};
+    onPlayerReady: (player: Player) => void;
+}
 
-export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({ id, filePath, player }) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
+export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({ id, filePath, onPlayerReady }) => {
 
     useEffect(() => {
-        if (videoRef.current && player) {
-            player.src(filePath);
-            player.load();
-            player.on("timeupdate", () => {
-                const currentTime = player.currentTime();
-                player.tech_.trigger('play');
-                player.tech_.setCurrentTime(currentTime);
-            });
-        }
-    }, [filePath, player]);
+        const player = videojs(id);
+        onPlayerReady(player.player_);
+
+        player.src(filePath);
+
+        return () => {
+            player.dispose();
+        };
+    }, [id, filePath, onPlayerReady]);
 
     return (
-        <div>
-            <video
-                ref={videoRef}
-                id={id}
-                className="video-js"
-                controls
-                preload="auto"
-                width="800"
-                height="450"
-                data-setup="{}"
-            >
-                <source src={filePath} type="video/mp4" />
-            </video>
-        </div>
+        <video id={id}
+            className="video-js"
+            controls
+            autoPlay={true}
+            style={{ width: '400px', aspectRatio: '16/9' }}>
+            {/* 動画ソースはプログラムで設定されます */}
+        </video>
     );
 };

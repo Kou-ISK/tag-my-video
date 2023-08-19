@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import videojs from "video.js";
-import { Box, Button } from "@mui/material";
-import { VideoPlayerView } from "./VideoPlayerView";
-import Player from "video.js/dist/types/player";
+// VideoPlayerApp.tsx
+
+import { Box, Button } from '@mui/material';
+import { VideoPlayerView } from './VideoPlayerView';
+import videojs from 'video.js';
+import { Player } from 'videojs';
+import { useState } from 'react';
 
 export const VideoPlayerApp = () => {
     const videoList = [
@@ -11,35 +13,28 @@ export const VideoPlayerApp = () => {
     ];
 
     const [players, setPlayers] = useState<Player[]>([]);
-    const videoRefs = useRef<Player[]>([]);
 
-    useEffect(() => {
-        videoRefs.current = videoList.map(() => {
-            const player = videojs(document.createElement('video'));
-            return player;
-        });
+    const onPlayerReady = (player: Player) => {
+        setPlayers([...players, player])
+    };
 
-        setPlayers(videoRefs.current);
+    const pause = () => {
+        players.forEach(player => player.pause());
+    };
 
-        return () => {
-            videoRefs.current.forEach(player => player.dispose());
-        };
-    }, [videoList]);
-
-    const handleJump = (time: number) => {
-        players.forEach(player => {
-            player.currentTime(time);
-        });
+    const play = () => {
+        players.forEach(player => player.play());
     };
 
     return (
         <>
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                 {videoList.map((filePath, index) => (
-                    <VideoPlayerView key={index} id={'video' + index.toString()} filePath={filePath} player={players[index]} />
+                    <VideoPlayerView key={index} id={'video' + index.toString()} filePath={filePath} onPlayerReady={onPlayerReady} />
                 ))}
             </Box>
-            <Button onClick={() => handleJump(10)}>Jump to 10 seconds</Button>
+            <Button onClick={play}>再生</Button>
+            <Button onClick={pause}>一時停止</Button>
         </>
     );
 };
