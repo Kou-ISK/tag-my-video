@@ -1,40 +1,38 @@
-// VideoPlayerApp.tsx
-
 import { Box, Button } from '@mui/material';
-import { VideoPlayerView } from './VideoPlayerView';
-import videojs from 'video.js';
-import { Player } from 'videojs';
 import { useState } from 'react';
+import { VideoPlayer } from './VideoPlayer';
+
 
 export const VideoPlayerApp = () => {
     const videoList = [
-        '/Users/isakakou/Desktop/MAH00240.MP4',
-        '/Users/isakakou/Desktop/MAH00122.MP4'
+        '/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 引き/20230807 西武台戦 引き.mp4',
+        '/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 寄り/20230807 西武台戦 寄り.mp4',
     ];
 
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [videoState, setVideoState] = useState<"play" | "pause" | "mute">("pause");
 
-    const onPlayerReady = (player: Player) => {
-        setPlayers([...players, player])
+    const handlePlay = () => {
+        setVideoState("play");
     };
 
-    const pause = () => {
-        players.forEach(player => player.pause());
+    const handlePause = () => {
+        setVideoState("pause");
     };
 
-    const play = () => {
-        players.forEach(player => player.play());
+    const handleMute = () => {
+        setVideoState("mute");
     };
 
     return (
         <>
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                 {videoList.map((filePath, index) => (
-                    <VideoPlayerView key={index} id={'video' + index.toString()} filePath={filePath} onPlayerReady={onPlayerReady} />
+                    <VideoPlayer videoSrc={filePath} videoState={videoState} />
                 ))}
             </Box>
-            <Button onClick={play}>再生</Button>
-            <Button onClick={pause}>一時停止</Button>
+            <Button onClick={handlePlay}>Play All</Button>
+            <Button onClick={handlePause}>Pause All</Button>
+            <Button onClick={handleMute}>Mute All</Button>
         </>
     );
 };
