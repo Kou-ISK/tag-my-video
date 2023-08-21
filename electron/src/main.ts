@@ -4,7 +4,7 @@ import * as path from 'path'
 const mainURL = `file:${__dirname}/../../index.html`
 
 const createWidnow = () => {
-    const mainWindow = new BrowserWindow({
+    let mainWindow = new BrowserWindow({
         width: 500,
         height: 500,
         webPreferences: {
