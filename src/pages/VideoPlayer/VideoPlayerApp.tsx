@@ -1,40 +1,45 @@
-// VideoPlayerApp.tsx
-
-import { Box, Button } from '@mui/material';
-import { VideoPlayerView } from './VideoPlayerView';
-import videojs from 'video.js';
-import { Player } from 'videojs';
+import { Box, Button, Slider } from '@mui/material';
 import { useState } from 'react';
+import { VideoPlayer } from './VideoPlayer';
+import { VideoController } from './VideoController';
+
 
 export const VideoPlayerApp = () => {
-    const videoList = [
-        '/Users/isakakou/Desktop/MAH00240.MP4',
-        '/Users/isakakou/Desktop/MAH00122.MP4'
-    ];
+    const [videoList, setVideoList] = useState<string[]>(
+        ['/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 寄り/20230807 西武台戦 寄り.mp4',
+            '/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 引き/20230807 西武台戦 引き.mp4']
+    );
 
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [currentTime, setCurrentTime] = useState(0);
 
-    const onPlayerReady = (player: Player) => {
-        setPlayers([...players, player])
+    const handleCurrentTime = (event: Event, newValue: number | number[]) => {
+        setCurrentTime(newValue as number);
     };
 
-    const pause = () => {
-        players.forEach(player => player.pause());
-    };
+    const [maxSec, setMaxSec] = useState(1000);
 
-    const play = () => {
-        players.forEach(player => player.play());
-    };
+    const [videoState, setVideoState] = useState<"play" | "pause" | "mute">("pause");
+    const [playBackRate, setPlayBackRate] = useState(1);
 
     return (
         <>
+            {/* TODO ファイルパスを指定するメニューを追加 */}
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                 {videoList.map((filePath, index) => (
-                    <VideoPlayerView key={index} id={'video' + index.toString()} filePath={filePath} onPlayerReady={onPlayerReady} />
+                    <VideoPlayer key={'video_' + index}
+                        videoSrc={filePath} id={'video_' + index}
+                        videoState={videoState}
+                        videoPlayBackRate={playBackRate}
+                        currentTime={currentTime}
+                        setMaxSec={setMaxSec} />
                 ))}
             </Box>
-            <Button onClick={play}>再生</Button>
-            <Button onClick={pause}>一時停止</Button>
+            <VideoController
+                setVideoState={setVideoState}
+                setPlayBackRate={setPlayBackRate}
+                currentTime={currentTime}
+                handleCurrentTime={handleCurrentTime}
+                maxSec={maxSec} />
         </>
     );
 };
