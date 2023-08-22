@@ -1,19 +1,24 @@
-import React, { useEffect, useRef } from "react";
+import { Box } from "@mui/material";
+import React, { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 
 interface VideoPlayerProps {
     videoSrc: string;
+    id: string;
     videoState: "play" | "pause" | "mute";
+    videoPlayBackRate: number;
+    currentTime: number;
+    setMaxSec: Dispatch<SetStateAction<number>>;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, videoState }) => {
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoState, videoPlayBackRate, currentTime, setMaxSec }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         if (videoRef.current) {
-            const player = videojs(videoRef.current);
-
+            const option = { 'autoplay': true, 'aspectRatio': '16:9' }
+            const player = videojs(videoRef.current, option);
             return () => {
                 player.dispose();
             };
@@ -21,8 +26,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, videoState }
     }, [videoRef]);
 
     useEffect(() => {
+        console.log(videoRef.current);
         if (videoRef.current) {
-            const player = videojs(videoRef.current);
+            const option = { 'autoplay': true, 'aspectRatio': '16:9' }
+            const player = videojs(videoRef.current, option);
+
+            player.ready(() => {
+                setMaxSec(player.duration());
+            });
 
             if (videoState === "play") {
                 player.play();
@@ -31,24 +42,31 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, videoState }
             } else if (videoState === "mute") {
                 player.muted(true);
             }
+            player.playbackRate(videoPlayBackRate);
         }
-    }, [videoState, videoRef]);
+    }, [videoState, videoRef, videoPlayBackRate]);
+
+    useEffect(() => {
+        if (videoRef.current) {
+            const player = videojs(videoRef.current);
+            if (!isNaN(currentTime)) {
+                player.currentTime(currentTime);
+            }
+        }
+    }, [currentTime])
 
     return (
-        <div>
+        <Box width="100%" height="100%">
             <video
                 ref={videoRef}
                 className="video-js"
-                controls
                 preload="auto"
                 width="640"
                 height="360"
-                key={videoSrc}
+                id={id}
             >
                 <source src={videoSrc} type="video/mp4" />
             </video>
-            <p>{videoSrc}</p>
-            <p>{videoState}</p>
-        </div>
+        </Box>
     );
 };
