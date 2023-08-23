@@ -1,16 +1,19 @@
-import { Box, Button, Slider } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useState } from 'react';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoController } from './VideoController';
+import { VideoPathSelector } from './VideoPathSelector';
 
 
 export const VideoPlayerApp = () => {
-    const [videoList, setVideoList] = useState<string[]>(
-        ['/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 寄り/20230807 西武台戦 寄り.mp4',
-            '/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 引き/20230807 西武台戦 引き.mp4']
+    const [videoList, setVideoList] = useState<string[]>([]
+        // ['/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 寄り/20230807 西武台戦 寄り.mp4',
+        //     '/Users/isakakou/Desktop/夏合宿/20230807 西武台戦 引き/20230807 西武台戦 引き.mp4']
     );
 
     const [currentTime, setCurrentTime] = useState(0);
+
+    const [isFileSelected, setIsFileSelected] = useState(false);
 
     const handleCurrentTime = (event: Event, newValue: number | number[]) => {
         setCurrentTime(newValue as number);
@@ -23,7 +26,6 @@ export const VideoPlayerApp = () => {
 
     return (
         <>
-            {/* TODO ファイルパスを指定するメニューを追加 */}
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                 {videoList.map((filePath, index) => (
                     <VideoPlayer key={'video_' + index}
@@ -40,6 +42,12 @@ export const VideoPlayerApp = () => {
                 currentTime={currentTime}
                 handleCurrentTime={handleCurrentTime}
                 maxSec={maxSec} />
+            {!isFileSelected &&
+                <VideoPathSelector
+                    videoList={videoList}
+                    setVideoList={setVideoList}
+                    setIsFileSelected={setIsFileSelected}
+                    isFileSelected={isFileSelected} />}
         </>
     );
 };
