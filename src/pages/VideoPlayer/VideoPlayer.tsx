@@ -32,7 +32,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoSta
             const player = videojs(videoRef.current, option);
 
             player.ready(() => {
-                setMaxSec(player.duration());
+                const duration = player.duration()
+                if (duration !== undefined) {
+                    setMaxSec(duration);
+                }
             });
 
             if (videoState === "play") {

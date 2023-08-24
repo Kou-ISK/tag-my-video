@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as path from 'path'
 
 const mainURL = `file:${__dirname}/../../index.html`
@@ -12,6 +12,25 @@ const createWidnow = () => {
         }
     })
     mainWindow.loadURL(mainURL)
+
+    ipcMain.handle('open-by-button', async () => {
+        return dialog
+            .showOpenDialog(mainWindow, {
+                properties: ['openFile'],
+                title: 'ファイルを選択する',
+                filters: [
+                    {
+                        name: '画像ファイル',
+                        extensions: ['png', 'jpeg', 'jpg'],
+                    },
+                ],
+            })
+            .then((result) => {
+                if (result.canceled) return;
+                return result.filePaths[0];
+            })
+            .catch((err) => console.log(`Error: ${err}`));
+    });
 }
 
 app.whenReady().then(() => {
