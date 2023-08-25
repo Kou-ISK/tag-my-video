@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Box } from "@mui/material";
 import { TimelineData } from '../../types/TimelineData';
 import { CodeButton } from "./CodeButton";
 

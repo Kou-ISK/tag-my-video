@@ -7,7 +7,6 @@ export const CodeButton = ({ actionName, timeline, setTimeline }: { actionName: 
     const [isActionButonPushed, setIsActionButtonPushed] = useState(false);
     const currentPlayerRef = useRef<any>();
     const [startTime, setStartTime] = useState(0);
-    const [endTime, setEndTime] = useState(0);
     useEffect(() => {
         currentPlayerRef.current = videojs('video_0');
         return () => {
@@ -19,31 +18,27 @@ export const CodeButton = ({ actionName, timeline, setTimeline }: { actionName: 
 
     const addTimeline = (qualifier: string) => {
         const currentPlayer = currentPlayerRef.current;
-        if (currentPlayer) {
-            if (!isActionButonPushed) {
-                const currentTime = currentPlayer.currentTime();
-                if (!isNaN(currentTime)) {
-                    setStartTime(currentTime);
-                    console.log("押されました。スタート")
-                }
-            } else {
-                const currentTime = currentPlayer.currentTime();
-                if (!isNaN(currentTime)) {
 
-                    // endTimeを取るタイミングを工夫する
-                    setEndTime(currentTime);
+        if (currentPlayer) {
+            const currentTime = currentPlayer.currentTime();
+            if (!isNaN(currentTime)) {
+                if (!isActionButonPushed) {
+                    setStartTime(currentTime);
+                } else {
+                    const newEndTime = currentTime;
                     const timelineInstance: TimelineData = {
                         actionName,
                         startTime,
-                        endTime,
+                        endTime: newEndTime,
                         qualifier
                     };
                     setTimeline([...timeline, timelineInstance]);
                 }
+                setIsActionButtonPushed(!isActionButonPushed);
             }
         }
-        setIsActionButtonPushed(!isActionButonPushed);
     }
+
 
     return (
         <>
