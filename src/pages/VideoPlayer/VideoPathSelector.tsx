@@ -1,7 +1,7 @@
 import { Box, Button, Input } from "@mui/material"
 import { useState } from "react";
 
-export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, timelineFilePath, setTimelineFilePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, timelineFilePath: string, setTimelineFilePath: any }) => {
+export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, timelineFilePath, setTimelineFilePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, timelineFilePath: string | undefined, setTimelineFilePath: any }) => {
     // TODO パス選択用コンポーネントを作成
 
     const [tightViewVideoPath, setTightViewVideoPath] = useState<string>();
@@ -10,6 +10,9 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
     const handleVideoList = () => {
         setVideoList([tightViewVideoPath, wideViewVideoPath]);
         setIsFileSelected(!isFileSelected)
+        if (timelineFilePath === undefined) {
+            setTimelineFilePath('notSelected')
+        }
     }
 
     return (

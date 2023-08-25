@@ -4,12 +4,15 @@ import { VideoPlayer } from './VideoPlayer';
 import { VideoController } from './VideoController';
 import { VideoPathSelector } from './VideoPathSelector';
 import { TimelineTable } from './TimelineTable';
+import { CodePanel } from './CodePanel';
+import { TimelineData } from '../../types/TimelineData';
 
 
 export const VideoPlayerApp = () => {
     const [videoList, setVideoList] = useState<string[]>([]);
     const [currentTime, setCurrentTime] = useState(0);
-    const [timelineFilePath, setTimelineFilePath] = useState('');
+    const [timelineFilePath, setTimelineFilePath] = useState<string | undefined>();
+    const [timeline, setTimeline] = useState<TimelineData[]>([]);
 
     const [isFileSelected, setIsFileSelected] = useState(false);
 
@@ -47,7 +50,11 @@ export const VideoPlayerApp = () => {
                     isFileSelected={isFileSelected}
                     timelineFilePath={timelineFilePath}
                     setTimelineFilePath={setTimelineFilePath} />}
-            {isFileSelected && <TimelineTable timeLineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} />}
+            {isFileSelected &&
+                <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} />
+                    <CodePanel timeline={timeline} setTimeline={setTimeline} />
+                </Box>}
         </>
     );
 };

@@ -2,15 +2,20 @@ import { Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, 
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 
-export const TimelineTable = ({ timeLineFilePath, setCurrentTime }: { timeLineFilePath: string, setCurrentTime: any }) => {
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[] }) => {
     const [jsonData, setJsonData] = useState<TimelineData[]>([]);
 
     useEffect(() => {
-        fetch(timeLineFilePath)
-            .then(response => response.json())
-            .then(data => setJsonData(data))
-            .catch(error => console.error('Error loading JSON:', error));
-    }, [timeLineFilePath]);
+        console.log(timelineFilePath)
+        if (timelineFilePath === undefined || timelineFilePath === 'notSelected') {
+            setJsonData(timeline)
+        } else {
+            fetch(timelineFilePath)
+                .then(response => response.json())
+                .then(data => setJsonData(data))
+                .catch(error => console.error('Error loading JSON:', error));
+        }
+    }, [timelineFilePath, timeline]);
 
     return (
         <>
