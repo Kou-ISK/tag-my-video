@@ -1,4 +1,13 @@
-import { contextBridge } from "electron"
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    openFileDialog: async () => {
+        return ipcRenderer.invoke('open-by-button');
+    },
+    exportTimeline: async (filePath: string, source: any) => {
+        return ipcRenderer.invoke('export-timeline', filePath, source);
+    }
+});
 
 contextBridge.exposeInMainWorld('versions', {
     node: () => process.versions.node,

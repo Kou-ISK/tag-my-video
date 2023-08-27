@@ -22,6 +22,7 @@
   },
   "include": [
     "src",
+    "src/**/*",
     "electron/src/global.d.ts"
   ]
 }
