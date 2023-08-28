@@ -1,38 +1,25 @@
 import { Box, Button } from '@mui/material';
-import { useState } from 'react';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoController } from './VideoController';
 import { VideoPathSelector } from './VideoPathSelector';
 import { TimelineTable } from './TimelineTable';
 import { CodePanel } from './CodePanel';
-import { TimelineData } from '../../types/TimelineData';
+import { useVideoPlayerApp } from '../../hooks/useVideoPlayerApp';
 
 // const ipcRenderer = require('electron');
 
 
 
 export const VideoPlayerApp = () => {
-    const [videoList, setVideoList] = useState<string[]>([]);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [timelineFilePath, setTimelineFilePath] = useState<string | undefined>();
-    const [timeline, setTimeline] = useState<TimelineData[]>([]);
-
-    const [isFileSelected, setIsFileSelected] = useState(false);
-
-    const handleCurrentTime = (event: Event, newValue: number | number[]) => {
-        setCurrentTime(newValue as number);
-    };
-
-    const [maxSec, setMaxSec] = useState(0);
-
-    const [videoState, setVideoState] = useState<"play" | "pause" | "mute">("pause");
-    const [playBackRate, setPlayBackRate] = useState(1);
-
-
     // const exportTimeline = () => {
     //     ipcRenderer.invoke('export-timeline', "/Users/isakakou/Desktop/夏合宿", timeline)
     // }
-
+    const {
+        timeline, setTimeline, videoList, setVideoList,
+        currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
+        isFileSelected, setIsFileSelected,
+        maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime
+    } = useVideoPlayerApp();
 
     return (
         <>
@@ -50,6 +37,7 @@ export const VideoPlayerApp = () => {
                 setVideoState={setVideoState}
                 setPlayBackRate={setPlayBackRate}
                 currentTime={currentTime}
+                setCurrentTime={setCurrentTime}
                 handleCurrentTime={handleCurrentTime}
                 maxSec={maxSec} />
             {!isFileSelected &&
