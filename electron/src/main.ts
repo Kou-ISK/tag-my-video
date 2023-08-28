@@ -1,12 +1,13 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as path from 'path'
+import * as fs from 'fs'
 
 const mainURL = `file:${__dirname}/../../index.html`
 
 const createWidnow = () => {
     let mainWindow = new BrowserWindow({
-        width: 500,
-        height: 500,
+        width: 1000,
+        height: 700,
         webPreferences: {
             preload: path.join(__dirname, "preload.js")
         }
@@ -31,6 +32,27 @@ const createWidnow = () => {
             })
             .catch((err) => console.log(`Error: ${err}`));
     });
+
+    ipcMain.handle('export-timeline', async (_, filePath, source) => {
+        const toJSON = JSON.stringify(source);
+        fs.writeFile(filePath, toJSON, (error) => { console.log(error) });
+    });
+
+    ipcMain.handle('create-package', async () => {
+        /* 
+        TODO Tight, Wideのファイルパスを指定すると下記構成のパッケージを作成する
+    
+        PackageName.pkg
+        ┗ .metadata
+            ┗ config.json (チーム名、シンク機能実装後は各ビデオアングルの開始秒数など)
+        ┗ timeline.json
+        ┗ videos
+            ┗ video0
+                ┗ tightView.mp4
+            ┗ video1
+                ┗ wideView.mp4
+        */
+    })
 }
 
 app.whenReady().then(() => {

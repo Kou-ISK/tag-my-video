@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useState } from 'react';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoController } from './VideoController';
@@ -6,6 +6,9 @@ import { VideoPathSelector } from './VideoPathSelector';
 import { TimelineTable } from './TimelineTable';
 import { CodePanel } from './CodePanel';
 import { TimelineData } from '../../types/TimelineData';
+
+// const ipcRenderer = require('electron');
+
 
 
 export const VideoPlayerApp = () => {
@@ -24,6 +27,12 @@ export const VideoPlayerApp = () => {
 
     const [videoState, setVideoState] = useState<"play" | "pause" | "mute">("pause");
     const [playBackRate, setPlayBackRate] = useState(1);
+
+
+    // const exportTimeline = () => {
+    //     ipcRenderer.invoke('export-timeline', "/Users/isakakou/Desktop/夏合宿", timeline)
+    // }
+
 
     return (
         <>
@@ -55,6 +64,7 @@ export const VideoPlayerApp = () => {
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} />
                 </Box>}
+            {/* <Button onClick={exportTimeline}>出力</Button> */}
         </>
     );
 };
