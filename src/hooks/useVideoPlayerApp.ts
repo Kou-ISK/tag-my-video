@@ -17,11 +17,13 @@ export const useVideoPlayerApp = () => {
     const handleCurrentTime = (event: Event, newValue: number | number[]) => {
         setCurrentTime(newValue as number);
     };
+    const [packagePath, setPackagePath] = useState<string>('');
 
     return {
         timeline, setTimeline, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         isFileSelected, setIsFileSelected,
-        maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime
+        maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime,
+        packagePath, setPackagePath
     }
 }

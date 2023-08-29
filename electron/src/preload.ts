@@ -8,10 +8,30 @@ contextBridge.exposeInMainWorld('versions', {
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    openFileDialog: async () => {
-        return ipcRenderer.invoke('open-by-button');
+    openFile: async () => {
+        try {
+            const filePath = await ipcRenderer.invoke('open-file');
+            return filePath;
+        } catch (error) {
+            console.error('Error:', error);
+            return null;
+        }
+    },
+    openDirectory: async () => {
+        try {
+            const filePath = await ipcRenderer.invoke('open-directory');
+            return filePath;
+        } catch (error) {
+            console.error('Error:', error);
+            return null;
+        }
     },
     exportTimeline: async (filePath: string, source: any) => {
-        return ipcRenderer.invoke('export-timeline', filePath, source);
+        try {
+            await ipcRenderer.invoke('export-timeline', filePath, source);
+            console.log('Timeline exported successfully.');
+        } catch (error) {
+            console.error('Error exporting timeline:', error);
+        }
     }
 });
