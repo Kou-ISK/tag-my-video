@@ -6,6 +6,7 @@ import { TimelineTable } from './TimelineTable';
 import { CodePanel } from './CodePanel';
 import { useVideoPlayerApp } from '../../hooks/useVideoPlayerApp';
 
+
 export const VideoPlayerApp = () => {
     const {
         timeline, setTimeline, videoList, setVideoList,
@@ -13,6 +14,13 @@ export const VideoPlayerApp = () => {
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime, packagePath, setPackagePath
     } = useVideoPlayerApp();
+
+    const handleExportButtonClick = async (source: TimelineData[]) => {
+        const filePath = await ipcRenderer.invoke('open-by-button');
+        if (filePath) {
+            await ipcRenderer.invoke('export-timeline', filePath, source);
+        }
+    };
 
     return (
         <>
@@ -47,6 +55,7 @@ export const VideoPlayerApp = () => {
                     <CodePanel timeline={timeline} setTimeline={setTimeline} />
                 </Box>}
             <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
+
         </>
     );
 };

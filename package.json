@@ -20,6 +20,9 @@
     "electron-is-dev": "^2.0.0",
     "electron-reload": "^2.0.0-alpha.1",
     "electronmon": "^2.0.2",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^11.1.1",
+    "fsevents": "^2.3.3",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "minimatch": "^9.0.3",
@@ -31,7 +34,6 @@
     "react-scripts": "^5.0.1",
     "redux": "^4.2.1",
     "tsc": "^2.0.4",
-    "typescript": "^4.9.5",
     "ulid": "^2.3.0",
     "video-react": "^0.16.0",
     "video.js": "^8.3.0",
@@ -53,7 +55,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron:start": "yarn run build && yarn run tsc -p electron && yarn run electron .",
+    "electron:start": "concurrently \"yarn run build\" \"yarn run tsc -p electron\" \"yarn run electron .\"",
     "electron:build": "yarn run build && yarn run tsc -p electron && yarn run electron-builder",
     "electron:dev": "concurrently \"yarn start\" \"wait-on http://localhost:3000 && yarn run electron:start .\""
   },
@@ -78,8 +80,10 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/react-datepicker": "^4.15.0",
-    "electron": "^25.4.0",
-    "electron-builder": "^24.6.3"
+    "electron": "^26.1.0",
+    "electron-builder": "^24.6.3",
+    "electron-webpack": "^2.8.2",
+    "typescript": "^5.2.2"
   },
   "repository": "https://github.com/Kou-ISK/electron-tutorial.git",
   "license": "MIT"

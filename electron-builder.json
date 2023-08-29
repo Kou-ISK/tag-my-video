@@ -4,6 +4,17 @@
         "target": "dmg"
     },
     "directories": {
-        "buildResources": "public"
+        "buildResources": "public",
+        "output": "dist"
+    },
+    "appId": "com.example.myapp",
+    "productName": "MyApp",
+    "files": [
+        "build/**/*",
+        "public/**/*"
+    ],
+    "buildVersion": "1.0.0",
+    "win": {
+        "target": "nsis"
     }
 }

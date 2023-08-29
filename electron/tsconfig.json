@@ -4,7 +4,15 @@
         // reactと共通のbuildフォルダへ出力
         "outDir": "../build",
         // build/electron/に出力
-        "rootDir": "../"
+        "rootDir": ".",
+        "paths": {
+            "*": [
+                "../node_modules/*"
+            ],
+            "path": [
+                "../node_modules/path-browserify"
+            ]
+        }
     },
     "include": [
         "src/**/*",

@@ -2,17 +2,20 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 
-const mainURL = `file:${__dirname}/../../index.html`
+const mainURL = `file:${__dirname}/../../index.html`;
 
 const createWidnow = () => {
     let mainWindow = new BrowserWindow({
         width: 1000,
         height: 700,
+
         webPreferences: {
-            preload: path.join(__dirname, "preload.js")
-        }
-    })
-    mainWindow.loadURL(mainURL)
+            preload: path.join(__dirname, "preload.ts"),
+        },
+    });
+
+    mainWindow.loadURL(mainURL);
+
 
     ipcMain.handle('open-directory', async () => {
         return dialog
@@ -44,12 +47,13 @@ const createWidnow = () => {
                         extensions: ['png', 'jpeg', 'jpg'],
                     },
                 ],
-            })
-            .then((result) => {
-                if (result.canceled) return;
-                return result.filePaths[0];
-            })
-            .catch((err) => console.log(`Error: ${err}`));
+            });
+
+            if (result.canceled) return;
+            return result.filePaths[0];
+        } catch (err) {
+            console.log(`Error: ${err}`);
+        }
     });
 
     ipcMain.handle('export-timeline', async (_, filePath, source) => {
@@ -75,12 +79,12 @@ const createWidnow = () => {
 }
 
 app.whenReady().then(() => {
-    createWidnow()
+    createWindow();
     app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWidnow()
-    })
-})
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+});
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    if (process.platform !== 'darwin') app.quit();
 });
