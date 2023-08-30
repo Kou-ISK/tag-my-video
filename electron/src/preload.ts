@@ -33,5 +33,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
         } catch (error) {
             console.error('Error exporting timeline:', error);
         }
+    },
+    createPackage: async (directoryName: string, packageName: string, tightViewPath: string, wideViewPath: string) => {
+        try {
+            await ipcRenderer.invoke('create-package', directoryName, packageName, tightViewPath, wideViewPath)
+        } catch (error) {
+            console.error('Error creating package:', error)
+        }
     }
+
 });
