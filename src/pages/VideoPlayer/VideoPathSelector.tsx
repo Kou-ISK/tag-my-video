@@ -1,6 +1,5 @@
 import { Box, Button, Input } from "@mui/material"
 import { useState } from "react";
-import { PackageDatas } from "../../renderer";
 
 export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, timelineFilePath, setTimelineFilePath, setPackagePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, timelineFilePath: string | undefined, setTimelineFilePath: any, setPackagePath: any }) => {
     // TODO パス選択用コンポーネントを作成
@@ -27,6 +26,7 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
     }
 
     // TODO ファイル選択完了後に映像再生画面に遷移するようにする
+    // ファイル選択後にチーム名を選択し、.metadata/config.jsonに書き込む
     const createPackage = async (packageName: string) => {
         const directoryName = await window.electronAPI.openDirectory();
         const tightViewPath = await window.electronAPI.openFile();

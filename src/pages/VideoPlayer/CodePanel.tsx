@@ -3,6 +3,7 @@ import { TimelineData } from '../../types/TimelineData';
 import { CodeButton } from "./CodeButton";
 
 export const CodePanel = ({ timeline, setTimeline }: { timeline: TimelineData[], setTimeline: any }) => {
+    // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const actionList = ["Carry", "Pass", "Kick", "Tackle", "Check"];
 
     return (
