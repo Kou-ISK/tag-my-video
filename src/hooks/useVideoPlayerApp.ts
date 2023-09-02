@@ -6,6 +6,7 @@ export const useVideoPlayerApp = () => {
     const [videoList, setVideoList] = useState<string[]>([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [timelineFilePath, setTimelineFilePath] = useState<string | undefined>();
+    const [metaDataConfigFilePath, setMetaDataConfigFilePath] = useState<string>('');
 
     const [isFileSelected, setIsFileSelected] = useState(false);
 
@@ -22,6 +23,7 @@ export const useVideoPlayerApp = () => {
     return {
         timeline, setTimeline, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
+        metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime,
         packagePath, setPackagePath

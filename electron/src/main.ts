@@ -58,14 +58,17 @@ const createWidnow = () => {
         fs.writeFile(filePath, toJSON, (error) => { console.log(error) });
     });
 
-    ipcMain.handle('create-package', async (_, directoryName, packageName, tightViewPath, wideViewPath) => {
+    ipcMain.handle('create-package', async (_, directoryName, packageName, tightViewPath, wideViewPath, metaDataConfig) => {
         // 引数で取ったpackageNameをもとに新規パッケージを作成
         const newPackagePath = directoryName + '/' + packageName;
         const newFilePath = newPackagePath.substring(newPackagePath.lastIndexOf('/') + 1);
         fs.mkdirSync(newPackagePath);
         // .metadataファイルを作成
         fs.mkdirSync(newPackagePath + '/.metadata');
-        fs.writeFile(newPackagePath + '/.metadata/config.json', '', (err) => {
+        const metaDataText = JSON.stringify(metaDataConfig)
+        console.log(metaDataConfig);
+        console.log(metaDataText);
+        fs.writeFile(newPackagePath + '/.metadata/config.json', metaDataText, (err) => {
             if (err) console.log(err);
         });
         fs.mkdirSync(newPackagePath + '/videos');
@@ -87,16 +90,14 @@ const createWidnow = () => {
             ┗ tightView.mp4
             ┗ wideView.mp4
         */
-        console.log({
-            "timelinePath": newPackagePath + '/timeline.json',
-            "tightViewPath": newTightViewPath,
-            "wideViewPath": newWideViewPath
-        })
-        return {
-            "timelinePath": newPackagePath + '/timeline.json',
-            "tightViewPath": newTightViewPath,
-            "wideViewPath": newWideViewPath
+        const packageDatas: PackageDatas = {
+            timelinePath: newPackagePath + '/timeline.json',
+            tightViewPath: newTightViewPath,
+            wideViewPath: newWideViewPath,
+            metaDataConfigFilePath: newPackagePath + '/.metadata/config.json'
         }
+        console.log(packageDatas);
+        return packageDatas
     })
 }
 

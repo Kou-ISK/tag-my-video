@@ -10,6 +10,7 @@ export const VideoPlayerApp = () => {
     const {
         timeline, setTimeline, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
+        metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime, packagePath, setPackagePath
     } = useVideoPlayerApp();
@@ -40,11 +41,12 @@ export const VideoPlayerApp = () => {
                     isFileSelected={isFileSelected}
                     timelineFilePath={timelineFilePath}
                     setTimelineFilePath={setTimelineFilePath}
-                    setPackagePath={setPackagePath} />}
+                    setPackagePath={setPackagePath}
+                    setMetaDataConfigFilePath={setMetaDataConfigFilePath} />}
             {isFileSelected &&
                 <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} />
-                    <CodePanel timeline={timeline} setTimeline={setTimeline} />
+                    <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} />
                 </Box>}
             <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
         </>

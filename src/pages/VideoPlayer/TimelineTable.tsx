@@ -5,7 +5,6 @@ import { TimelineData } from '../../types/TimelineData';
 export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any }) => {
 
     useEffect(() => {
-        console.log(timelineFilePath)
         if (timelineFilePath !== undefined && timelineFilePath !== 'notSelected') {
             fetch(timelineFilePath)
                 .then(response => response.json())
