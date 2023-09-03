@@ -18,7 +18,7 @@ export const VideoPlayerApp = () => {
     return (
         <>
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                {videoList.map((filePath, index) => (
+                {videoList !== undefined && videoList.map((filePath, index) => (
                     <VideoPlayer key={'video_' + index}
                         videoSrc={filePath} id={'video_' + index}
                         videoState={videoState}

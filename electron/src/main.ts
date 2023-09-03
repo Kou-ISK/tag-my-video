@@ -78,7 +78,7 @@ const createWidnow = () => {
         fs.renameSync(tightViewPath, newTightViewPath);
         fs.renameSync(wideViewPath, newWideViewPath);
         // タイムラインファイルを作成
-        fs.writeFile(newPackagePath + '/timeline.json', '', (err) => {
+        fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
             if (err) console.log(err);
         });
         /* 

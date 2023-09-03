@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import React, { Dispatch, SetStateAction, useEffect, useRef } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 
@@ -14,49 +14,48 @@ interface VideoPlayerProps {
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoState, videoPlayBackRate, currentTime, setMaxSec }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const playerRef = useRef<any>(null); // プレイヤーの参照を保持
 
     useEffect(() => {
         if (videoRef.current) {
-            const option = { 'autoplay': true, 'aspectRatio': '16:9' }
-            const player = videojs(videoRef.current, option);
+            const option = { 'autoplay': true, 'aspectRatio': '16:9' };
+
+            // プレイヤーが初期化されていない場合のみ初期化
+            if (!playerRef.current) {
+                const player = videojs(videoRef.current, option);
+                playerRef.current = player;
+                player.ready(() => {
+                    const duration = player.duration();
+                    if (duration !== undefined) {
+                        setMaxSec(duration);
+                    }
+                });
+            }
+
+            // プレイヤーの状態を設定
+            const player = playerRef.current;
+            if (player) {
+                if (videoState === "play") {
+                    player.play();
+                } else if (videoState === "pause") {
+                    player.pause();
+                } else if (videoState === "mute") {
+                    player.muted(true);
+                }
+                player.playbackRate(videoPlayBackRate);
+                if (!isNaN(currentTime)) {
+                    player.currentTime(currentTime);
+                }
+            }
+
             return () => {
-                player.dispose();
+                if (playerRef.current) {
+                    playerRef.current.dispose();
+                    playerRef.current = null;
+                }
             };
         }
-    }, [videoRef]);
-
-    useEffect(() => {
-        console.log(videoRef.current);
-        if (videoRef.current) {
-            const option = { 'autoplay': true, 'aspectRatio': '16:9' }
-            const player = videojs(videoRef.current, option);
-
-            player.ready(() => {
-                const duration = player.duration()
-                if (duration !== undefined) {
-                    setMaxSec(duration);
-                }
-            });
-
-            if (videoState === "play") {
-                player.play();
-            } else if (videoState === "pause") {
-                player.pause();
-            } else if (videoState === "mute") {
-                player.muted(true);
-            }
-            player.playbackRate(videoPlayBackRate);
-        }
-    }, [videoState, videoRef, videoPlayBackRate]);
-
-    useEffect(() => {
-        if (videoRef.current) {
-            const player = videojs(videoRef.current);
-            if (!isNaN(currentTime)) {
-                player.currentTime(currentTime);
-            }
-        }
-    }, [currentTime])
+    }, [videoRef, videoState, currentTime, videoPlayBackRate]);
 
     return (
         <Box width="100%" height="100%">

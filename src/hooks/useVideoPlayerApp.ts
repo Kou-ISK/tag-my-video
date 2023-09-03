@@ -3,7 +3,7 @@ import { TimelineData } from "../types/TimelineData";
 
 export const useVideoPlayerApp = () => {
     const [timeline, setTimeline] = useState<TimelineData[]>([]);
-    const [videoList, setVideoList] = useState<string[]>([]);
+    const [videoList, setVideoList] = useState<string[]>();
     const [currentTime, setCurrentTime] = useState(0);
     const [timelineFilePath, setTimelineFilePath] = useState<string | undefined>();
     const [metaDataConfigFilePath, setMetaDataConfigFilePath] = useState<string>('');
