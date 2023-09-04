@@ -1,9 +1,8 @@
 import { Button } from "@mui/material"
-import { TimelineData } from "../../types/TimelineData"
 import { useState } from "react";
 import videojs from "video.js";
 
-export const CodeButton = ({ actionName, timeline, setTimeline }: { actionName: string, timeline: TimelineData[], setTimeline: any }) => {
+export const CodeButton = ({ actionName, addTimelineData }: { actionName: string, addTimelineData: any }) => {
     const [isActionButonPushed, setIsActionButtonPushed] = useState(false);
     const [startTime, setStartTime] = useState(0);
 
@@ -18,13 +17,11 @@ export const CodeButton = ({ actionName, timeline, setTimeline }: { actionName: 
                     setStartTime(currentTime);
                 } else {
                     const newEndTime = currentTime;
-                    const timelineInstance: TimelineData = {
-                        actionName,
+                    addTimelineData(actionName,
                         startTime,
-                        endTime: newEndTime,
-                        qualifier
-                    };
-                    setTimeline([...timeline, timelineInstance]);
+                        newEndTime,
+                        qualifier)
+
                 }
                 setIsActionButtonPushed(!isActionButonPushed);
             }

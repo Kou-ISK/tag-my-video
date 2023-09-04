@@ -1,8 +1,8 @@
-import { Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 
-export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any }) => {
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, updateQualifier }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any, updateQualifier: any }) => {
 
     useEffect(() => {
         if (timelineFilePath !== undefined && timelineFilePath !== 'notSelected') {
@@ -33,7 +33,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                                 <TableCell>{item.actionName}</TableCell>
                                 <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
                                 <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
-                                <TableCell align="left">{item.qualifier}</TableCell>
+                                <TableCell align="left"><Input type='text' value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

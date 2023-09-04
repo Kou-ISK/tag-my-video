@@ -3,7 +3,7 @@ import { TimelineData } from '../../types/TimelineData';
 import { CodeButton } from "./CodeButton";
 import { useEffect, useState } from "react";
 
-export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath }: { timeline: TimelineData[], setTimeline: any, metaDataConfigFilePath: string }) => {
+export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: { timeline: TimelineData[], setTimeline: any, metaDataConfigFilePath: string, addTimelineData: any }) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const [team1Name, setTeam1Name] = useState<string>('');
     const actionList = ["Carry", "Pass", "Kick", "Tackle", "Check"];
@@ -32,8 +32,8 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath }: { t
             {actionList.map((value, index) => (
                 <>
                     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                        <CodeButton actionName={team1Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
-                        <CodeButton actionName={team2Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
+                        <CodeButton actionName={team1Name + ' ' + value} addTimelineData={addTimelineData} />
+                        <CodeButton actionName={team2Name + ' ' + value} addTimelineData={addTimelineData} />
                     </Box>
                 </>
             ))}

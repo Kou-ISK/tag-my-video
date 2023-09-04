@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TimelineData } from "../types/TimelineData";
+import { ulid } from "ulid";
 
 export const useVideoPlayerApp = () => {
     const [timeline, setTimeline] = useState<TimelineData[]>([]);
@@ -20,12 +21,27 @@ export const useVideoPlayerApp = () => {
     };
     const [packagePath, setPackagePath] = useState<string>('');
 
+    const addTimelineData = (actionName: string,
+        startTime: number,
+        endTime: number,
+        qualifier: string) => {
+        const newTimelineInstance: TimelineData = { id: ulid(), actionName, startTime, endTime, qualifier };
+        setTimeline([...timeline, newTimelineInstance]);
+    }
+
+    const updateQualifier = (id: string, qualifier: string) => {
+        const updatedTimeline = timeline.map((item) =>
+            item.id === id ? { ...item, qualifier } : item
+        )
+        setTimeline(updatedTimeline)
+    }
+
     return {
         timeline, setTimeline, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath
+        packagePath, setPackagePath, addTimelineData, updateQualifier
     }
 }
