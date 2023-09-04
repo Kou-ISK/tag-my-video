@@ -41,7 +41,6 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
             team2Name: team2Name
         }
         const packageDatas: PackageDatas = await window.electronAPI.createPackage(directoryName, packageName, tightViewPath, wideViewPath, metaDataConfig);
-        console.log(packageDatas);
         setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
         setTimelineFilePath(packageDatas.timelinePath);
         setHasOpenModal(!hasOpenModal)
@@ -56,12 +55,18 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
                 <Button onClick={() => setHasOpenModal(!hasOpenModal)}>新規パッケージ</Button>
             </Box>
             {hasOpenModal && <Box>
-                <label htmlFor="packageName">パッケージ名</label>
-                <Input id='packageName' value={packageName} onChange={(e) => setPackageName(e.currentTarget.value)} />
-                <label htmlFor="team1Name">チーム名(1)</label>
-                <Input id='team1Name' value={team1Name} onChange={(e) => setTeam1Name(e.currentTarget.value)}></Input>
-                <label htmlFor="team2Name">チーム名(2)</label>
-                <Input id='team2Name' value={team2Name} onChange={(e) => setTeam2Name(e.currentTarget.value)}></Input>
+                <div>
+                    <label htmlFor="packageName">パッケージ名</label>
+                    <Input id='packageName' value={packageName} onChange={(e) => setPackageName(e.currentTarget.value)} />
+                </div>
+                <div>
+                    <label htmlFor="team1Name">チーム名(1)</label>
+                    <Input id='team1Name' value={team1Name} onChange={(e) => setTeam1Name(e.currentTarget.value)}></Input>
+                </div>
+                <div>
+                    <label htmlFor="team2Name">チーム名(2)</label>
+                    <Input id='team2Name' value={team2Name} onChange={(e) => setTeam2Name(e.currentTarget.value)}></Input>
+                </div>
                 <Button variant='contained' onClick={() => createPackage(packageName)}>作成</Button>
             </Box>}
         </>

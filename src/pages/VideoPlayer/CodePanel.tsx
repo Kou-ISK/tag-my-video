@@ -31,8 +31,10 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath }: { t
         }}>
             {actionList.map((value, index) => (
                 <>
-                    <CodeButton actionName={team1Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
-                    <CodeButton actionName={team2Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
+                    <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+                        <CodeButton actionName={team1Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
+                        <CodeButton actionName={team2Name + ' ' + value} timeline={timeline} setTimeline={setTimeline} />
+                    </Box>
                 </>
             ))}
         </Box>
