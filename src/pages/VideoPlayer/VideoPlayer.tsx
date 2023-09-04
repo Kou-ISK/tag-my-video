@@ -26,7 +26,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoSta
     }, [videoRef]);
 
     useEffect(() => {
-        console.log(videoRef.current);
         if (videoRef.current) {
             const option = { 'autoplay': true, 'aspectRatio': '16:9' }
             const player = videojs(videoRef.current, option);
@@ -67,6 +66,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoSta
                 width="640"
                 height="360"
                 id={id}
+                controls
             >
                 <source src={videoSrc} type="video/mp4" />
             </video>

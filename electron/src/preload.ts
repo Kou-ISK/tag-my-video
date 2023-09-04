@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
+import { PackageDatas } from "../../src/renderer";
 
 contextBridge.exposeInMainWorld('versions', {
     node: () => process.versions.node,
@@ -33,5 +34,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
         } catch (error) {
             console.error('Error exporting timeline:', error);
         }
+    },
+    createPackage: async (directoryName: string, packageName: string, tightViewPath: string, wideViewPath: string, metaData: any) => {
+        try {
+            const packageDatas: PackageDatas = await ipcRenderer.invoke('create-package', directoryName, packageName, tightViewPath, wideViewPath, metaData);
+            return packageDatas;
+        } catch (error) {
+            console.error('Error creating package:', error)
+        }
     }
+
 });

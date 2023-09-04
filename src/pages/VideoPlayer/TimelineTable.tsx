@@ -5,7 +5,6 @@ import { TimelineData } from '../../types/TimelineData';
 export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any }) => {
 
     useEffect(() => {
-        console.log(timelineFilePath)
         if (timelineFilePath !== undefined && timelineFilePath !== 'notSelected') {
             fetch(timelineFilePath)
                 .then(response => response.json())
@@ -15,10 +14,10 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
     }, [timelineFilePath]);
 
     return (
-        <div style={{ overflowY: 'scroll', maxHeight: '400px' }}> {/* Set the max height and overflow for scrolling */}
+        <div style={{ overflowY: 'scroll', maxHeight: '500px' }}> {/* Set the max height and overflow for scrolling */}
             <TableContainer component={Paper}>
                 <Table sx={{
-                    minWidth: 650, tableLayout: "fixed"
+                    maxWidth: 900, tableLayout: "fixed"
                 }} aria-label="simple table">
                     <TableHead>
                         <TableRow>

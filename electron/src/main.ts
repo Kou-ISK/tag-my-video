@@ -1,13 +1,14 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
+import { PackageDatas } from '../../src/renderer';
 
 const mainURL = `file:${__dirname}/../../index.html`
 
 const createWidnow = () => {
     let mainWindow = new BrowserWindow({
-        width: 1000,
-        height: 700,
+        width: 1200,
+        height: 900,
         webPreferences: {
             preload: path.join(__dirname, "preload.js")
         }
@@ -40,8 +41,8 @@ const createWidnow = () => {
                 title: 'ファイルを選択する',
                 filters: [
                     {
-                        name: '画像ファイル',
-                        extensions: ['png', 'jpeg', 'jpg'],
+                        name: '映像ファイル',
+                        extensions: ['mov', 'mp4'],
                     },
                 ],
             })
@@ -57,20 +58,46 @@ const createWidnow = () => {
         fs.writeFile(filePath, toJSON, (error) => { console.log(error) });
     });
 
-    ipcMain.handle('create-package', async () => {
+    ipcMain.handle('create-package', async (_, directoryName, packageName, tightViewPath, wideViewPath, metaDataConfig) => {
+        // 引数で取ったpackageNameをもとに新規パッケージを作成
+        const newPackagePath = directoryName + '/' + packageName;
+        const newFilePath = newPackagePath.substring(newPackagePath.lastIndexOf('/') + 1);
+        fs.mkdirSync(newPackagePath);
+        // .metadataファイルを作成
+        fs.mkdirSync(newPackagePath + '/.metadata');
+        const metaDataText = JSON.stringify(metaDataConfig)
+        console.log(metaDataConfig);
+        console.log(metaDataText);
+        fs.writeFile(newPackagePath + '/.metadata/config.json', metaDataText, (err) => {
+            if (err) console.log(err);
+        });
+        fs.mkdirSync(newPackagePath + '/videos');
+        // 新しいビデオファイルパスを変数に格納
+        const newTightViewPath = newPackagePath + '/videos/' + newFilePath + ' 寄り.mp4';
+        const newWideViewPath = newPackagePath + '/videos/' + newFilePath + ' 引き.mp4'
+        fs.renameSync(tightViewPath, newTightViewPath);
+        fs.renameSync(wideViewPath, newWideViewPath);
+        // タイムラインファイルを作成
+        fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
+            if (err) console.log(err);
+        });
         /* 
-        TODO Tight, Wideのファイルパスを指定すると下記構成のパッケージを作成する
-    
         PackageName.pkg
         ┗ .metadata
             ┗ config.json (チーム名、シンク機能実装後は各ビデオアングルの開始秒数など)
         ┗ timeline.json
         ┗ videos
-            ┗ video0
-                ┗ tightView.mp4
-            ┗ video1
-                ┗ wideView.mp4
+            ┗ tightView.mp4
+            ┗ wideView.mp4
         */
+        const packageDatas: PackageDatas = {
+            timelinePath: newPackagePath + '/timeline.json',
+            tightViewPath: newTightViewPath,
+            wideViewPath: newWideViewPath,
+            metaDataConfigFilePath: newPackagePath + '/.metadata/config.json'
+        }
+        console.log(packageDatas);
+        return packageDatas
     })
 }
 
