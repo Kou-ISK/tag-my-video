@@ -2,9 +2,9 @@ import React from 'react';
 import './App.css';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { MainView } from './pages/MainView';
-import { TodoApp } from './pages/Todo/TodoApp';
+import { TodoApp } from './pages/TodoApp';
 import { Header } from './components/Header';
-import { VideoPlayerApp } from './pages/VideoPlayer/VideoPlayerApp';
+import { VideoPlayerApp } from './pages/VideoPlayerApp';
 
 function App() {
   return (

@@ -46,7 +46,10 @@
     "extends": null,
     "files": [
       "build/**/*"
-    ]
+    ],
+    "directories": {
+      "output": "dist/"
+    }
   },
   "scripts": {
     "start": "react-scripts start",
@@ -79,7 +82,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/react-datepicker": "^4.15.0",
     "electron": "^25.4.0",
-    "electron-builder": "^24.6.3"
+    "electron-builder": "^24.6.4"
   },
   "repository": "https://github.com/Kou-ISK/electron-tutorial.git",
   "license": "MIT"

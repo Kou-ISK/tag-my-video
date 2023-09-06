@@ -3,12 +3,15 @@ import { useState } from "react";
 import { PackageDatas } from "../../renderer";
 import { MetaData } from "../../types/MetaData";
 
-export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, timelineFilePath, setTimelineFilePath, setPackagePath, setMetaDataConfigFilePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, timelineFilePath: string | undefined, setTimelineFilePath: any, setPackagePath: any, setMetaDataConfigFilePath: any }) => {
-    // TODO パス選択用コンポーネントを作成
+export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, setTimelineFilePath, setPackagePath, setMetaDataConfigFilePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, setTimelineFilePath: any, setPackagePath: any, setMetaDataConfigFilePath: any }) => {
     const [hasOpenModal, setHasOpenModal] = useState<boolean>(false);
     const [packageName, setPackageName] = useState<string>('');
     const [team1Name, setTeam1Name] = useState<string>('');
     const [team2Name, setTeam2Name] = useState<string>('');
+
+    const handleHasOpenModal = () => {
+        setIsFileSelected(!isFileSelected)
+    }
 
     // パッケージを選択した場合
     const setVideoPathByPackagePath = async () => {
@@ -30,7 +33,6 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
         }
     }
 
-    // TODO ファイル選択完了後に映像再生画面に遷移するようにする
     // ファイル選択後にチーム名を選択し、.metadata/config.jsonに書き込む
     const createPackage = async (packageName: string) => {
         const directoryName = await window.electronAPI.openDirectory();
@@ -49,10 +51,10 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
     }
 
     return (
-        <>
+        <div style={{ marginLeft: "20vw", marginRight: "20vw" }}>
             <Box display={"flex"} flexDirection={"column"}>
-                <Button onClick={setVideoPathByPackagePath} variant="contained">ビデオパッケージを選択</Button>
-                <Button onClick={() => setHasOpenModal(!hasOpenModal)}>新規パッケージ</Button>
+                <Button sx={{ height: "200px", fontsize: "200px", margin: "20px" }} onClick={setVideoPathByPackagePath} variant="contained">ビデオパッケージを選択</Button>
+                <Button sx={{ height: "200px", fontsize: "200px", margin: "20px" }} onClick={handleHasOpenModal} variant="outlined">新規パッケージ</Button>
             </Box>
             {hasOpenModal && <Box>
                 <div>
@@ -69,6 +71,6 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
                 </div>
                 <Button variant='contained' onClick={() => createPackage(packageName)}>作成</Button>
             </Box>}
-        </>
+        </div>
     )
 }

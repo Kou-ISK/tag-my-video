@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
-import { useTodos } from '../../hooks/useTodos';
-import { AddTodoItem } from './AddTodoItem';
-import { TodoList } from './TodoList';
+import { useTodos } from '../hooks/useTodos';
+import { AddTodoItem } from '../components/TodoApp/AddTodoItem';
+import { TodoList } from '../components/TodoApp/TodoList';
 export const TodoApp = () => {
     const { todoList, toggleTodoStatus, deleteTodoItem, addTodoItem } = useTodos();
     return (
