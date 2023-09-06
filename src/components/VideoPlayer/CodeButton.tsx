@@ -6,7 +6,6 @@ export const CodeButton = ({ actionName, addTimelineData }: { actionName: string
     const [isActionButonPushed, setIsActionButtonPushed] = useState(false);
     const [startTime, setStartTime] = useState(0);
 
-
     const addTimeline = (qualifier: string) => {
         const player = videojs('video_0');
 
@@ -17,11 +16,7 @@ export const CodeButton = ({ actionName, addTimelineData }: { actionName: string
                     setStartTime(currentTime);
                 } else {
                     const newEndTime = currentTime;
-                    addTimelineData(actionName,
-                        startTime,
-                        newEndTime,
-                        qualifier)
-
+                    addTimelineData(actionName, startTime, newEndTime, qualifier)
                 }
                 setIsActionButtonPushed(!isActionButonPushed);
             }
@@ -30,7 +25,6 @@ export const CodeButton = ({ actionName, addTimelineData }: { actionName: string
 
 
     return (
-        <>
-            <Button sx={{ "margin": "3px" }} variant={isActionButonPushed ? "contained" : "outlined"} onClick={() => addTimeline('')}>{actionName}</Button></>
+        <Button sx={{ "margin": "3px" }} variant={isActionButonPushed ? "contained" : "outlined"} onClick={() => addTimeline('')}>{actionName}</Button>
     )
 }
