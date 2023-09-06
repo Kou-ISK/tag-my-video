@@ -6,13 +6,13 @@ import "video.js/dist/video-js.css";
 interface VideoPlayerProps {
     videoSrc: string;
     id: string;
-    videoState: "play" | "pause" | "mute";
+    isVideoPlaying: boolean
     videoPlayBackRate: number;
     currentTime: number;
     setMaxSec: Dispatch<SetStateAction<number>>;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoState, videoPlayBackRate, currentTime, setMaxSec }) => {
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, isVideoPlaying, videoPlayBackRate, currentTime, setMaxSec }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -37,16 +37,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, videoSta
                 }
             });
 
-            if (videoState === "play") {
+            if (isVideoPlaying) {
                 player.play();
-            } else if (videoState === "pause") {
+            } else if (!isVideoPlaying) {
                 player.pause();
-            } else if (videoState === "mute") {
-                player.muted(true);
             }
             player.playbackRate(videoPlayBackRate);
         }
-    }, [videoState, videoRef, videoPlayBackRate]);
+    }, [isVideoPlaying, videoRef, videoPlayBackRate]);
 
     useEffect(() => {
         if (videoRef.current) {

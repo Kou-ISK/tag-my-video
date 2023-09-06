@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { Utils } from './utils'
+import { shortCutKeys } from './shortCutKey'
 
 
 const mainURL = `file:${__dirname}/../../index.html`
@@ -15,6 +16,7 @@ const createWidnow = () => {
     })
     mainWindow.loadURL(mainURL)
     Utils(mainWindow)
+    shortCutKeys(mainWindow)
 }
 
 app.whenReady().then(() => {

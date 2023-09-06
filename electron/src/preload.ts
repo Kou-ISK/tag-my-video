@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron"
+import { IpcRenderer, IpcRendererEvent, contextBridge, ipcRenderer } from "electron"
 import { PackageDatas } from "../../src/renderer";
 
 contextBridge.exposeInMainWorld('versions', {
@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
         } catch (error) {
             console.error('Error creating package:', error)
         }
-    }
-
+    },
+    on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => IpcRenderer) => {
+        ipcRenderer.on(channel, (_event, ...args) => listener(_event, ...args))
+    },
 });
