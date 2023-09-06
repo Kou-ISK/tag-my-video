@@ -13,7 +13,7 @@ export const useVideoPlayerApp = () => {
 
     const [maxSec, setMaxSec] = useState(0);
 
-    const [videoState, setVideoState] = useState<"play" | "pause" | "mute">("pause");
+    const [isVideoPlaying, setisVideoPlaying] = useState<boolean>(false);
     const [playBackRate, setPlayBackRate] = useState(1);
 
     const handleCurrentTime = (event: Event, newValue: number | number[]) => {
@@ -36,12 +36,16 @@ export const useVideoPlayerApp = () => {
         setTimeline(updatedTimeline)
     }
 
+    const toggleIsVideoPlaying = () => {
+        setisVideoPlaying(!isVideoPlaying)
+    }
+
     return {
         timeline, setTimeline, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
-        maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath, addTimelineData, updateQualifier
+        maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
+        packagePath, setPackagePath, addTimelineData, updateQualifier, toggleIsVideoPlaying
     }
 }

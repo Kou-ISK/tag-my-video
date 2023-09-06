@@ -12,7 +12,7 @@ export const VideoPlayerApp = () => {
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
-        maxSec, setMaxSec, videoState, setVideoState, playBackRate, setPlayBackRate, handleCurrentTime, packagePath, setPackagePath, addTimelineData, updateQualifier
+        maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime, packagePath, setPackagePath, addTimelineData, updateQualifier, toggleIsVideoPlaying
     } = useVideoPlayerApp();
 
     return (
@@ -21,14 +21,15 @@ export const VideoPlayerApp = () => {
                 {videoList !== undefined && videoList.map((filePath, index) => (
                     <VideoPlayer key={'video_' + index}
                         videoSrc={filePath} id={'video_' + index}
-                        videoState={videoState}
+                        isVideoPlaying={isVideoPlaying}
                         videoPlayBackRate={playBackRate}
                         currentTime={currentTime}
                         setMaxSec={setMaxSec} />
                 ))}
             </Box>
                 <VideoController
-                    setVideoState={setVideoState}
+                    setIsVideoPlaying={setisVideoPlaying}
+                    isVideoPlaying={isVideoPlaying}
                     setPlayBackRate={setPlayBackRate}
                     currentTime={currentTime}
                     setCurrentTime={setCurrentTime}

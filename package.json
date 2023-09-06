@@ -18,6 +18,7 @@
     "@types/videojs": "^5.16.2",
     "concurrently": "^8.2.0",
     "electron-is-dev": "^2.0.0",
+    "electron-localshortcut": "^3.2.1",
     "electron-reload": "^2.0.0-alpha.1",
     "electronmon": "^2.0.2",
     "js-yaml": "^4.1.0",

@@ -1,14 +1,28 @@
 import { Box, Button, Slider } from "@mui/material"
+import { useEffect } from "react"
 
 export const VideoController = (
-    { setVideoState, setPlayBackRate, currentTime, setCurrentTime, handleCurrentTime, maxSec }
-        : { setVideoState: any, setPlayBackRate: any, currentTime: number, setCurrentTime: any, handleCurrentTime: any, maxSec: number }
+    { setIsVideoPlaying, isVideoPlaying, setPlayBackRate, currentTime, setCurrentTime, handleCurrentTime, maxSec }
+        : { setIsVideoPlaying: any, isVideoPlaying: any, setPlayBackRate: any, currentTime: number, setCurrentTime: any, handleCurrentTime: any, maxSec: number }
 ) => {
+
+    //TODO currentTimeが映像の時間に合わせて更新されるようにする
+    useEffect(() => {
+        window.electronAPI.on('shortcut-event', (event, args) => {
+            if (args > 1) {
+                setPlayBackRate(args)
+            } else if (args === 1) {
+                setIsVideoPlaying(!isVideoPlaying)
+                setPlayBackRate(1)
+            } else {
+                setCurrentTime(currentTime - args)
+            }
+        })
+    }, [isVideoPlaying])
+
     return (
         <>
-            <Button onClick={() => setVideoState('play')}>Play All</Button>
-            <Button onClick={() => setVideoState('pause')}>Pause All</Button>
-            <Button onClick={() => setVideoState('mute')}>Mute All</Button>
+            <Button onClick={() => setIsVideoPlaying(!isVideoPlaying)}>{isVideoPlaying ? 'Pause All' : 'Play All'}</Button>
             <Button onClick={() => setCurrentTime(currentTime - 10)}>10秒戻る</Button>
             <Button onClick={() => setCurrentTime(currentTime - 5)}>5秒戻る</Button>
             <Button onClick={() => setPlayBackRate(0.5)}>0.5倍速</Button>
