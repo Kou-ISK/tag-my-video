@@ -29,8 +29,7 @@ export const VideoController = (
             <Button onClick={() => setPlayBackRate(1)}>1倍速</Button>
             <Button onClick={() => setPlayBackRate(2)}>2倍速</Button>
             <Button onClick={() => setPlayBackRate(6)}>6倍速</Button>
-            <p>{currentTime}</p>
-            <Box width={500}>
+            <Box sx={{ paddingLeft: "30px" }} width={500}>
                 <Slider aria-label="Time"
                     valueLabelDisplay="auto"
                     value={currentTime}
