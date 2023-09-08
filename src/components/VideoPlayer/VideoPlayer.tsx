@@ -36,7 +36,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoSrc, id, isVideoP
                     setMaxSec(duration);
                 }
             });
-
             if (isVideoPlaying) {
                 player.play();
             } else if (!isVideoPlaying) {

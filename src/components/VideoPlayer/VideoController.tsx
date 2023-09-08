@@ -9,13 +9,13 @@ export const VideoController = (
     //TODO currentTimeが映像の時間に合わせて更新されるようにする
     useEffect(() => {
         window.electronAPI.on('shortcut-event', (event, args) => {
-            if (args > 1) {
+            if (args > 0) {
                 setPlayBackRate(args)
-            } else if (args === 1) {
-                setIsVideoPlaying(!isVideoPlaying)
-                setPlayBackRate(1)
+                if (args === 1) {
+                    setIsVideoPlaying(!isVideoPlaying)
+                }
             } else {
-                setCurrentTime(currentTime - args)
+                setCurrentTime(currentTime + args)
             }
         })
     }, [isVideoPlaying])
@@ -29,11 +29,10 @@ export const VideoController = (
             <Button onClick={() => setPlayBackRate(1)}>1倍速</Button>
             <Button onClick={() => setPlayBackRate(2)}>2倍速</Button>
             <Button onClick={() => setPlayBackRate(6)}>6倍速</Button>
-            <Box width={500}>
+            <Box sx={{ paddingLeft: "30px" }} width={500}>
                 <Slider aria-label="Time"
                     valueLabelDisplay="auto"
                     value={currentTime}
-                    step={1}
                     onChange={handleCurrentTime}
                     min={0} max={maxSec} />
             </Box></>
