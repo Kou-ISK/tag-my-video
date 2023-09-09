@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: { timeline: TimelineData[], setTimeline: any, metaDataConfigFilePath: string, addTimelineData: any }) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const [team1Name, setTeam1Name] = useState<string>('');
-    const actionList = ["Carry", "Pass", "Kick", "Tackle", "Check"];
+    const [actionList, setActionList] = useState(["Carry", "Pass", "Kick", "Tackle", "Check"]);
     const [team2Name, setTeam2Name] = useState<string>('');
     useEffect(() => {
         console.log(metaDataConfigFilePath)
