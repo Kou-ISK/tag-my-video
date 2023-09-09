@@ -8,7 +8,6 @@ export const VideoController = (
 ) => {
     const [videoTime, setVideoTime] = useState<number>(0); // 映像の再生時間を管理
 
-    //TODO currentTimeが映像の時間に合わせて更新されるようにする
     useEffect(() => {
         window.electronAPI.on('shortcut-event', (event, args) => {
             if (args > 0) {
