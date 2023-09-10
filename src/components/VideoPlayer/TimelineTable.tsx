@@ -1,10 +1,11 @@
-import { Button, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 
-export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, updateQualifier }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any, updateQualifier: any }) => {
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any, getSelectedTimelineId: any, updateQualifier: any }) => {
 
     useEffect(() => {
+        console.log(timelineFilePath)
         if (timelineFilePath !== undefined && timelineFilePath !== 'notSelected') {
             fetch(timelineFilePath)
                 .then(response => response.json())
@@ -13,6 +14,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
         }
     }, [timelineFilePath]);
 
+    // チェックボックスを配置し、選択したものだけのリストを作る。
     return (
         <div style={{ overflowY: 'scroll', maxHeight: '500px' }}> {/* Set the max height and overflow for scrolling */}
             <TableContainer component={Paper}>
@@ -29,8 +31,8 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                     </TableHead>
                     <TableBody>
                         {timeline.map((item, index) => (
-                            <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} >
-                                <TableCell>{item.actionName}</TableCell>
+                            <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, marginY: '0px' }} >
+                                <TableCell><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
                                 <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
                                 <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
                                 <TableCell align="left"><Input type='text' value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>

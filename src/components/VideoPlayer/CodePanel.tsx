@@ -9,7 +9,6 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
     const [actionList, setActionList] = useState(["Carry", "Pass", "Kick", "Tackle", "Check"]);
     const [team2Name, setTeam2Name] = useState<string>('');
     useEffect(() => {
-        console.log(metaDataConfigFilePath)
         if (metaDataConfigFilePath !== undefined) {
             // TODO fetchが上手くいっていない問題に対応する(undefinedになる)
             fetch(metaDataConfigFilePath)
@@ -23,7 +22,7 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
                 .catch(error => console.error('Error loading JSON:', error));
         }
     }, [metaDataConfigFilePath])
-    console.log(team1Name, team2Name)
+
     return (
         <Box sx={{
             border: '2px primary.main',
