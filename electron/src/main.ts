@@ -8,8 +8,8 @@ const mainURL = `file:${__dirname}/../../index.html`
 
 const createWidnow = () => {
     let mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 900,
+        width: 1400,
+        height: 1000,
         webPreferences: {
             preload: path.join(__dirname, "preload.js")
         }
