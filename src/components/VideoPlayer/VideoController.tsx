@@ -3,10 +3,10 @@ import { useEffect, useState } from "react"
 import videojs from "video.js"
 
 export const VideoController = (
-    { setIsVideoPlaying, isVideoPlaying, setPlayBackRate, currentTime, setCurrentTime, handleCurrentTime, maxSec }
-        : { setIsVideoPlaying: any, isVideoPlaying: any, setPlayBackRate: any, currentTime: number, setCurrentTime: any, handleCurrentTime: any, maxSec: number }
+    { setIsVideoPlaying, isVideoPlaying, setPlayBackRate, setCurrentTime, handleCurrentTime, maxSec }
+        : { setIsVideoPlaying: any, isVideoPlaying: any, setPlayBackRate: any, setCurrentTime: any, handleCurrentTime: any, maxSec: number }
 ) => {
-    const [videoTime, setVideoTime] = useState<number>(0); // 映像の再生時間を管理
+    const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
 
     useEffect(() => {
         window.electronAPI.on('shortcut-event', (event, args) => {

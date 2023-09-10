@@ -32,7 +32,6 @@ export const VideoPlayerApp = () => {
                     setIsVideoPlaying={setisVideoPlaying}
                     isVideoPlaying={isVideoPlaying}
                     setPlayBackRate={setPlayBackRate}
-                    currentTime={currentTime}
                     setCurrentTime={setCurrentTime}
                     handleCurrentTime={handleCurrentTime}
                     maxSec={maxSec} />
