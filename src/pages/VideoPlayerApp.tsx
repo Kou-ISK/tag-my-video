@@ -8,11 +8,12 @@ import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 
 export const VideoPlayerApp = () => {
     const {
-        timeline, setTimeline, videoList, setVideoList,
+        timeline, setTimeline, selectedTimelineIdList, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
-        maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime, packagePath, setPackagePath, addTimelineData, updateQualifier, toggleIsVideoPlaying
+        maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
+        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId
     } = useVideoPlayerApp();
 
     return (
@@ -36,10 +37,12 @@ export const VideoPlayerApp = () => {
                     handleCurrentTime={handleCurrentTime}
                     maxSec={maxSec} />
                 <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} updateQualifier={updateQualifier} />
+                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
                 </Box>
-                <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button></>}
+                <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
+                <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button></>
+            }
 
             {!isFileSelected &&
                 <VideoPathSelector
