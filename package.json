@@ -50,7 +50,10 @@
     ],
     "directories": {
       "output": "dist/"
-    }
+    },
+    "appId": "com.example.tagMyVideo",
+    "productName": "Tag My Video",
+    "icon": "public/tag-my-video-icon.ico"
   },
   "scripts": {
     "start": "react-scripts start",
