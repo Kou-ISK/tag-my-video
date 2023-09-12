@@ -53,7 +53,7 @@
     },
     "appId": "com.example.tagMyVideo",
     "productName": "Tag My Video",
-    "icon": "public/tag-my-video-icon.ico"
+    "icon": "public/icon.png"
   },
   "scripts": {
     "start": "react-scripts start",
