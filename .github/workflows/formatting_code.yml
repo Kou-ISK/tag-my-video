@@ -16,4 +16,4 @@ jobs:
     - name: Prettier
       run: npm run format
     - name: Lint
-      run: npm run lin
+      run: npm run lint
