@@ -3,7 +3,14 @@ import { TimelineData } from '../../types/TimelineData';
 import { CodeButton } from "./CodeButton";
 import { useEffect, useState } from "react";
 
-export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: { timeline: TimelineData[], setTimeline: any, metaDataConfigFilePath: string, addTimelineData: any }) => {
+interface CodePanelProps {
+    timeline: TimelineData[],
+    setTimeline: any,
+    metaDataConfigFilePath: string,
+    addTimelineData: any
+}
+
+export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: CodePanelProps) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const [team1Name, setTeam1Name] = useState<string>('');
     const [actionList, setActionList] = useState(["Carry", "Pass", "Kick", "Tackle", "Check"]);
