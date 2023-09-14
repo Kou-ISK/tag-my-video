@@ -2,9 +2,17 @@ import { Box, Button, Slider } from "@mui/material"
 import { useEffect, useState } from "react"
 import videojs from "video.js"
 
+interface VideoControllerProps {
+    setIsVideoPlaying: any,
+    isVideoPlaying: any,
+    setPlayBackRate: any,
+    setCurrentTime: any,
+    handleCurrentTime: any,
+    maxSec: number
+}
+
 export const VideoController = (
-    { setIsVideoPlaying, isVideoPlaying, setPlayBackRate, setCurrentTime, handleCurrentTime, maxSec }
-        : { setIsVideoPlaying: any, isVideoPlaying: any, setPlayBackRate: any, setCurrentTime: any, handleCurrentTime: any, maxSec: number }
+    { setIsVideoPlaying, isVideoPlaying, setPlayBackRate, setCurrentTime, handleCurrentTime, maxSec }: VideoControllerProps
 ) => {
     const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
 
@@ -38,7 +46,7 @@ export const VideoController = (
     }, []);
 
     return (
-        <>
+        <><Box sx={{ display: "flex", flexDirection: "row" }}>
             <Button onClick={() => setIsVideoPlaying(!isVideoPlaying)}>{isVideoPlaying ? 'Pause All' : 'Play All'}</Button>
             <Button onClick={() => setCurrentTime(videoTime - 10)}>10秒戻る</Button>
             <Button onClick={() => setCurrentTime(videoTime - 5)}>5秒戻る</Button>
@@ -52,6 +60,8 @@ export const VideoController = (
                     value={videoTime}
                     onChange={handleCurrentTime}
                     min={0} max={maxSec} />
-            </Box></>
+            </Box>
+        </Box>
+        </>
     )
 }

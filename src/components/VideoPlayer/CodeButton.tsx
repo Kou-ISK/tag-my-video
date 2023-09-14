@@ -2,7 +2,12 @@ import { Button } from "@mui/material"
 import { useState } from "react";
 import videojs from "video.js";
 
-export const CodeButton = ({ actionName, addTimelineData }: { actionName: string, addTimelineData: any }) => {
+interface CodeButtonProps {
+    actionName: string,
+    addTimelineData: any
+}
+
+export const CodeButton = ({ actionName, addTimelineData }: CodeButtonProps) => {
     const [isActionButonPushed, setIsActionButtonPushed] = useState(false);
     const [startTime, setStartTime] = useState(0);
 
@@ -22,7 +27,6 @@ export const CodeButton = ({ actionName, addTimelineData }: { actionName: string
             }
         }
     }
-
 
     return (
         <Button sx={{ "margin": "3px" }} variant={isActionButonPushed ? "contained" : "outlined"} onClick={() => addTimeline('')}>{actionName}</Button>

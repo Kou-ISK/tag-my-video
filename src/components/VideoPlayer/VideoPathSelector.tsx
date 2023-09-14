@@ -3,7 +3,16 @@ import { useState } from "react";
 import { PackageDatas } from "../../renderer";
 import { MetaData } from "../../types/MetaData";
 
-export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, setTimelineFilePath, setPackagePath, setMetaDataConfigFilePath }: { setVideoList: any, setIsFileSelected: any, isFileSelected: boolean, setTimelineFilePath: any, setPackagePath: any, setMetaDataConfigFilePath: any }) => {
+interface VideoPathSelectorProps {
+    setVideoList: any,
+    setIsFileSelected: any,
+    isFileSelected: boolean,
+    setTimelineFilePath: any,
+    setPackagePath: any,
+    setMetaDataConfigFilePath: any
+}
+
+export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelected, setTimelineFilePath, setPackagePath, setMetaDataConfigFilePath }: VideoPathSelectorProps) => {
     const [hasOpenModal, setHasOpenModal] = useState<boolean>(false);
     const [packageName, setPackageName] = useState<string>('');
     const [team1Name, setTeam1Name] = useState<string>('');

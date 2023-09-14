@@ -2,7 +2,16 @@ import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableConta
 import { useEffect } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 
-export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier }: { timelineFilePath: string | undefined, setCurrentTime: any, timeline: TimelineData[], setTimeline: any, getSelectedTimelineId: any, updateQualifier: any }) => {
+interface TimelineTableProps {
+    timelineFilePath: string | undefined,
+    setCurrentTime: any,
+    timeline: TimelineData[],
+    setTimeline: any,
+    getSelectedTimelineId: any,
+    updateQualifier: any
+}
+
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier }: TimelineTableProps) => {
 
     useEffect(() => {
         console.log(timelineFilePath)
