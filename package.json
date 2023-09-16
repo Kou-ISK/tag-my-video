@@ -21,10 +21,12 @@
     "electron-localshortcut": "^3.2.1",
     "electron-reload": "^2.0.0-alpha.1",
     "electronmon": "^2.0.2",
+    "eslint": "^8.49.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "minimatch": "^9.0.3",
     "path-browserify": "^1.0.1",
+    "prettier": "^3.0.3",
     "react": "^18.2.0",
     "react-datepicker": "^4.16.0",
     "react-dom": "^18.2.0",
@@ -56,6 +58,9 @@
     "icon": "public/icon.png"
   },
   "scripts": {
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write '**/*.ts'",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

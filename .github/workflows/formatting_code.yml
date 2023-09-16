@@ -11,9 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Insatll Dependencies
+      run: npm install
     - name: Install packages
       run: npm ci
     - name: Prettier
+      # TODO 使用するスクリプトをpackage.jsonに記入する
       run: npm run format
     - name: Lint
-      run: npm run lin
+      run: npm run lint:fix
