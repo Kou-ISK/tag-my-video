@@ -19,4 +19,4 @@ jobs:
       # TODO 使用するスクリプトをpackage.jsonに記入する
       run: npm run format
     - name: Lint
-      run: npm run lint
+      run: npm run lint:fix
