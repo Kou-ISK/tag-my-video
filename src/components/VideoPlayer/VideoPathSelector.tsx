@@ -19,7 +19,7 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
     const [team2Name, setTeam2Name] = useState<string>('');
 
     const handleHasOpenModal = () => {
-        setIsFileSelected(!isFileSelected)
+        setHasOpenModal(true);
     }
 
     // パッケージを選択した場合
