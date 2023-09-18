@@ -13,7 +13,7 @@ interface CodePanelProps {
 export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: CodePanelProps) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const [team1Name, setTeam1Name] = useState<string>('');
-    const [actionList, setActionList] = useState(["Carry", "Pass", "Kick", "Tackle", "Check"]);
+    const [actionList, setActionList] = useState([]);
     const [team2Name, setTeam2Name] = useState<string>('');
     useEffect(() => {
         if (metaDataConfigFilePath !== undefined) {
@@ -24,6 +24,7 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
                     if (data) {
                         setTeam1Name(data.team1Name);
                         setTeam2Name(data.team2Name);
+                        setActionList(data.actionList);
                     }
                 })
                 .catch(error => console.error('Error loading JSON:', error));
@@ -35,7 +36,7 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
             border: '2px primary.main',
             padding: '2vw'
         }}>
-            {actionList.map((value, index) => (
+            {actionList && actionList.map((value, index) => (
                 <>
                     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
                         <CodeButton actionName={team1Name + ' ' + value} addTimelineData={addTimelineData} />

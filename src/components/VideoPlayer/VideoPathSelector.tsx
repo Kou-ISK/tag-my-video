@@ -19,7 +19,7 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
     const [team2Name, setTeam2Name] = useState<string>('');
 
     const handleHasOpenModal = () => {
-        setIsFileSelected(!isFileSelected)
+        setHasOpenModal(true);
     }
 
     // パッケージを選択した場合
@@ -49,7 +49,8 @@ export const VideoPathSelector = ({ setVideoList, setIsFileSelected, isFileSelec
         const wideViewPath: string = await window.electronAPI.openFile();
         const metaDataConfig: MetaData = {
             team1Name: team1Name,
-            team2Name: team2Name
+            team2Name: team2Name,
+            actionList: ["ポゼッション", "スクラム", "ラインアウト", "キック", "タックル", "PK", "FK", "Check", "キックオフ", "トライ", "ショット"]
         }
         const packageDatas: PackageDatas = await window.electronAPI.createPackage(directoryName, packageName, tightViewPath, wideViewPath, metaDataConfig);
         setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
