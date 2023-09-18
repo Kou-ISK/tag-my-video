@@ -13,7 +13,7 @@ export const VideoPlayerApp = () => {
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId
+        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId, sortTimelineDatas
     } = useVideoPlayerApp();
 
     return (
@@ -37,7 +37,7 @@ export const VideoPlayerApp = () => {
                     handleCurrentTime={handleCurrentTime}
                     maxSec={maxSec} />
                 <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} />
+                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
                 </Box>
                 <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>

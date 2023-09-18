@@ -51,12 +51,34 @@ export const useVideoPlayerApp = () => {
         }
     }
 
+    const sortTimelineDatas = (column: string, sortDesc: boolean) => {
+        if (sortDesc) {
+            if (column === 'startTime') {
+                setTimeline(timeline.sort((a, b) => a.startTime > b.startTime ? -1 : 1));
+            } else if (column === 'endTime') {
+                setTimeline(timeline.sort((a, b) => a.endTime > b.endTime ? -1 : 1));
+            } else if (column === 'actionName') {
+                setTimeline(timeline.sort((a, b) => a.actionName > b.actionName ? -1 : 1));
+            }
+        }
+        else if (sortDesc === false) {
+            console.log('asc')
+            if (column === 'startTime') {
+                setTimeline(timeline.sort((a, b) => a.startTime < b.startTime ? -1 : 1));
+            } else if (column === 'endTime') {
+                setTimeline(timeline.sort((a, b) => a.endTime < b.endTime ? -1 : 1));
+            } else if (column === 'actionName') {
+                setTimeline(timeline.sort((a, b) => a.actionName < b.actionName ? -1 : 1));
+            }
+        }
+    }
+
     return {
         timeline, setTimeline, selectedTimelineIdList, setSelectedTimelineIdList, videoList, setVideoList,
         currentTime, setCurrentTime, timelineFilePath, setTimelineFilePath,
         metaDataConfigFilePath, setMetaDataConfigFilePath,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId
+        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId, sortTimelineDatas
     }
 }
