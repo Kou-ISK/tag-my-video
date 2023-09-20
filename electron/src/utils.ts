@@ -88,4 +88,23 @@ export const Utils = (mainWindow: Electron.BrowserWindow) => {
         console.log(packageDatas);
         return packageDatas
     })
+
+    ipcMain.handle('show-stats', async () => {
+        return dialog
+            .showOpenDialog(mainWindow, {
+                properties: ['openDirectory'],
+                title: 'パッケージを選択する',
+                filters: [
+                    {
+                        name: 'パッケージファイル',
+                        extensions: ['pkg'],
+                    },
+                ],
+            })
+            .then((result) => {
+                if (result.canceled) return;
+                return result.filePaths[0];
+            })
+            .catch((err) => console.log(`Error: ${err}`));
+    });
 }
