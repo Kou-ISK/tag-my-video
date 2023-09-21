@@ -1,5 +1,4 @@
 import { Menu, app } from "electron";
-import { Utils } from "./utils";
 
 export const menuBar = Menu.buildFromTemplate([
     ({

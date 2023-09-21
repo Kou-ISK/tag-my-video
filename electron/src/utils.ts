@@ -3,7 +3,14 @@ import * as fs from 'fs'
 import { PackageDatas } from '../../src/renderer';
 
 // メインプロセスで使用するメソッドを切り出し
-export const Utils = (mainWindow: Electron.BrowserWindow) => {
+
+let mainWindow: Electron.BrowserWindow | null = null; // mainWindowをnullで初期化
+
+export const setMainWindow = (window: Electron.BrowserWindow) => {
+    mainWindow = window;
+}
+
+export const Utils = () => {
     ipcMain.handle('open-directory', async () => {
         return dialog
             .showOpenDialog(mainWindow, {
