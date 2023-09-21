@@ -3,7 +3,14 @@ import * as fs from 'fs'
 import { PackageDatas } from '../../src/renderer';
 
 // メインプロセスで使用するメソッドを切り出し
-export const Utils = (mainWindow: Electron.BrowserWindow) => {
+
+let mainWindow: Electron.BrowserWindow | null = null; // mainWindowをnullで初期化
+
+export const setMainWindow = (window: Electron.BrowserWindow) => {
+    mainWindow = window;
+}
+
+export const Utils = () => {
     ipcMain.handle('open-directory', async () => {
         return dialog
             .showOpenDialog(mainWindow, {
@@ -88,4 +95,23 @@ export const Utils = (mainWindow: Electron.BrowserWindow) => {
         console.log(packageDatas);
         return packageDatas
     })
+
+    ipcMain.handle('show-stats', async () => {
+        return dialog
+            .showOpenDialog(mainWindow, {
+                properties: ['openDirectory'],
+                title: 'パッケージを選択する',
+                filters: [
+                    {
+                        name: 'パッケージファイル',
+                        extensions: ['pkg'],
+                    },
+                ],
+            })
+            .then((result) => {
+                if (result.canceled) return;
+                return result.filePaths[0];
+            })
+            .catch((err) => console.log(`Error: ${err}`));
+    });
 }

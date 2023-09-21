@@ -1,6 +1,8 @@
-import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { useEffect } from 'react';
+import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
 interface TimelineTableProps {
     timelineFilePath: string | undefined,
@@ -8,10 +10,11 @@ interface TimelineTableProps {
     timeline: TimelineData[],
     setTimeline: any,
     getSelectedTimelineId: any,
-    updateQualifier: any
+    updateQualifier: any,
+    sortTimelineDatas: any
 }
 
-export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier }: TimelineTableProps) => {
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier, sortTimelineDatas }: TimelineTableProps) => {
 
     useEffect(() => {
         console.log(timelineFilePath)
@@ -23,6 +26,25 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
         }
     }, [timelineFilePath]);
 
+    const [isActionNameDesc, setIsActionNameDesc] = useState<boolean>(true);
+    const [isStartTimeDesc, setIsStartTimeDesc] = useState<boolean>(true);
+    const [isEndTimeDesc, setIsEndTimeDesc] = useState<boolean>(true);
+
+    const handleSortByActionName = () => {
+        sortTimelineDatas('actionName', isActionNameDesc)
+        setIsActionNameDesc(!isActionNameDesc)
+    }
+
+    const handleSortByStartTime = () => {
+        sortTimelineDatas('startTime', isStartTimeDesc)
+        setIsStartTimeDesc(!isStartTimeDesc)
+    }
+
+    const handleSortByEndTime = () => {
+        sortTimelineDatas('endTime', isEndTimeDesc)
+        setIsEndTimeDesc(!isEndTimeDesc)
+    }
+
     // チェックボックスを配置し、選択したものだけのリストを作る。
     return (
         <div style={{ overflowY: 'scroll', maxHeight: '500px' }}> {/* Set the max height and overflow for scrolling */}
@@ -32,9 +54,13 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                 }} aria-label="simple table">
                     <TableHead>
                         <TableRow>
-                            <TableCell >Action Name</TableCell>
-                            <TableCell align="left">Start Time</TableCell>
-                            <TableCell align="left">End Time</TableCell>
+                            <TableCell onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                            </TableCell>
+                            <TableCell align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                            </TableCell>
+                            <TableCell align="left" onClick={handleSortByEndTime}>
+                                End Time{isEndTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                            </TableCell>
                             <TableCell align="left">Qualifier</TableCell>
                         </TableRow>
                     </TableHead>
