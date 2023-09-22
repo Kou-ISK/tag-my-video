@@ -50,7 +50,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
         <div style={{ overflowY: 'scroll', maxHeight: '500px' }}> {/* Set the max height and overflow for scrolling */}
             <TableContainer component={Paper}>
                 <Table sx={{
-                    maxWidth: 900, tableLayout: "fixed"
+                    maxWidth: 1000, tableLayout: "fixed"
                 }} aria-label="simple table">
                     <TableHead>
                         <TableRow>

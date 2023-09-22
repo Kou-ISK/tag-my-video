@@ -36,12 +36,12 @@ export const VideoPlayerApp = () => {
                     setCurrentTime={setCurrentTime}
                     handleCurrentTime={handleCurrentTime}
                     maxSec={maxSec} />
-                <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+                <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
+                <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
-                </Box>
-                <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
-                <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button></>
+                </Box></>
             }
 
             {!isFileSelected &&
