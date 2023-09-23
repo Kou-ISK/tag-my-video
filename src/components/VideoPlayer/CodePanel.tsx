@@ -35,7 +35,8 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
         <Box sx={{
             border: '2px primary.main',
             padding: '2px',
-            alignItems: 'center'
+            overflowY: 'scroll',
+            width: '25vw'
         }}>
             {actionList && actionList.map((value, index) => (
                 <>

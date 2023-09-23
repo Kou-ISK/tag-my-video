@@ -47,35 +47,31 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
 
     // チェックボックスを配置し、選択したものだけのリストを作る。
     return (
-        <div style={{ overflowY: 'scroll', maxHeight: '500px' }}> {/* Set the max height and overflow for scrolling */}
-            <TableContainer component={Paper}>
-                <Table sx={{
-                    maxWidth: 1000, tableLayout: "fixed"
-                }} aria-label="simple table">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-                            </TableCell>
-                            <TableCell align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-                            </TableCell>
-                            <TableCell align="left" onClick={handleSortByEndTime}>
-                                End Time{isEndTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-                            </TableCell>
-                            <TableCell align="left">Qualifier</TableCell>
+        <TableContainer sx={{ overflowY: 'scroll', maxWidth: '75vw' }} component={Paper}>
+            <Table stickyHeader>
+                <TableHead>
+                    <TableRow sx={{ position: 'sticky' }}>
+                        <TableCell onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                        </TableCell>
+                        <TableCell align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                        </TableCell>
+                        <TableCell align="left" onClick={handleSortByEndTime}>
+                            End Time{isEndTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                        </TableCell>
+                        <TableCell align="left">Qualifier</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {timeline.map((item, index) => (
+                        <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, marginY: '0px' }} >
+                            <TableCell><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
+                            <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
+                            <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
+                            <TableCell align="left"><Input type='text' value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
                         </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {timeline.map((item, index) => (
-                            <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, marginY: '0px' }} >
-                                <TableCell><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
-                                <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
-                                <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
-                                <TableCell align="left"><Input type='text' value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </div>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
     );
 };

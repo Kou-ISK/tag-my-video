@@ -18,7 +18,7 @@ export const VideoPlayerApp = () => {
 
     return (
         <>
-            {isFileSelected && <><Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            {isFileSelected && <><Box sx={{ display: 'flex', flexDirection: 'row', height: '45vh' }}>
                 {videoList !== undefined && videoList.map((filePath, index) => (
                     <VideoPlayer key={'video_' + index}
                         videoSrc={filePath} id={'video_' + index}
@@ -29,16 +29,18 @@ export const VideoPlayerApp = () => {
                         setMaxSec={setMaxSec} />
                 ))}
             </Box>
-                <VideoController
-                    setIsVideoPlaying={setisVideoPlaying}
-                    isVideoPlaying={isVideoPlaying}
-                    setPlayBackRate={setPlayBackRate}
-                    setCurrentTime={setCurrentTime}
-                    handleCurrentTime={handleCurrentTime}
-                    maxSec={maxSec} />
-                <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
-                <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
+                <Box sx={{ height: '5vh' }}>
+                    <VideoController
+                        setIsVideoPlaying={setisVideoPlaying}
+                        isVideoPlaying={isVideoPlaying}
+                        setPlayBackRate={setPlayBackRate}
+                        setCurrentTime={setCurrentTime}
+                        handleCurrentTime={handleCurrentTime}
+                        maxSec={maxSec} />
+                    <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
+                    <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
+                </Box>
+                <Box sx={{ height: '50vh', display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
                 </Box></>
