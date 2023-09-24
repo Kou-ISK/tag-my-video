@@ -18,7 +18,7 @@ export const VideoPlayerApp = () => {
 
     return (
         <>
-            {isFileSelected && <><Box sx={{ display: 'flex', flexDirection: 'row', height: '45vh' }}>
+            {isFileSelected && <><Box sx={{ display: 'flex', flexDirection: 'row', maxHeight: '50vh', margin: '0px' }}>
                 {videoList !== undefined && videoList.map((filePath, index) => (
                     <VideoPlayer key={'video_' + index}
                         videoSrc={filePath} id={'video_' + index}
@@ -29,7 +29,7 @@ export const VideoPlayerApp = () => {
                         setMaxSec={setMaxSec} />
                 ))}
             </Box>
-                <Box sx={{ height: '5vh' }}>
+                <Box sx={{ maxHeight: '5vh', display: 'flex', flexDirection: 'row', }}>
                     <VideoController
                         setIsVideoPlaying={setisVideoPlaying}
                         isVideoPlaying={isVideoPlaying}
@@ -40,7 +40,7 @@ export const VideoPlayerApp = () => {
                     <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>選択したデータを削除</Button>
                     <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
                 </Box>
-                <Box sx={{ height: '50vh', display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
+                <Box sx={{ maxHeight: '50vh', display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
                 </Box></>
