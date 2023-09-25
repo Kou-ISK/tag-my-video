@@ -46,11 +46,12 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
     }
 
     // チェックボックスを配置し、選択したものだけのリストを作る。
+    // TODO セルの高さと幅を修正する
     return (
         <TableContainer sx={{ overflowY: 'scroll', maxWidth: '75vw' }} component={Paper}>
             <Table stickyHeader>
                 <TableHead>
-                    <TableRow sx={{ position: 'sticky' }}>
+                    <TableRow sx={{ position: 'sticky', zIndex: 1500 }}>
                         <TableCell onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
                         </TableCell>
                         <TableCell align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
@@ -63,7 +64,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                 </TableHead>
                 <TableBody>
                     {timeline.map((item, index) => (
-                        <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, marginY: '0px' }} >
+                        <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, zIndex: 1000 }} >
                             <TableCell><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
                             <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
                             <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
