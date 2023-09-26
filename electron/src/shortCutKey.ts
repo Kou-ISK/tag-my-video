@@ -5,6 +5,10 @@ export const shortCutKeys = (mainWindow) => {
         mainWindow.webContents.send("shortcut-event", 0.5)
     );
 
+    local_shortcut.register(mainWindow, "Shift+Right", () =>
+        mainWindow.webContents.send("shortcut-event", 2)
+    );
+
     local_shortcut.register(mainWindow, "Command+Right", () =>
         mainWindow.webContents.send("shortcut-event", 4)
     );

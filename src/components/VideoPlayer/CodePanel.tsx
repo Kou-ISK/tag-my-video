@@ -34,13 +34,15 @@ export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTi
     return (
         <Box sx={{
             border: '2px primary.main',
-            padding: '2vw'
+            padding: '2px',
+            overflowY: 'scroll',
+            width: '25vw'
         }}>
             {actionList && actionList.map((value, index) => (
                 <>
                     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                        <CodeButton actionName={team1Name + ' ' + value} addTimelineData={addTimelineData} />
-                        <CodeButton actionName={team2Name + ' ' + value} addTimelineData={addTimelineData} />
+                        <CodeButton actionName={team1Name + ' ' + value} addTimelineData={addTimelineData} color="error" />
+                        <CodeButton actionName={team2Name + ' ' + value} addTimelineData={addTimelineData} color="primary" />
                     </Box>
                 </>
             ))}

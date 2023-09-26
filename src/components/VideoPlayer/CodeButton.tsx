@@ -5,9 +5,10 @@ import videojs from "video.js";
 interface CodeButtonProps {
     actionName: string,
     addTimelineData: any
+    color: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
 }
 
-export const CodeButton = ({ actionName, addTimelineData }: CodeButtonProps) => {
+export const CodeButton = ({ actionName, addTimelineData, color }: CodeButtonProps) => {
     const [isActionButonPushed, setIsActionButtonPushed] = useState(false);
     const [startTime, setStartTime] = useState(0);
 
@@ -29,6 +30,6 @@ export const CodeButton = ({ actionName, addTimelineData }: CodeButtonProps) => 
     }
 
     return (
-        <Button sx={{ "margin": "3px" }} variant={isActionButonPushed ? "contained" : "outlined"} onClick={() => addTimeline('')}>{actionName}</Button>
+        <Button sx={{ "margin": "3px" }} color={color} variant={isActionButonPushed ? "contained" : "outlined"} onClick={() => addTimeline('')}>{actionName}</Button>
     )
 }
