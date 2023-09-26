@@ -49,26 +49,26 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
     // TODO セルの高さと幅を修正する
     return (
         <TableContainer sx={{ overflowY: 'scroll', maxWidth: '75vw' }} component={Paper}>
-            <Table stickyHeader>
+            <Table stickyHeader size="small">
                 <TableHead>
                     <TableRow sx={{ position: 'sticky', zIndex: 1500 }}>
-                        <TableCell onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                        <TableCell padding='none' align="center" onClick={handleSortByActionName}>Action Name{isActionNameDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
                         </TableCell>
-                        <TableCell align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                        <TableCell padding='none' align="left" onClick={handleSortByStartTime}>Start Time{isStartTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
                         </TableCell>
-                        <TableCell align="left" onClick={handleSortByEndTime}>
+                        <TableCell padding='none' align="left" onClick={handleSortByEndTime}>
                             End Time{isEndTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
                         </TableCell>
-                        <TableCell align="left">Qualifier</TableCell>
+                        <TableCell padding='none' align="left">Qualifier</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {timeline.map((item, index) => (
                         <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 }, zIndex: 1000 }} >
-                            <TableCell><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
-                            <TableCell align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
-                            <TableCell align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
-                            <TableCell align="left"><Input type='text' value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
+                            <TableCell padding='none' align="left"><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
+                            <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
+                            <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
+                            <TableCell padding='none' align="left"><Input type='text' sx={{ width: '100%', margin: '0', padding: '0' }} value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
