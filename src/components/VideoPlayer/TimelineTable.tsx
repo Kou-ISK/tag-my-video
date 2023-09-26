@@ -45,8 +45,6 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
         setIsEndTimeDesc(!isEndTimeDesc)
     }
 
-    // チェックボックスを配置し、選択したものだけのリストを作る。
-    // TODO セルの高さと幅を修正する
     return (
         <TableContainer sx={{ overflowY: 'scroll', maxWidth: '75vw' }} component={Paper}>
             <Table stickyHeader size="small">
