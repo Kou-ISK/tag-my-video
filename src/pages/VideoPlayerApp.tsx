@@ -5,6 +5,7 @@ import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
 import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
 import { CodePanel } from '../components/VideoPlayer/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
+import { StatsModal } from '../components/VideoPlayer/StatsModal';
 
 export const VideoPlayerApp = () => {
     const {
@@ -43,7 +44,8 @@ export const VideoPlayerApp = () => {
                 <Box sx={{ maxHeight: '50vh', display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel timeline={timeline} setTimeline={setTimeline} metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} />
-                </Box></>
+                </Box>
+            </>
             }
 
             {!isFileSelected &&
@@ -54,6 +56,7 @@ export const VideoPlayerApp = () => {
                     setTimelineFilePath={setTimelineFilePath}
                     setPackagePath={setPackagePath}
                     setMetaDataConfigFilePath={setMetaDataConfigFilePath} />}
+            <StatsModal timeline={timeline} />
         </>
     );
 };
