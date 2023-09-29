@@ -1966,9 +1966,9 @@
     react-is "^18.2.0"
 
 "@mui/x-charts@^6.0.0-alpha.12":
-  version "6.0.0-alpha.12"
-  resolved "https://registry.npmjs.org/@mui/x-charts/-/x-charts-6.0.0-alpha.12.tgz"
-  integrity sha512-zA7xhOzGt/xgIdnA2PwZM+tKUzCIwUBf6ltK0o8NA3VHAgxbG0yvvLPID+xKqLpl2gaNQ2E0YmysDH1yKDxKCA==
+  version "6.0.0-alpha.13"
+  resolved "https://registry.npmjs.org/@mui/x-charts/-/x-charts-6.0.0-alpha.13.tgz"
+  integrity sha512-/FfH55kkhbP3IRbQczvcysp78iTMllqHC4RUDz4wskQVMVCep32slv77aTfgP+XWtMx9lEHPGse238OKwUKLEA==
   dependencies:
     "@babel/runtime" "^7.22.15"
     "@mui/base" "^5.0.0-beta.14"

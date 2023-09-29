@@ -4,12 +4,16 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import Modal from '@mui/material/Modal';
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
+import { useAnalysis } from '../../hooks/useAnalysis';
+import { TransformedData } from '../../types/TransformedData';
 
 interface StatsModalProps {
     timeline: TimelineData[];
+    team1Name: string;
+    team2Name: string;
 }
 
-export const StatsModal = ({ timeline }: StatsModalProps) => {
+export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) => {
     const style = {
         position: 'absolute' as 'absolute',
         top: '50%',
@@ -20,6 +24,7 @@ export const StatsModal = ({ timeline }: StatsModalProps) => {
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
+        zIndex: 2000
     };
 
     const [open, setOpen] = useState<boolean>(false);
@@ -33,20 +38,20 @@ export const StatsModal = ({ timeline }: StatsModalProps) => {
         })
     }, []);
 
-
+    const transformedData = useAnalysis(timeline);
+    console.log(transformedData.transformedData)
     // 参考: https://mui.com/x/react-charts/
 
-    // 仮のラベル
-    const xLabels = [
-        'Page A',
-        'Page B',
-        'Page C',
-        'Page D',
-        'Page E',
-        'Page F',
-        'Page G',
-    ];
-
+    const valueFormatter = (value: number) => `${value}sec`;
+    const chartSetting = {
+        xAxis: [
+            {
+                label: 'Duration',
+            },
+        ],
+        width: 500,
+        height: 400,
+    };
     return (
         <Modal
             open={open}
@@ -55,11 +60,15 @@ export const StatsModal = ({ timeline }: StatsModalProps) => {
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
+                <p>データでるよ</p>
                 <BarChart
-                    width={500}
-                    height={300}
-                    series={timeline}
-                    xAxis={[{ data: xLabels, scaleType: 'band' }]}
+                    dataset={transformedData.transformedData}
+                    yAxis={[{ scaleType: 'band', dataKey: 'actionName' }]}
+                    series={[
+                        { dataKey: 'duration', label: 'Duration', valueFormatter },
+                    ]}
+                    layout="horizontal"
+                    {...chartSetting}
                 />
             </Box>
         </Modal>

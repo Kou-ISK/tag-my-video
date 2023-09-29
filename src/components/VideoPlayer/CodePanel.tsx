@@ -1,20 +1,20 @@
 import { Box } from "@mui/material";
-import { TimelineData } from '../../types/TimelineData';
 import { CodeButton } from "./CodeButton";
 import { useEffect, useState } from "react";
 
 interface CodePanelProps {
-    timeline: TimelineData[],
-    setTimeline: any,
     metaDataConfigFilePath: string,
     addTimelineData: any
+    team1Name: string,
+    team2Name: string,
+    setTeam1Name: any,
+    setTeam2Name: any,
 }
 
-export const CodePanel = ({ timeline, setTimeline, metaDataConfigFilePath, addTimelineData }: CodePanelProps) => {
+export const CodePanel = ({ metaDataConfigFilePath, addTimelineData, team1Name, team2Name, setTeam1Name, setTeam2Name }: CodePanelProps) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
-    const [team1Name, setTeam1Name] = useState<string>('');
     const [actionList, setActionList] = useState([]);
-    const [team2Name, setTeam2Name] = useState<string>('');
+
     useEffect(() => {
         if (metaDataConfigFilePath !== undefined) {
             // TODO fetchが上手くいっていない問題に対応する(undefinedになる)
