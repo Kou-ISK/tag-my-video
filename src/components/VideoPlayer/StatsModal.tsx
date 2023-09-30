@@ -1,11 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { BarChart } from '@mui/x-charts/BarChart';
+
+import { PieChart } from '@mui/x-charts/PieChart';
 import Modal from '@mui/material/Modal';
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
-import { TransformedData } from '../../types/TransformedData';
 
 interface StatsModalProps {
     timeline: TimelineData[];
@@ -42,16 +42,6 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
     console.log(transformedData.transformedData)
     // 参考: https://mui.com/x/react-charts/
 
-    const valueFormatter = (value: number) => `${value}sec`;
-    const chartSetting = {
-        xAxis: [
-            {
-                label: 'Duration',
-            },
-        ],
-        width: 500,
-        height: 400,
-    };
     return (
         <Modal
             open={open}
@@ -61,14 +51,10 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         >
             <Box sx={style}>
                 <p>データでるよ</p>
-                <BarChart
-                    dataset={transformedData.transformedData}
-                    yAxis={[{ scaleType: 'band', dataKey: 'actionName' }]}
-                    series={[
-                        { dataKey: 'duration', label: 'Duration', valueFormatter },
-                    ]}
-                    layout="horizontal"
-                    {...chartSetting}
+                <PieChart
+                    series={[{ data: transformedData.transformedData }]}
+                    width={400}
+                    height={200}
                 />
             </Box>
         </Modal>

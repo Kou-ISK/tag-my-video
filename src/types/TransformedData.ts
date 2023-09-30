@@ -1,4 +1,5 @@
 export type TransformedData = {
-    actionName: string,
-    duration: number
+    id: number,
+    label: string,
+    value: number
 }

@@ -7,9 +7,10 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         const duration = timeline.reduce((sum, i) => sum + i.endTime - i.startTime, 0);
     }
 
-    const transformedData: TransformedData[] = timeline.map(item => ({
-        actionName: item.actionName,
-        duration: item.endTime - item.startTime
+    const transformedData: TransformedData[] = timeline.map((item, index) => ({
+        id: index,
+        label: item.actionName,
+        value: item.endTime - item.startTime
     }));
     return { transformedData }
 }
