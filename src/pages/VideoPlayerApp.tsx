@@ -47,6 +47,7 @@ export const VideoPlayerApp = () => {
                     <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} team1Name={team1Name} setTeam1Name={setTeam1Name} team2Name={team2Name} setTeam2Name={setTeam2Name} />
                 </Box>
+                <StatsModal timeline={timeline} team1Name={team1Name} team2Name={team2Name} />
             </>
             }
 
@@ -58,7 +59,7 @@ export const VideoPlayerApp = () => {
                     setTimelineFilePath={setTimelineFilePath}
                     setPackagePath={setPackagePath}
                     setMetaDataConfigFilePath={setMetaDataConfigFilePath} />}
-            <StatsModal timeline={timeline} team1Name={team1Name} team2Name={team2Name} />
+
         </>
     );
 };

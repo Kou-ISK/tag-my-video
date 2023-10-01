@@ -1,12 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-
-import { PieChart } from '@mui/x-charts/PieChart';
 import Modal from '@mui/material/Modal';
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
-
+import * as path from 'path';
+import { Pie, PieChart } from 'recharts';
 interface StatsModalProps {
     timeline: TimelineData[];
     team1Name: string;
@@ -19,12 +18,13 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 400,
+        width: 900,
+        height: 900,
         bgcolor: 'background.paper',
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
-        zIndex: 2000
+        zIndex: 2000,
     };
 
     const [open, setOpen] = useState<boolean>(false);
@@ -50,12 +50,23 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <p>データでるよ</p>
-                <PieChart
+                <PieChart width={400} height={400}>
+                    <Pie
+                        dataKey="value"
+                        startAngle={180}
+                        endAngle={0}
+                        data={transformedData.transformedData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        fill="#8884d8"
+                        label
+                    />
+                </PieChart>
+
+                {/* <PieChart
                     series={[{ data: transformedData.transformedData }]}
-                    width={400}
-                    height={200}
-                />
+                /> */}
             </Box>
         </Modal>
     );
