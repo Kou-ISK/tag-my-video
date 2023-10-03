@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
-import { calculateActionDuration } from '../../hooks/useAnalysis';
+import { useAnalysis } from '../../hooks/useAnalysis';
 import { Pie, PieChart } from 'recharts';
 interface StatsModalProps {
     timeline: TimelineData[];
@@ -19,6 +19,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         transform: 'translate(-50%, -50%)',
         width: 900,
         height: 900,
+        margin: '10px',
         bgcolor: 'background.paper',
         border: '2px solid #000',
         boxShadow: 10,
@@ -37,7 +38,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         })
     }, []);
 
-    const durationData = calculateActionDuration(timeline);
+    const { countActions, calculateActionDuration, countActionByTeamName } = useAnalysis(timeline);
     // ラベル名
     const formatDuration = (seconds: number) => {
         const min = Math.floor(seconds % 3600 / 60);
@@ -49,6 +50,8 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
     };
     // 参考: https://recharts.org/en-US/
 
+    const actions: string[] = ["スクラム", "ラインアウト", "キック"];
+
     return (
         <Modal
             open={open}
@@ -58,21 +61,68 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
             sx={{ zIndex: 1600 }}
         >
             <Box sx={style}>
-                {/* ポゼッショングラフ */}
-                <PieChart width={200} height={200}>
-                    <Pie
-                        nameKey="name"
-                        dataKey="value"
-                        startAngle={180}
-                        endAngle={0}
-                        data={durationData.filter((item) => item.name.includes('ポゼッション'))}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        fill="#8884d8"
-                        label={renderCustomizedLabel}
-                    />
-                </PieChart>
+                <Box>
+                    <h2>ポゼッション</h2>
+                    <PieChart width={500} height={300}>
+                        <Pie
+                            nameKey="name"
+                            dataKey="value"
+                            startAngle={180}
+                            endAngle={0}
+                            data={calculateActionDuration().filter((item) => item.name.includes('ポゼッション'))}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            label={renderCustomizedLabel}
+                        />
+                    </PieChart>
+                </Box>
+                {
+                /* TODO
+                小さな単位のコンポーネントへの切り出し
+                グラフ描画エリアをスクロール可能にする
+                グラフの凡例ごとに色をかえる
+                */}
+                {actions && actions.map((value, index) => (
+                    <Box key={index} display={'flex'} flexDirection={'row'}>
+                        <Box>
+                            <h2>{team1Name + ' ' + value}</h2>
+                            <PieChart width={400} height={400}>
+                                <Pie
+                                    nameKey="name"
+                                    dataKey="value"
+                                    startAngle={180}
+                                    endAngle={0}
+                                    data={countActionByTeamName(team1Name, value)}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    label={({ name, value }) => (name + ' ' + value)}
+                                />
+                            </PieChart>
+                        </Box>
+                        <Box>
+                            <h2>{team2Name + ' ' + value}</h2>
+                            <PieChart width={400} height={400}>
+                                <Pie
+                                    nameKey="name"
+                                    dataKey="value"
+                                    startAngle={180}
+                                    endAngle={0}
+                                    data={countActionByTeamName(team2Name, value)}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    label={({ name, value }) => (name + ' ' + value)}
+                                />
+                            </PieChart>
+                        </Box>
+                    </Box>
+                ))}
+
             </Box>
         </Modal>
     );
