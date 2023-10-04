@@ -19,7 +19,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: actionName, value: duration });
             }
         });
-        return actionData
+        return actionData.sort((a, b) => b.value - a.value)
     }
 
     const countActions = () => {
@@ -36,7 +36,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionName, value: 1 });
             }
         });
-        return actionData
+        return actionData.sort((a, b) => b.value - a.value)
     }
 
     const countActionByTeamName = (teamName: string, actionName: string) => {
@@ -50,7 +50,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.qualifier, value: 1 });
             }
         });
-        return actionData
+        return actionData.sort((a, b) => b.value - a.value)
     }
     return { calculateActionDuration, countActions, countActionByTeamName }
 }
