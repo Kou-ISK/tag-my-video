@@ -6,19 +6,20 @@ interface ActionResultPieChartProps {
     teamName: string,
     actionName: string
 }
+const CUSTOM_COLORS = [
+    '#0088FE',
+    '#00C49F',
+    '#FFBB28',
+    '#FF8042',
+    '#AF19FF',
+    '#FF6600',
+    '#33CC33',
+    '#FF3399',
+    '#66CCCC',
+    '#FF6666',
+];
+
 export const ActionResultPieChart = ({ countActionByTeamName, teamName, actionName }: ActionResultPieChartProps) => {
-    const CUSTOM_COLORS = [
-        '#0088FE',
-        '#00C49F',
-        '#FFBB28',
-        '#FF8042',
-        '#AF19FF',
-        '#FF6600',
-        '#33CC33',
-        '#FF3399',
-        '#66CCCC',
-        '#FF6666',
-    ];
     const data = countActionByTeamName(teamName, actionName)
     return (
         <>

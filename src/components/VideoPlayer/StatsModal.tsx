@@ -12,23 +12,23 @@ interface StatsModalProps {
     team2Name: string;
 }
 
-export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) => {
-    const style = {
-        position: 'absolute' as 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 900,
-        height: '90vh', // モーダルの高さを0％に固定
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 10,
-        p: 4,
-        zIndex: 2000,
-        justifyItem: 'center',
-        overflowY: 'scroll'
-    };
+const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 900,
+    height: '90vh', // モーダルの高さを0％に固定
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 10,
+    p: 4,
+    zIndex: 2000,
+    justifyItem: 'center',
+    overflowY: 'scroll'
+};
 
+export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) => {
     const [open, setOpen] = useState<boolean>(false);
     const toggleOpen = () => setOpen(!open);
     useEffect(() => {
@@ -45,8 +45,12 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
     const formatDuration = (seconds: number) => {
         const min = Math.floor(seconds % 3600 / 60);
         const sec = Math.floor(seconds % 60);
+        if (sec < 10) {
+            return `${min}:${sec.toString().padStart(2, '0')}`;
+        }
         return `${min}:${sec}`;
     }
+
     const renderCustomizedLabel = ({ name, value }: any) => {
         return name.replace(' ポゼッション', '') + ' ' + formatDuration(value);
     };
@@ -75,7 +79,6 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
                             cx="50%"
                             cy="100%"
                             outerRadius={80}
-                            fill="#8884d8"
                             label={renderCustomizedLabel}
                         />
                     </PieChart>
