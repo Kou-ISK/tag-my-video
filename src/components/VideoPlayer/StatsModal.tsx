@@ -19,15 +19,14 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: 900,
-        height: 900,
+        height: '90vh', // モーダルの高さを0％に固定
         bgcolor: 'background.paper',
         border: '2px solid #000',
         boxShadow: 10,
         p: 4,
         zIndex: 2000,
         justifyItem: 'center',
-        overflowY: 'scroll',
-        marginY: '50vw'
+        overflowY: 'scroll'
     };
 
     const [open, setOpen] = useState<boolean>(false);
@@ -55,7 +54,6 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
 
     const actions: string[] = ["スクラム", "ラインアウト", "キック"];
 
-    // TODO 見切れないようにpadding, marginを調整
     return (
         <Modal
             open={open}

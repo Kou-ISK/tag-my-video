@@ -1,4 +1,4 @@
-import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel } from '@mui/material';
+import { Button, Checkbox, Input, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
