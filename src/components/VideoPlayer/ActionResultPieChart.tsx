@@ -38,7 +38,7 @@ export const ActionResultPieChart = ({ countActionByTeamName, teamName, actionNa
                         outerRadius={80}
                         label={({ name, value }) => (name + ' ' + value)} >
                         {data.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={CUSTOM_COLORS[index % CUSTOM_COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={CUSTOM_COLORS[index]} />
                         ))}
                     </Pie>
                 </PieChart>

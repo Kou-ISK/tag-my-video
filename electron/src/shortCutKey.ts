@@ -28,7 +28,7 @@ export const shortCutKeys = (mainWindow) => {
         mainWindow.webContents.send("video-shortcut-event", -10)
     );
 
-    local_shortcut.register(mainWindow, "Command+A", () =>
+    local_shortcut.register(mainWindow, "Command+Shift+A", () =>
         mainWindow.webContents.send("general-shortcut-event", 'analyze')
     );
 }

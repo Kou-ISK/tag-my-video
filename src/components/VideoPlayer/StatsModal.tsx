@@ -6,6 +6,7 @@ import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import { Pie, PieChart } from 'recharts';
 import { ActionResultPieChart } from './ActionResultPieChart';
+import { MomentumChart } from './MomentumChart';
 interface StatsModalProps {
     timeline: TimelineData[];
     team1Name: string;
@@ -33,14 +34,13 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
     const toggleOpen = () => setOpen(!open);
     useEffect(() => {
         window.electronAPI.on('general-shortcut-event', (event, args) => {
-            console.log('hello')
             if (args === 'analyze') {
                 setOpen(!open)
             }
         })
     }, []);
 
-    const { countActions, calculateActionDuration, countActionByTeamName } = useAnalysis(timeline);
+    const { countActions, calculateActionDuration, countActionByTeamName, createMomentumData } = useAnalysis(timeline);
     // ラベル名
     const formatDuration = (seconds: number) => {
         const min = Math.floor(seconds % 3600 / 60);
@@ -79,6 +79,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
                             cx="50%"
                             cy="100%"
                             outerRadius={80}
+                            innerRadius={50}
                             label={renderCustomizedLabel}
                         />
                     </PieChart>
@@ -89,6 +90,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
                         <ActionResultPieChart countActionByTeamName={countActionByTeamName} teamName={team2Name} actionName={value} />
                     </Box>
                 ))}
+                <MomentumChart createMomentumData={createMomentumData} team1Name={team1Name} team2Name={team2Name} />
             </Box>
         </Modal>
     );
