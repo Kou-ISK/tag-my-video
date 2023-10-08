@@ -1,36 +1,56 @@
-import { Bar, BarChart, Tooltip, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, Cell, Label, ResponsiveContainer, Text, XAxis, YAxis } from "recharts";
+import React from "react";
+import { Box } from "@mui/material";
 
 interface MomentumChartProps {
-    createMomentumData: any,
-    team1Name: string,
-    team2Name: string
+    createMomentumData: any;
+    team1Name: string;
+    team2Name: string;
 }
 
-export const MomentumChart = ({ createMomentumData, team1Name, team2Name }: MomentumChartProps) => {
-    const data = createMomentumData(team1Name, team2Name)
+export const MomentumChart: React.FC<MomentumChartProps> = ({
+    createMomentumData,
+    team1Name,
+    team2Name,
+}: MomentumChartProps) => {
+    const data = createMomentumData(team1Name, team2Name);
+    const minYValue = Math.round(Math.min(...data.map((item: any) => item.value))) - 5;
+    const maxYValue = Math.round(Math.max(...data.map((item: any) => item.value))) + 5;
+
+    const teamColors: { [key: string]: string } = {
+        [team1Name]: "royalblue",
+        [team2Name]: "darkgoldenrod",
+    };
+
+    const getBarColor = (teamName: string, isTryScored: boolean) => {
+        // チームごとに異なる色を割り当て
+        const defaultColor = teamColors[teamName] || "lightgrey"; // 該当する色がない場合はデフォルトの色
+        return isTryScored ? "crimson" : defaultColor;
+    };
+
     return (
         <>
             <h2>モメンタムチャート</h2>
-            <BarChart width={730} height={250} data={data}>
-                <XAxis dataKey="timespan" />
-                <YAxis />
-                <Tooltip content={<CustomTooltip team1Name={team1Name} team2Name={team2Name} />} />
-                <Bar dataKey="value" fill="#8884d8">
-                </Bar>
-            </BarChart>
+            <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
+                <p>{team1Name}</p>
+                <p>{team2Name}</p>
+            </Box>
+            <ResponsiveContainer height={500} width="90%">
+                <BarChart data={data} layout="vertical" barCategoryGap={0} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                    <XAxis type="number" domain={[minYValue, maxYValue]} />
+                    <YAxis type="category" hide />
+                    <Bar dataKey="value">
+                        {data.map((entry: any, index: number) => (
+                            <>
+                                <Cell
+                                    key={index}
+                                    fill={getBarColor(entry.teamName, entry.isTryScored)}
+                                />
+                            </>
+                        ))}
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
         </>
-    )
-}
-
-const CustomTooltip = ({ active, payload, label, team1Name, team2Name }: any) => {
-    if (active && payload && payload.length) {
-        const entry = payload[0].payload; // バーのデータ
-        const teamName = entry.value > 0 ? team1Name : team2Name; // チーム名
-        return (
-            <div className="custom-tooltip">
-                <p>{teamName}</p>
-            </div>
-        );
-    }
-    return null;
+    );
 };

@@ -23,7 +23,7 @@ export const ActionResultPieChart = ({ countActionByTeamName, teamName, actionNa
     const data = countActionByTeamName(teamName, actionName)
     return (
         <>
-            <Box sx={{ flexDirection: 'column', margin: '5px' }}>
+            <Box sx={{ flexDirection: 'column', margin: '5px', justifyContent: 'left' }}>
                 <h2>{teamName + ' ' + actionName}</h2>
                 <PieChart width={400} height={180} >
                     <Pie
