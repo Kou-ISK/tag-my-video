@@ -16,7 +16,7 @@ export const VideoPlayerApp = () => {
         team2Name, setTeam2Name,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId, sortTimelineDatas
+        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, updateActionResult, updateActionType, getSelectedTimelineId, sortTimelineDatas
     } = useVideoPlayerApp();
 
     return (
@@ -44,7 +44,7 @@ export const VideoPlayerApp = () => {
                     <Button onClick={() => window.electronAPI.exportTimeline(packagePath + "/timeline.json", timeline)}>タイムラインを保存</Button>
                 </Box>
                 <Box sx={{ maxHeight: '50vh', display: 'flex', flexDirection: 'row', alignContent: 'space-between' }}>
-                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} sortTimelineDatas={sortTimelineDatas} />
+                    <TimelineTable timelineFilePath={timelineFilePath} setCurrentTime={setCurrentTime} timeline={timeline} setTimeline={setTimeline} getSelectedTimelineId={getSelectedTimelineId} updateQualifier={updateQualifier} updateActionResult={updateActionResult} updateActionType={updateActionType} sortTimelineDatas={sortTimelineDatas} />
                     <CodePanel metaDataConfigFilePath={metaDataConfigFilePath} addTimelineData={addTimelineData} team1Name={team1Name} setTeam1Name={setTeam1Name} team2Name={team2Name} setTeam2Name={setTeam2Name} />
                 </Box>
                 <StatsModal timeline={timeline} team1Name={team1Name} team2Name={team2Name} />

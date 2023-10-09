@@ -28,7 +28,7 @@ export const useVideoPlayerApp = () => {
         startTime: number,
         endTime: number,
         qualifier: string) => {
-        const newTimelineInstance: TimelineData = { id: ulid(), actionName, startTime, endTime, qualifier };
+        const newTimelineInstance: TimelineData = { id: ulid(), actionName, startTime, endTime, actionResult: "", actionType: "", qualifier };
         setTimeline([...timeline, newTimelineInstance]);
     }
 
@@ -40,6 +40,20 @@ export const useVideoPlayerApp = () => {
     const updateQualifier = (id: string, qualifier: string) => {
         const updatedTimeline = timeline.map((item) =>
             item.id === id ? { ...item, qualifier } : item
+        )
+        setTimeline(updatedTimeline)
+    }
+
+    const updateActionResult = (id: string, actionResult: string) => {
+        const updatedTimeline = timeline.map((item) =>
+            item.id === id ? { ...item, actionResult } : item
+        )
+        setTimeline(updatedTimeline)
+    }
+
+    const updateActionType = (id: string, actionType: string) => {
+        const updatedTimeline = timeline.map((item) =>
+            item.id === id ? { ...item, actionType } : item
         )
         setTimeline(updatedTimeline)
     }
@@ -83,6 +97,6 @@ export const useVideoPlayerApp = () => {
         team2Name, setTeam2Name,
         isFileSelected, setIsFileSelected,
         maxSec, setMaxSec, isVideoPlaying, setisVideoPlaying, playBackRate, setPlayBackRate, handleCurrentTime,
-        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, getSelectedTimelineId, sortTimelineDatas
+        packagePath, setPackagePath, addTimelineData, deleteTimelineDatas, updateQualifier, updateActionResult, updateActionType, getSelectedTimelineId, sortTimelineDatas
     }
 }

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import { ActionResultSelector } from './ActionResultSelector';
+import { ActionTypeSelector } from './ActionTypeSelector';
 
 interface TimelineTableProps {
     timelineFilePath: string | undefined,
@@ -11,10 +13,12 @@ interface TimelineTableProps {
     setTimeline: any,
     getSelectedTimelineId: any,
     updateQualifier: any,
+    updateActionResult: any,
+    updateActionType: any,
     sortTimelineDatas: any
 }
 
-export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier, sortTimelineDatas }: TimelineTableProps) => {
+export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setTimeline, getSelectedTimelineId, updateQualifier, updateActionResult, updateActionType, sortTimelineDatas }: TimelineTableProps) => {
 
     useEffect(() => {
         console.log(timelineFilePath)
@@ -57,7 +61,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                         <TableCell padding='none' align="left" onClick={handleSortByEndTime}>
                             End Time{isEndTimeDesc ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
                         </TableCell>
-                        <TableCell padding='none' align="left">Qualifier</TableCell>
+                        <TableCell padding='none' align="left">Qualifiers</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -66,7 +70,11 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                             <TableCell padding='none' align="left"><Checkbox onClick={(event) => getSelectedTimelineId(event, item.id)} />{item.actionName}</TableCell>
                             <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
                             <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
-                            <TableCell padding='none' align="left"><Input type='text' sx={{ width: '100%', margin: '0', padding: '0' }} value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} /></TableCell>
+                            <TableCell padding='none' align="left" sx={{ display: 'flex', flexDirection: 'row' }}>
+                                <ActionResultSelector id={item.id} actionName={item.actionName} updateActionResult={updateActionResult} />
+                                <ActionTypeSelector id={item.id} actionName={item.actionName} updateActionType={updateActionType} />
+                                <Input type='text' sx={{ width: '50%', margin: '0', padding: '0' }} value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} />
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
