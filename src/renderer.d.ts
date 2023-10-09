@@ -3,7 +3,7 @@ export interface IElectronAPI {
     openDirectory: () => Promise<string>,
     exportTimeline: (filePath: string, source: any) => Promise<void>
     createPackage: (directoryName: string, packageName: string, tightViewPath: string, wideViewPath: string, metaDataConfig: any) => Promise<PackageDatas>
-    on: (channel: string, listener: (event: any, args: number) => void) => void
+    on: (channel: string, listener: (event: any, args: any) => void) => void
 }
 
 export interface PackageDatas {

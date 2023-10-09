@@ -17,7 +17,7 @@ export const VideoController = (
     const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
 
     useEffect(() => {
-        window.electronAPI.on('shortcut-event', (event, args) => {
+        window.electronAPI.on('video-shortcut-event', (event, args) => {
             if (args > 0) {
                 setPlayBackRate(args)
                 if (args === 1) {
