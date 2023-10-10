@@ -1,4 +1,4 @@
-import { MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
 import { ActionList } from '../../ActionList'
 import { useState } from 'react';
 
@@ -16,18 +16,28 @@ export const ActionResultSelector = ({ id, actionName, updateActionResult }: Act
     }
     return (
         <>
-            <Select
-                value={result}
-                label="Result"
-                onChange={handleChange}
-                sx={{ margin: '5px' }}
-                size='small'
-            >
-                <MenuItem sx={{ zIndex: 2000 }} value={''}></MenuItem>
-                {results && results.map((value) =>
-                    <MenuItem sx={{ zIndex: 2000 }} value={value}>{value}</MenuItem>
-                )}
-            </Select>
+            <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+                <InputLabel id={id + "_result"}>Result</InputLabel>
+                <Select
+                    id={id + "_result"}
+                    value={result}
+                    label="Result"
+                    onChange={handleChange}
+                    size='small'
+                    MenuProps={{
+                        style: {
+                            zIndex: 2000
+                        }
+                    }}
+                >
+                    <MenuItem value="">
+                        <em>None</em>
+                    </MenuItem>
+                    {results && results.map((value) =>
+                        <MenuItem value={value}>{value}</MenuItem>
+                    )}
+                </Select>
+            </FormControl>
         </>
     )
 }

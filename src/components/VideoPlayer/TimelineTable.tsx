@@ -71,9 +71,9 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
                             <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.startTime)}>{item.startTime}</Button></TableCell>
                             <TableCell padding='none' align="left"><Button onClick={() => setCurrentTime(item.endTime)}>{item.endTime}</Button></TableCell>
                             <TableCell padding='none' align="left" sx={{ display: 'flex', flexDirection: 'row' }}>
-                                <ActionResultSelector id={item.id} actionName={item.actionName} updateActionResult={updateActionResult} />
                                 <ActionTypeSelector id={item.id} actionName={item.actionName} updateActionType={updateActionType} />
-                                <Input type='text' sx={{ width: '50%', margin: '0', padding: '0' }} value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} />
+                                <ActionResultSelector id={item.id} actionName={item.actionName} updateActionResult={updateActionResult} />
+                                <Input type='text' sx={{ width: '30%', margin: '0', padding: '0' }} value={item.qualifier} onChange={(e) => updateQualifier(item.id, e.currentTarget.value)} />
                             </TableCell>
                         </TableRow>
                     ))}

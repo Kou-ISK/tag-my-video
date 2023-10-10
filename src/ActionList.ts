@@ -96,7 +96,7 @@ export const ActionList = [
         ]
     },
     {
-        action: "ペナルティ",
+        action: "PK",
         results: [
             "Not Releasing",
             "Not Rolling Away",
