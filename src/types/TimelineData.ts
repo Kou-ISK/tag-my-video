@@ -3,5 +3,7 @@ export type TimelineData = {
     actionName: string
     startTime: number
     endTime: number
+    actionResult: string
+    actionType: string
     qualifier: string
 }
