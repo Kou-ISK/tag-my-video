@@ -36,21 +36,36 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionName, value: 1 });
             }
         });
-        return actionData.sort((a, b) => b.value - a.value)
+        return actionData.sort()
     }
 
-    const countActionByTeamName = (teamName: string, actionName: string) => {
+    // TODO ソート順を指定(Won -> Reset -> Lost)
+    const countActionResultByTeamName = (teamName: string, actionName: string) => {
         const actionData: rechartsData[] = [];
         timeline.filter((value) => value.actionName === `${teamName} ${actionName}`).forEach((item) => {
             // qualifierに対応するアクション名がすでに存在するかチェック
-            const existingQualifier = actionData.find((data) => data.name === item.qualifier);
-            if (existingQualifier) {
-                existingQualifier.value += 1;
+            const existingResult = actionData.find((data) => data.name === item.actionResult);
+            if (existingResult) {
+                existingResult.value += 1;
             } else {
-                actionData.push({ name: item.qualifier, value: 1 });
+                actionData.push({ name: item.actionResult, value: 1 });
             }
         });
-        return actionData.sort((a, b) => b.value - a.value)
+        return actionData.sort()
+    }
+
+    const countActionTypeByTeamName = (teamName: string, actionName: string) => {
+        const actionData: rechartsData[] = [];
+        timeline.filter((value) => value.actionName === `${teamName} ${actionName}`).forEach((item) => {
+            // qualifierに対応するアクション名がすでに存在するかチェック
+            const existingType = actionData.find((data) => data.name === item.actionType);
+            if (existingType) {
+                existingType.value += 1;
+            } else {
+                actionData.push({ name: item.actionType, value: 1 });
+            }
+        });
+        return actionData.sort()
     }
 
     const createMomentumData = (team1Name: string, team2Name: string) => {
@@ -71,5 +86,5 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         })
         return momentumData
     }
-    return { calculateActionDuration, countActions, countActionByTeamName, createMomentumData }
+    return { calculateActionDuration, countActions, countActionByTeamName: countActionResultByTeamName, createMomentumData }
 }

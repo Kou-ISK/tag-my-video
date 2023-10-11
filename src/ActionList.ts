@@ -40,6 +40,7 @@ export const ActionList = [
             "Won PK",
             "Reset",
             "Lost Outright",
+            "Lost FK",
             "Lost PK",
             "Lost Reversed"
         ],

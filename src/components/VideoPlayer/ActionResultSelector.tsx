@@ -5,11 +5,12 @@ import { useState } from 'react';
 interface ActionResultSelectorProps {
     id: string
     actionName: string,
+    actionResult: string,
     updateActionResult: any
 }
-export const ActionResultSelector = ({ id, actionName, updateActionResult }: ActionResultSelectorProps) => {
+export const ActionResultSelector = ({ id, actionName, actionResult, updateActionResult }: ActionResultSelectorProps) => {
     const results = ActionList.find((value) => actionName.includes(value.action))?.results
-    const [result, setResult] = useState('');
+    const [result, setResult] = useState(actionResult);
     const handleChange = (event: SelectChangeEvent) => {
         setResult(event.target.value)
         updateActionResult(id, event.target.value)

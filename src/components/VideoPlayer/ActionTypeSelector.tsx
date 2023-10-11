@@ -5,14 +5,12 @@ import { useState } from 'react';
 interface ActionTypeSelectorProps {
     id: string
     actionName: string,
+    actionType: string,
     updateActionType: any
 }
-export const ActionTypeSelector = ({ id, actionName, updateActionType }: ActionTypeSelectorProps) => {
+export const ActionTypeSelector = ({ id, actionName, actionType, updateActionType }: ActionTypeSelectorProps) => {
     const types = ActionList.find((value) => actionName.includes(value.action))?.types
-
-    console.log(ActionList);
-    console.log(types)
-    const [type, setType] = useState('');
+    const [type, setType] = useState(actionType);
     const handleChange = (event: SelectChangeEvent) => {
         setType(event.target.value)
         updateActionType(id, event.target.value)
