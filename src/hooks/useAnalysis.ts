@@ -2,6 +2,10 @@ import { TimelineData } from '../types/TimelineData';
 import { rechartsData } from '../types/RechartsData';
 
 export const useAnalysis = (timeline: TimelineData[]) => {
+    const rechartsDataComparator = (x: rechartsData, y: rechartsData) => {
+        return - x.name.localeCompare(y.name)
+    }
+
     const calculateActionDuration = () => {
         const actionData: rechartsData[] = [];
         timeline.forEach((item) => {
@@ -39,7 +43,6 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         return actionData.sort()
     }
 
-    // TODO ソート順を指定(Won -> Reset -> Lost)
     const countActionResultByTeamName = (teamName: string, actionName: string) => {
         const actionData: rechartsData[] = [];
         timeline.filter((value) => value.actionName === `${teamName} ${actionName}`).forEach((item) => {
@@ -51,7 +54,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionResult, value: 1 });
             }
         });
-        return actionData.sort()
+        return actionData.sort(rechartsDataComparator)
     }
 
     const countActionTypeByTeamName = (teamName: string, actionName: string) => {
@@ -65,7 +68,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionType, value: 1 });
             }
         });
-        return actionData.sort()
+        return actionData.sort(rechartsDataComparator).reverse
     }
 
     const createMomentumData = (team1Name: string, team2Name: string) => {
