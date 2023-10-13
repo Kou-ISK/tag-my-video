@@ -76,14 +76,15 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         timeline.filter((value) => value.actionName.includes("ポゼッション")).forEach((item) => {
             const duration = item.endTime - item.startTime
             const teamName = item.actionName.includes(team1Name) ? team1Name : team2Name
-            const isTryScored = timeline.filter((it) => it.actionName === teamName + ' トライ').some((tryItem) => {
-                return (Math.max(item.startTime, tryItem.startTime) < Math.min(item.endTime, tryItem.endTime)) ? true : false
-            }
-            )
+            const isTryScored = item.actionResult === "Try" ? true : false
+            const isNegativeResult = ["Kick Error", "Pen Con", "Turnover", "Turnover (Scrum)",].includes(item.actionResult) ? true : false
+            const isPositiveResult = ["Try", "Drop Goal", "Pen Won", "Scrum", "Own Lineout",].includes(item.actionResult) ? true : false
             const momentumItem = {
                 teamName: teamName,
                 value: `${teamName === team1Name ? -duration : duration}`, //チーム1の場合、負の数を返す
-                isTryScored: isTryScored
+                isTryScored: isTryScored,
+                isPositiveResult: isPositiveResult,
+                isNegativeResult: isNegativeResult
             }
             momentumData.push(momentumItem)
         })
