@@ -1,4 +1,4 @@
-import { Bar, BarChart, Cell, Label, ResponsiveContainer, Text, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import React from "react";
 import { Box } from "@mui/material";
 
@@ -22,10 +22,13 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
         [team2Name]: "darkgoldenrod",
     };
 
-    const getBarColor = (teamName: string, isTryScored: boolean) => {
+    const getBarColor = (entry: any) => {
         // チームごとに異なる色を割り当て
-        const defaultColor = teamColors[teamName] || "lightgrey"; // 該当する色がない場合はデフォルトの色
-        return isTryScored ? "crimson" : defaultColor;
+        const defaultColor = teamColors[entry.teamName] || "lightgrey"; // 該当する色がない場合はデフォルトの色
+        // ポゼッションの終わり方によって異なる色を割り当て
+        if (entry.isTryScored) { return "crimson" }
+        else if (entry.isPositiveResult) { return "green" }
+        else { return defaultColor; }
     };
 
     return (
@@ -44,7 +47,7 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
                             <>
                                 <Cell
                                     key={index}
-                                    fill={getBarColor(entry.teamName, entry.isTryScored)}
+                                    fill={getBarColor(entry)}
                                 />
                             </>
                         ))}
