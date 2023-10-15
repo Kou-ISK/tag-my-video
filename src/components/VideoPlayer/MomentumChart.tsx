@@ -26,8 +26,9 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
         // チームごとに異なる色を割り当て
         const defaultColor = teamColors[entry.teamName] || "lightgrey"; // 該当する色がない場合はデフォルトの色
         // ポゼッションの終わり方によって異なる色を割り当て
-        if (entry.isTryScored) { return "crimson" }
+        if (entry.isTryScored) { return "gold" }
         else if (entry.isPositiveResult) { return "green" }
+        else if (entry.isNegativeResult) { return "darkorchid" }
         else { return defaultColor; }
     };
 
