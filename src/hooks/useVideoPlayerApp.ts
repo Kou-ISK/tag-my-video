@@ -67,6 +67,7 @@ export const useVideoPlayerApp = () => {
         }
     }
 
+    // TODO ソートするとactionResult, actionTypeが消える問題に対応する
     const sortTimelineDatas = (column: string, sortDesc: boolean) => {
         if (sortDesc) {
             if (column === 'startTime') {

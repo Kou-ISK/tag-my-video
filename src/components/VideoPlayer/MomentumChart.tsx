@@ -1,4 +1,4 @@
-import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis, Label, Legend } from 'recharts';
 import React from "react";
 import { Box } from "@mui/material";
 
@@ -17,18 +17,12 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
     const minYValue = Math.round(Math.min(...data.map((item: any) => item.value))) - 5;
     const maxYValue = Math.round(Math.max(...data.map((item: any) => item.value))) + 5;
 
-    const teamColors: { [key: string]: string } = {
-        [team1Name]: "royalblue",
-        [team2Name]: "darkgoldenrod",
-    };
-
     const getBarColor = (entry: any) => {
-        // チームごとに異なる色を割り当て
-        const defaultColor = teamColors[entry.teamName] || "lightgrey"; // 該当する色がない場合はデフォルトの色
+        const defaultColor = "lightgrey"; // 該当する色がない場合はデフォルトの色
         // ポゼッションの終わり方によって異なる色を割り当て
-        if (entry.isTryScored) { return "gold" }
+        if (entry.isTryScored) { return "orangered" }
         else if (entry.isPositiveResult) { return "green" }
-        else if (entry.isNegativeResult) { return "darkorchid" }
+        else if (entry.isNegativeResult) { return "mediumpurple" }
         else { return defaultColor; }
     };
 
@@ -45,14 +39,13 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
                     <YAxis type="category" hide />
                     <Bar dataKey="value">
                         {data.map((entry: any, index: number) => (
-                            <>
-                                <Cell
-                                    key={index}
-                                    fill={getBarColor(entry)}
-                                />
-                            </>
+                            <Cell
+                                key={index}
+                                fill={getBarColor(entry)}
+                            />
                         ))}
                     </Bar>
+                    <Legend />
                 </BarChart>
             </ResponsiveContainer>
         </>

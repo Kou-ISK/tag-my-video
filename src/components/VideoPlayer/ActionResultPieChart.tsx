@@ -1,5 +1,5 @@
 import { Box } from "@mui/material"
-import { Cell, Pie, PieChart } from "recharts"
+import { Cell, Legend, Pie, PieChart } from "recharts"
 
 interface ActionResultPieChartProps {
     countActionByTeamName: any,
@@ -26,6 +26,7 @@ export const ActionResultPieChart = ({ countActionByTeamName, teamName, actionNa
             <Box sx={{ flexDirection: 'column', margin: '5px', justifyContent: 'left' }}>
                 <h2>{teamName + ' ' + actionName}</h2>
                 <PieChart width={400} height={180} >
+                    <Legend />
                     <Pie
                         nameKey="name"
                         dataKey="value"
@@ -36,7 +37,8 @@ export const ActionResultPieChart = ({ countActionByTeamName, teamName, actionNa
                         cy="100%"
                         innerRadius={50}
                         outerRadius={80}
-                        label={({ name, value }) => (name + ' ' + value)} >
+                        label={({ value }) => value}
+                    >
                         {data.map((entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={CUSTOM_COLORS[index]} />
                         ))}
