@@ -4,16 +4,14 @@ import { Box } from "@mui/material";
 
 interface MomentumChartProps {
     createMomentumData: any;
-    team1Name: string;
-    team2Name: string;
+    teamNames: string[];
 }
 
 export const MomentumChart: React.FC<MomentumChartProps> = ({
     createMomentumData,
-    team1Name,
-    team2Name,
+    teamNames
 }: MomentumChartProps) => {
-    const data = createMomentumData(team1Name, team2Name);
+    const data = createMomentumData(teamNames[0], teamNames[1]);
     const minYValue = Math.round(Math.min(...data.map((item: any) => item.value))) - 5;
     const maxYValue = Math.round(Math.max(...data.map((item: any) => item.value))) + 5;
 
@@ -30,8 +28,8 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
         <>
             <h2>モメンタムチャート</h2>
             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                <p>{team1Name}</p>
-                <p>{team2Name}</p>
+                <p>{teamNames[0]}</p>
+                <p>{teamNames[1]}</p>
             </Box>
             <ResponsiveContainer height={500} width="90%">
                 <BarChart data={data} layout="vertical" barCategoryGap={0} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
