@@ -68,7 +68,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionType, value: 1 });
             }
         });
-        return actionData.sort(rechartsDataComparator).reverse
+        return actionData.sort(rechartsDataComparator)
     }
 
     const createMomentumData = (team1Name: string, team2Name: string) => {
@@ -90,5 +90,5 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         })
         return momentumData
     }
-    return { calculateActionDuration, countActions, countActionByTeamName: countActionResultByTeamName, createMomentumData }
+    return { calculateActionDuration, countActions, countActionResultByTeamName, countActionTypeByTeamName, createMomentumData }
 }

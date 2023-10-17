@@ -1,8 +1,8 @@
 import { Box } from "@mui/material"
 import { Cell, Legend, Pie, PieChart } from "recharts"
 
-interface ActionResultPieChartProps {
-    countActionResultByTeamName: any,
+interface ActionTypePieChartProps {
+    countActionTypeByTeamName: any,
     teamName: string,
     actionName: string
 }
@@ -19,8 +19,8 @@ const CUSTOM_COLORS = [
     '#FF6666',
 ];
 
-export const ActionResultPieChart = ({ countActionResultByTeamName, teamName, actionName }: ActionResultPieChartProps) => {
-    const data = countActionResultByTeamName(teamName, actionName)
+export const ActionTypePieChart = ({ countActionTypeByTeamName, teamName, actionName }: ActionTypePieChartProps) => {
+    const data = countActionTypeByTeamName(teamName, actionName)
     return (
         <>
             <Box sx={{ flexDirection: 'column', margin: '5px', justifyContent: 'left' }}>
