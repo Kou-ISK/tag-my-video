@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
-import { ActionResultSelector } from './ActionResultSelector';
 import { ActionTypeSelector } from './ActionTypeSelector';
 
 interface TimelineTableProps {

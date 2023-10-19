@@ -5,9 +5,8 @@ import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import { Pie, PieChart } from 'recharts';
-import { ActionResultPieChart } from './ActionResultPieChart';
+import { ActionPieChart } from './ActionPieChart';
 import { MomentumChart } from './MomentumChart';
-import { ActionTypePieChart } from './ActionTypePieChart';
 interface StatsModalProps {
     timeline: TimelineData[];
     teamNames: string[];
@@ -88,8 +87,10 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
                         {teamNames.map((teamName) => (
                             <Box key={index} display={'flex'} flexDirection={'column'}>
                                 <h2>{teamName + ' ' + value}</h2>
-                                <ActionResultPieChart countActionResultByTeamName={countActionResultByTeamName} teamName={teamName} actionName={value} />
-                                <ActionTypePieChart countActionTypeByTeamName={countActionTypeByTeamName} teamName={teamName} actionName={value} />
+                                <ActionPieChart countActionFunction={countActionResultByTeamName} teamName={teamName} actionName={value} />
+                                <ActionPieChart countActionFunction={countActionTypeByTeamName} teamName={teamName} actionName={value} />
+                                {/* <ActionResultPieChart countActionResultByTeamName={countActionResultByTeamName} teamName={teamName} actionName={value} />
+                                <ActionTypePieChart countActionTypeByTeamName={countActionTypeByTeamName} teamName={teamName} actionName={value} /> */}
                             </Box>
                         ))}
                     </Box>
