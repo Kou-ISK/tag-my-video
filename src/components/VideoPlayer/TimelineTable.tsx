@@ -4,6 +4,7 @@ import { TimelineData } from '../../types/TimelineData';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import { ActionTypeSelector } from './ActionTypeSelector';
+import { ActionResultSelector } from './ActionResultSelector';
 
 interface TimelineTableProps {
     timelineFilePath: string | undefined,
