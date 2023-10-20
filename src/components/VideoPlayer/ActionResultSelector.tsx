@@ -10,9 +10,7 @@ interface ActionResultSelectorProps {
 }
 export const ActionResultSelector = ({ id, actionName, actionResult, updateActionResult }: ActionResultSelectorProps) => {
     const results = ActionList.find((value) => actionName.includes(value.action))?.results
-    const [result, setResult] = useState(actionResult);
     const handleChange = (event: SelectChangeEvent) => {
-        setResult(event.target.value)
         updateActionResult(id, event.target.value)
     }
     return (
@@ -21,7 +19,7 @@ export const ActionResultSelector = ({ id, actionName, actionResult, updateActio
                 <InputLabel id={id + "_result"}>Result</InputLabel>
                 <Select
                     id={id + "_result"}
-                    value={result}
+                    value={actionResult}
                     label="Result"
                     onChange={handleChange}
                     size='small'

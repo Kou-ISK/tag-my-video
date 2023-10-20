@@ -10,9 +10,7 @@ interface ActionTypeSelectorProps {
 }
 export const ActionTypeSelector = ({ id, actionName, actionType, updateActionType }: ActionTypeSelectorProps) => {
     const types = ActionList.find((value) => actionName.includes(value.action))?.types
-    const [type, setType] = useState(actionType);
     const handleChange = (event: SelectChangeEvent) => {
-        setType(event.target.value)
         updateActionType(id, event.target.value)
     }
     return (
@@ -21,7 +19,7 @@ export const ActionTypeSelector = ({ id, actionName, actionType, updateActionTyp
                 <InputLabel id={id + "_type"}>Type</InputLabel>
                 <Select
                     id={id + "_type"}
-                    value={type}
+                    value={actionType}
                     label="Type"
                     onChange={handleChange}
                     size='small'
