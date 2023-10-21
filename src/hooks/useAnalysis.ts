@@ -76,15 +76,20 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         timeline.filter((value) => value.actionName.includes("ポゼッション")).forEach((item) => {
             const duration = item.endTime - item.startTime
             const teamName = item.actionName.includes(team1Name) ? team1Name : team2Name
-            const isTryScored = item.actionResult === "Try" ? true : false
-            const isNegativeResult = ["Kick Error", "Pen Con", "Turnover", "Turnover (Scrum)",].includes(item.actionResult) ? true : false
-            const isPositiveResult = ["Try", "Drop Goal", "Pen Won", "Scrum", "Own Lineout",].includes(item.actionResult) ? true : false
+            let possessionResult: string;
+            if (item.actionResult === "Try") {
+                possessionResult = "Try";
+            } else if (["Kick Error", "Pen Con", "Turnover", "Turnover (Scrum)"].includes(item.actionResult)) {
+                possessionResult = "Negative";
+            } else if (["Try", "Drop Goal", "Pen Won", "Scrum", "Own Lineout"].includes(item.actionResult)) {
+                possessionResult = "Positive";
+            } else {
+                possessionResult = "Neutral";
+            }
             const momentumItem = {
                 teamName: teamName,
                 value: `${teamName === team1Name ? -duration : duration}`, //チーム1の場合、負の数を返す
-                isTryScored: isTryScored,
-                isPositiveResult: isPositiveResult,
-                isNegativeResult: isNegativeResult
+                possessionResult
             }
             momentumData.push(momentumItem)
         })
