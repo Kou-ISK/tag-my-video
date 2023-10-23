@@ -55,7 +55,7 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
     };
     // 参考: https://recharts.org/en-US/
 
-    const actions: string[] = ["スクラム", "ラインアウト", "キック"];
+    const actions: string[] = ["スクラム", "ラインアウト", "キック", "PK"];
     return (
         <Modal
             open={open}
