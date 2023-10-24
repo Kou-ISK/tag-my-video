@@ -2,6 +2,10 @@ import { TimelineData } from '../types/TimelineData';
 import { rechartsData } from '../types/RechartsData';
 
 export const useAnalysis = (timeline: TimelineData[]) => {
+    const rechartsDataComparator = (x: rechartsData, y: rechartsData) => {
+        return - x.name.localeCompare(y.name)
+    }
+
     const calculateActionDuration = () => {
         const actionData: rechartsData[] = [];
         timeline.forEach((item) => {
@@ -36,21 +40,35 @@ export const useAnalysis = (timeline: TimelineData[]) => {
                 actionData.push({ name: item.actionName, value: 1 });
             }
         });
-        return actionData.sort((a, b) => b.value - a.value)
+        return actionData.sort()
     }
 
-    const countActionByTeamName = (teamName: string, actionName: string) => {
+    const countActionResultByTeamName = (teamName: string, actionName: string) => {
         const actionData: rechartsData[] = [];
         timeline.filter((value) => value.actionName === `${teamName} ${actionName}`).forEach((item) => {
             // qualifierに対応するアクション名がすでに存在するかチェック
-            const existingQualifier = actionData.find((data) => data.name === item.qualifier);
-            if (existingQualifier) {
-                existingQualifier.value += 1;
+            const existingResult = actionData.find((data) => data.name === item.actionResult);
+            if (existingResult) {
+                existingResult.value += 1;
             } else {
-                actionData.push({ name: item.qualifier, value: 1 });
+                actionData.push({ name: item.actionResult, value: 1 });
             }
         });
-        return actionData.sort((a, b) => b.value - a.value)
+        return actionData.sort(rechartsDataComparator)
+    }
+
+    const countActionTypeByTeamName = (teamName: string, actionName: string) => {
+        const actionData: rechartsData[] = [];
+        timeline.filter((value) => value.actionName === `${teamName} ${actionName}`).forEach((item) => {
+            // qualifierに対応するアクション名がすでに存在するかチェック
+            const existingType = actionData.find((data) => data.name === item.actionType);
+            if (existingType) {
+                existingType.value += 1;
+            } else {
+                actionData.push({ name: item.actionType, value: 1 });
+            }
+        });
+        return actionData.sort(rechartsDataComparator)
     }
 
     const createMomentumData = (team1Name: string, team2Name: string) => {
@@ -58,18 +76,24 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         timeline.filter((value) => value.actionName.includes("ポゼッション")).forEach((item) => {
             const duration = item.endTime - item.startTime
             const teamName = item.actionName.includes(team1Name) ? team1Name : team2Name
-            const isTryScored = timeline.filter((it) => it.actionName === teamName + ' トライ').some((tryItem) => {
-                return (Math.max(item.startTime, tryItem.startTime) < Math.min(item.endTime, tryItem.endTime)) ? true : false
+            let possessionResult: string;
+            if (item.actionResult === "Try") {
+                possessionResult = "Try";
+            } else if (["Kick Error", "Pen Con", "Turnover", "Turnover (Scrum)"].includes(item.actionResult)) {
+                possessionResult = "Negative";
+            } else if (["Try", "Drop Goal", "Pen Won", "Scrum", "Own Lineout"].includes(item.actionResult)) {
+                possessionResult = "Positive";
+            } else {
+                possessionResult = "Neutral";
             }
-            )
             const momentumItem = {
                 teamName: teamName,
                 value: `${teamName === team1Name ? -duration : duration}`, //チーム1の場合、負の数を返す
-                isTryScored: isTryScored
+                possessionResult
             }
             momentumData.push(momentumItem)
         })
         return momentumData
     }
-    return { calculateActionDuration, countActions, countActionByTeamName, createMomentumData }
+    return { calculateActionDuration, countActions, countActionResultByTeamName, countActionTypeByTeamName, createMomentumData }
 }

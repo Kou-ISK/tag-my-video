@@ -5,12 +5,11 @@ import { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import { Pie, PieChart } from 'recharts';
-import { ActionResultPieChart } from './ActionResultPieChart';
+import { ActionPieChart } from './ActionPieChart';
 import { MomentumChart } from './MomentumChart';
 interface StatsModalProps {
     timeline: TimelineData[];
-    team1Name: string;
-    team2Name: string;
+    teamNames: string[];
 }
 
 const style = {
@@ -29,7 +28,7 @@ const style = {
     overflowY: 'scroll'
 };
 
-export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) => {
+export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
     const [open, setOpen] = useState<boolean>(false);
     const toggleOpen = () => setOpen(!open);
     useEffect(() => {
@@ -40,7 +39,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
         })
     }, []);
 
-    const { countActions, calculateActionDuration, countActionByTeamName, createMomentumData } = useAnalysis(timeline);
+    const { countActions, calculateActionDuration, countActionResultByTeamName, countActionTypeByTeamName, createMomentumData } = useAnalysis(timeline);
     // ラベル名
     const formatDuration = (seconds: number) => {
         const min = Math.floor(seconds % 3600 / 60);
@@ -56,8 +55,7 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
     };
     // 参考: https://recharts.org/en-US/
 
-    const actions: string[] = ["スクラム", "ラインアウト", "キック"];
-
+    const actions: string[] = ["スクラム", "ラインアウト", "キック", "PK"];
     return (
         <Modal
             open={open}
@@ -86,11 +84,18 @@ export const StatsModal = ({ timeline, team1Name, team2Name }: StatsModalProps) 
                 </Box>
                 {actions && actions.map((value, index) => (
                     <Box key={index} display={'flex'} flexDirection={'row'}>
-                        <ActionResultPieChart countActionByTeamName={countActionByTeamName} teamName={team1Name} actionName={value} />
-                        <ActionResultPieChart countActionByTeamName={countActionByTeamName} teamName={team2Name} actionName={value} />
+                        {teamNames.map((teamName) => (
+                            <Box key={index} display={'flex'} flexDirection={'column'}>
+                                <h2>{teamName + ' ' + value}</h2>
+                                <ActionPieChart countActionFunction={countActionResultByTeamName} teamName={teamName} actionName={value} />
+                                <ActionPieChart countActionFunction={countActionTypeByTeamName} teamName={teamName} actionName={value} />
+                                {/* <ActionResultPieChart countActionResultByTeamName={countActionResultByTeamName} teamName={teamName} actionName={value} />
+                                <ActionTypePieChart countActionTypeByTeamName={countActionTypeByTeamName} teamName={teamName} actionName={value} /> */}
+                            </Box>
+                        ))}
                     </Box>
                 ))}
-                <MomentumChart createMomentumData={createMomentumData} team1Name={team1Name} team2Name={team2Name} />
+                <MomentumChart createMomentumData={createMomentumData} teamNames={teamNames} />
             </Box>
         </Modal>
     );

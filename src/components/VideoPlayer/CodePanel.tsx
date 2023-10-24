@@ -5,13 +5,11 @@ import { useEffect, useState } from "react";
 interface CodePanelProps {
     metaDataConfigFilePath: string,
     addTimelineData: any
-    team1Name: string,
-    team2Name: string,
-    setTeam1Name: any,
-    setTeam2Name: any,
+    teamNames: string[];
+    setTeamNames: any;
 }
 
-export const CodePanel = ({ metaDataConfigFilePath, addTimelineData, team1Name, team2Name, setTeam1Name, setTeam2Name }: CodePanelProps) => {
+export const CodePanel = ({ metaDataConfigFilePath, addTimelineData, teamNames, setTeamNames }: CodePanelProps) => {
     // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
     const [actionList, setActionList] = useState([]);
 
@@ -22,8 +20,7 @@ export const CodePanel = ({ metaDataConfigFilePath, addTimelineData, team1Name, 
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
-                        setTeam1Name(data.team1Name);
-                        setTeam2Name(data.team2Name);
+                        setTeamNames([data.team1Name, data.team2Name]);
                         setActionList(data.actionList);
                     }
                 })
@@ -38,11 +35,12 @@ export const CodePanel = ({ metaDataConfigFilePath, addTimelineData, team1Name, 
             overflowY: 'scroll',
             width: '25vw'
         }}>
-            {actionList && actionList.map((value, index) => (
+            {actionList && actionList.map((value) => (
                 <>
                     <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-                        <CodeButton actionName={team1Name + ' ' + value} addTimelineData={addTimelineData} color="error" />
-                        <CodeButton actionName={team2Name + ' ' + value} addTimelineData={addTimelineData} color="primary" />
+                        {teamNames.map((teamName, index) =>
+                            <CodeButton actionName={teamName + ' ' + value} addTimelineData={addTimelineData} color={index === 0 ? "error" : "primary"} />
+                        )}
                     </Box>
                 </>
             ))}

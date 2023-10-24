@@ -5,13 +5,12 @@ import { useState } from 'react';
 interface ActionResultSelectorProps {
     id: string
     actionName: string,
+    actionResult: string,
     updateActionResult: any
 }
-export const ActionResultSelector = ({ id, actionName, updateActionResult }: ActionResultSelectorProps) => {
+export const ActionResultSelector = ({ id, actionName, actionResult, updateActionResult }: ActionResultSelectorProps) => {
     const results = ActionList.find((value) => actionName.includes(value.action))?.results
-    const [result, setResult] = useState('');
     const handleChange = (event: SelectChangeEvent) => {
-        setResult(event.target.value)
         updateActionResult(id, event.target.value)
     }
     return (
@@ -20,7 +19,7 @@ export const ActionResultSelector = ({ id, actionName, updateActionResult }: Act
                 <InputLabel id={id + "_result"}>Result</InputLabel>
                 <Select
                     id={id + "_result"}
-                    value={result}
+                    value={actionResult}
                     label="Result"
                     onChange={handleChange}
                     size='small'
