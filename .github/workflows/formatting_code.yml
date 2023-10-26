@@ -20,6 +20,19 @@ jobs:
       run: npm run format
     - name: Lint
       run: npm run lint:fix
-    - uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Apply Prettier Change
+      
+    - name: Check diff
+      id: diff
+      run: |
+        git add .
+        git diff --staged --name-only --exit-code
+      continue-on-error: true
+
+    - name: Commit and push
+      if: steps.diff.outcome == 'failure'
+      run: |
+        set -x
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git commit -m 'Formatting code' --no-verify
+        git push --no-verify
