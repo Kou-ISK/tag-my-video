@@ -7,7 +7,7 @@ import { ActionTypeSelector } from './ActionTypeSelector';
 import { ActionResultSelector } from './ActionResultSelector';
 
 interface TimelineTableProps {
-    timelineFilePath: string | undefined,
+    timelineFilePath: string,
     setCurrentTime: any,
     timeline: TimelineData[],
     setTimeline: any,
@@ -22,7 +22,7 @@ export const TimelineTable = ({ timelineFilePath, setCurrentTime, timeline, setT
 
     useEffect(() => {
         console.log(timelineFilePath)
-        if (timelineFilePath !== undefined && timelineFilePath !== 'notSelected') {
+        if (timelineFilePath !== '') {
             fetch(timelineFilePath)
                 .then(response => response.json())
                 .then(data => setTimeline(data))
