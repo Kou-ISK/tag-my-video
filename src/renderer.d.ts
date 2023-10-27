@@ -1,20 +1,26 @@
 export interface IElectronAPI {
-    openFile: () => Promise<string>,
-    openDirectory: () => Promise<string>,
-    exportTimeline: (filePath: string, source: any) => Promise<void>
-    createPackage: (directoryName: string, packageName: string, tightViewPath: string, wideViewPath: string, metaDataConfig: any) => Promise<PackageDatas>
-    on: (channel: string, listener: (event: any, args: any) => void) => void
+  openFile: () => Promise<string>;
+  openDirectory: () => Promise<string>;
+  exportTimeline: (filePath: string, source: any) => Promise<void>;
+  createPackage: (
+    directoryName: string,
+    packageName: string,
+    tightViewPath: string,
+    wideViewPath: string,
+    metaDataConfig: any,
+  ) => Promise<PackageDatas>;
+  on: (channel: string, listener: (event: any, args: any) => void) => void;
 }
 
 export interface PackageDatas {
-    timelinePath: string,
-    tightViewPath: string,
-    wideViewPath: string,
-    metaDataConfigFilePath: string
+  timelinePath: string;
+  tightViewPath: string;
+  wideViewPath: string;
+  metaDataConfigFilePath: string;
 }
 
 declare global {
-    interface Window {
-        electronAPI: IElectronAPI
-    }
+  interface Window {
+    electronAPI: IElectronAPI;
+  }
 }
