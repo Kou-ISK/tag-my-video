@@ -1,6 +1,6 @@
-import { BrowserWindow, dialog, ipcMain } from "electron";
-import * as fs from "fs";
-import { PackageDatas } from "../../src/renderer";
+import { BrowserWindow, dialog, ipcMain } from 'electron';
+import * as fs from 'fs';
+import { PackageDatas } from '../../src/renderer';
 
 // メインプロセスで使用するメソッドを切り出し
 
@@ -11,15 +11,15 @@ export const setMainWindow = (window: Electron.BrowserWindow) => {
 };
 
 export const Utils = () => {
-  ipcMain.handle("open-directory", async () => {
+  ipcMain.handle('open-directory', async () => {
     return dialog
       .showOpenDialog(mainWindow, {
-        properties: ["openDirectory"],
-        title: "パッケージを選択する",
+        properties: ['openDirectory'],
+        title: 'パッケージを選択する',
         filters: [
           {
-            name: "パッケージファイル",
-            extensions: ["pkg"],
+            name: 'パッケージファイル',
+            extensions: ['pkg'],
           },
         ],
       })
@@ -30,15 +30,15 @@ export const Utils = () => {
       .catch((err) => console.log(`Error: ${err}`));
   });
 
-  ipcMain.handle("open-file", async () => {
+  ipcMain.handle('open-file', async () => {
     return dialog
       .showOpenDialog(mainWindow, {
-        properties: ["openFile"],
-        title: "ファイルを選択する",
+        properties: ['openFile'],
+        title: 'ファイルを選択する',
         filters: [
           {
-            name: "映像ファイル",
-            extensions: ["mov", "mp4"],
+            name: '映像ファイル',
+            extensions: ['mov', 'mp4'],
           },
         ],
       })
@@ -49,7 +49,7 @@ export const Utils = () => {
       .catch((err) => console.log(`Error: ${err}`));
   });
 
-  ipcMain.handle("export-timeline", async (_, filePath, source) => {
+  ipcMain.handle('export-timeline', async (_, filePath, source) => {
     const toJSON = JSON.stringify(source);
     fs.writeFile(filePath, toJSON, (error) => {
       console.log(error);
@@ -57,7 +57,7 @@ export const Utils = () => {
   });
 
   ipcMain.handle(
-    "create-package",
+    'create-package',
     async (
       _,
       directoryName,
@@ -67,33 +67,33 @@ export const Utils = () => {
       metaDataConfig,
     ) => {
       // 引数で取ったpackageNameをもとに新規パッケージを作成
-      const newPackagePath = directoryName + "/" + packageName;
+      const newPackagePath = directoryName + '/' + packageName;
       const newFilePath = newPackagePath.substring(
-        newPackagePath.lastIndexOf("/") + 1,
+        newPackagePath.lastIndexOf('/') + 1,
       );
       fs.mkdirSync(newPackagePath);
       // .metadataファイルを作成
-      fs.mkdirSync(newPackagePath + "/.metadata");
+      fs.mkdirSync(newPackagePath + '/.metadata');
       const metaDataText = JSON.stringify(metaDataConfig);
       console.log(metaDataConfig);
       console.log(metaDataText);
       fs.writeFile(
-        newPackagePath + "/.metadata/config.json",
+        newPackagePath + '/.metadata/config.json',
         metaDataText,
         (err) => {
           if (err) console.log(err);
         },
       );
-      fs.mkdirSync(newPackagePath + "/videos");
+      fs.mkdirSync(newPackagePath + '/videos');
       // 新しいビデオファイルパスを変数に格納
       const newTightViewPath =
-        newPackagePath + "/videos/" + newFilePath + " 寄り.mp4";
+        newPackagePath + '/videos/' + newFilePath + ' 寄り.mp4';
       const newWideViewPath =
-        newPackagePath + "/videos/" + newFilePath + " 引き.mp4";
+        newPackagePath + '/videos/' + newFilePath + ' 引き.mp4';
       fs.renameSync(tightViewPath, newTightViewPath);
       fs.renameSync(wideViewPath, newWideViewPath);
       // タイムラインファイルを作成
-      fs.writeFile(newPackagePath + "/timeline.json", "[]", (err) => {
+      fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
         if (err) console.log(err);
       });
       /* 
@@ -106,10 +106,10 @@ export const Utils = () => {
             ┗ wideView.mp4
         */
       const packageDatas: PackageDatas = {
-        timelinePath: newPackagePath + "/timeline.json",
+        timelinePath: newPackagePath + '/timeline.json',
         tightViewPath: newTightViewPath,
         wideViewPath: newWideViewPath,
-        metaDataConfigFilePath: newPackagePath + "/.metadata/config.json",
+        metaDataConfigFilePath: newPackagePath + '/.metadata/config.json',
       };
       console.log(packageDatas);
       return packageDatas;

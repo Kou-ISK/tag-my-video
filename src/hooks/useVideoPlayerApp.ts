@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { TimelineData } from "../types/TimelineData";
-import { ulid } from "ulid";
+import { useState } from 'react';
+import { TimelineData } from '../types/TimelineData';
+import { ulid } from 'ulid';
 
 export const useVideoPlayerApp = () => {
   const [timeline, setTimeline] = useState<TimelineData[]>([]);
@@ -9,9 +9,9 @@ export const useVideoPlayerApp = () => {
   >([]);
   const [videoList, setVideoList] = useState<string[]>();
   const [currentTime, setCurrentTime] = useState(0);
-  const [timelineFilePath, setTimelineFilePath] = useState<string>("");
+  const [timelineFilePath, setTimelineFilePath] = useState<string>('');
   const [metaDataConfigFilePath, setMetaDataConfigFilePath] =
-    useState<string>("");
+    useState<string>('');
 
   const [teamNames, setTeamNames] = useState<string[]>([]);
 
@@ -25,7 +25,7 @@ export const useVideoPlayerApp = () => {
   const handleCurrentTime = (event: Event, newValue: number | number[]) => {
     setCurrentTime(newValue as number);
   };
-  const [packagePath, setPackagePath] = useState<string>("");
+  const [packagePath, setPackagePath] = useState<string>('');
 
   const addTimelineData = (
     actionName: string,
@@ -38,8 +38,8 @@ export const useVideoPlayerApp = () => {
       actionName,
       startTime,
       endTime,
-      actionResult: "",
-      actionType: "",
+      actionResult: '',
+      actionType: '',
       qualifier,
     };
     setTimeline([...timeline, newTimelineInstance]);
@@ -88,26 +88,26 @@ export const useVideoPlayerApp = () => {
   // TODO ソートするとactionResult, actionTypeが消える問題に対応する
   const sortTimelineDatas = (column: string, sortDesc: boolean) => {
     if (sortDesc) {
-      if (column === "startTime") {
+      if (column === 'startTime') {
         setTimeline(
           timeline.sort((a, b) => (a.startTime > b.startTime ? -1 : 1)),
         );
-      } else if (column === "endTime") {
+      } else if (column === 'endTime') {
         setTimeline(timeline.sort((a, b) => (a.endTime > b.endTime ? -1 : 1)));
-      } else if (column === "actionName") {
+      } else if (column === 'actionName') {
         setTimeline(
           timeline.sort((a, b) => (a.actionName > b.actionName ? -1 : 1)),
         );
       }
     } else if (sortDesc === false) {
-      console.log("asc");
-      if (column === "startTime") {
+      console.log('asc');
+      if (column === 'startTime') {
         setTimeline(
           timeline.sort((a, b) => (a.startTime < b.startTime ? -1 : 1)),
         );
-      } else if (column === "endTime") {
+      } else if (column === 'endTime') {
         setTimeline(timeline.sort((a, b) => (a.endTime < b.endTime ? -1 : 1)));
-      } else if (column === "actionName") {
+      } else if (column === 'actionName') {
         setTimeline(
           timeline.sort((a, b) => (a.actionName < b.actionName ? -1 : 1)),
         );

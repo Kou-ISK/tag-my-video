@@ -1,5 +1,5 @@
-import { TimelineData } from "../types/TimelineData";
-import { rechartsData } from "../types/RechartsData";
+import { TimelineData } from '../types/TimelineData';
+import { rechartsData } from '../types/RechartsData';
 
 export const useAnalysis = (timeline: TimelineData[]) => {
   const rechartsDataComparator = (x: rechartsData, y: rechartsData) => {
@@ -89,29 +89,29 @@ export const useAnalysis = (timeline: TimelineData[]) => {
   const createMomentumData = (team1Name: string, team2Name: string) => {
     const momentumData: any[] = [];
     timeline
-      .filter((value) => value.actionName.includes("ポゼッション"))
+      .filter((value) => value.actionName.includes('ポゼッション'))
       .forEach((item) => {
         const duration = item.endTime - item.startTime;
         const teamName = item.actionName.includes(team1Name)
           ? team1Name
           : team2Name;
         let possessionResult: string;
-        if (item.actionResult === "Try") {
-          possessionResult = "Try";
+        if (item.actionResult === 'Try') {
+          possessionResult = 'Try';
         } else if (
-          ["Kick Error", "Pen Con", "Turnover", "Turnover (Scrum)"].includes(
+          ['Kick Error', 'Pen Con', 'Turnover', 'Turnover (Scrum)'].includes(
             item.actionResult,
           )
         ) {
-          possessionResult = "Negative";
+          possessionResult = 'Negative';
         } else if (
-          ["Try", "Drop Goal", "Pen Won", "Scrum", "Own Lineout"].includes(
+          ['Try', 'Drop Goal', 'Pen Won', 'Scrum', 'Own Lineout'].includes(
             item.actionResult,
           )
         ) {
-          possessionResult = "Positive";
+          possessionResult = 'Positive';
         } else {
-          possessionResult = "Neutral";
+          possessionResult = 'Neutral';
         }
         const momentumItem = {
           teamName: teamName,
