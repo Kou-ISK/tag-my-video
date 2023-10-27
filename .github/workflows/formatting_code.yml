@@ -16,10 +16,7 @@ jobs:
     - name: Install packages
       run: npm ci
     - name: Prettier
-      # TODO 使用するスクリプトをpackage.jsonに記入する
       run: npm run format
-    - name: Lint
-      run: npm run lint:fix
       
     - name: Check diff
       id: diff
