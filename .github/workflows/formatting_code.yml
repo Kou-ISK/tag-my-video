@@ -1,38 +1,33 @@
 name: formatting code
 on:
-  push:
-    branches:
-    - main
-    - 'feat**'
+  pull_request:
+    branches: [main, 'feat**']
 
 jobs:
   test:
     name: Check the source code
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Insatll Dependencies
-      run: npm install
-    - name: Install packages
-      run: npm ci
-    - name: Prettier
-      # TODO 使用するスクリプトをpackage.jsonに記入する
-      run: npm run format
-    - name: Lint
-      run: npm run lint:fix
-      
-    - name: Check diff
-      id: diff
-      run: |
-        git add .
-        git diff --staged --name-only --exit-code
-      continue-on-error: true
+      - uses: actions/checkout@v2
+      - name: Insatll Dependencies
+        run: npm install
+      - name: Install packages
+        run: npm ci
+      - name: Prettier & eslint
+        run: npm run fix
 
-    - name: Commit and push
-      if: steps.diff.outcome == 'failure'
-      run: |
-        set -x
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git commit -m 'Formatting code' --no-verify
-        git push --no-verify
+      - name: Check diff
+        id: diff
+        run: |
+          git add .
+          git diff --staged --name-only --exit-code
+        continue-on-error: true
+
+      - name: Commit and push
+        if: steps.diff.outcome == 'failure'
+        run: |
+          set -x
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m 'Formatting code' --no-verify
+          git push --no-verify

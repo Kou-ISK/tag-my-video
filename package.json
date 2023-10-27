@@ -25,6 +25,7 @@
     "electron-reload": "^2.0.0-alpha.1",
     "electronmon": "^2.0.2",
     "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "minimatch": "^9.0.3",
@@ -62,8 +63,8 @@
     "icon": "public/icon.png"
   },
   "scripts": {
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "eslint src --fix",
+    "fix": "npm run lint & npm run format",
     "format": "prettier --write '**/*.ts'",
     "start": "react-scripts start",
     "build": "react-scripts build",
