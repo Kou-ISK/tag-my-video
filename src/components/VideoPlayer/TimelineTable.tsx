@@ -16,6 +16,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ActionResultSelector } from './ActionResultSelector';
+import React from 'react';
 
 interface TimelineTableProps {
   timelineFilePath: string;

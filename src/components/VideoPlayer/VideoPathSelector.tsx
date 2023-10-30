@@ -2,6 +2,7 @@ import { Box, Button, Input } from '@mui/material';
 import { useState } from 'react';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
+import React from 'react';
 
 interface VideoPathSelectorProps {
   setVideoList: any;

@@ -6,6 +6,7 @@ import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
 import { CodePanel } from '../components/VideoPlayer/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 import { StatsModal } from '../components/VideoPlayer/StatsModal';
+import React from 'react';
 
 export const VideoPlayerApp = () => {
   const {

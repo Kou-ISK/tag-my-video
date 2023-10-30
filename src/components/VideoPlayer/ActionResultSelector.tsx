@@ -6,7 +6,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { ActionList } from '../../ActionList';
-import { useState } from 'react';
+import React from 'react';
 
 interface ActionResultSelectorProps {
   id: string;
@@ -45,7 +45,11 @@ export const ActionResultSelector = ({
             <em>None</em>
           </MenuItem>
           {results &&
-            results.map((value) => <MenuItem value={value}>{value}</MenuItem>)}
+            results.map((value, index) => (
+              <MenuItem key={index} value={value}>
+                {value}
+              </MenuItem>
+            ))}
         </Select>
       </FormControl>
     </>

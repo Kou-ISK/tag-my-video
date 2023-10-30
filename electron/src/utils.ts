@@ -15,7 +15,7 @@ export const Utils = () => {
     return dialog
       .showOpenDialog(mainWindow, {
         properties: ['openDirectory'],
-        title: 'パッケージを選択する',
+        message: 'パッケージを選択する',
         filters: [
           {
             name: 'パッケージファイル',
@@ -34,7 +34,7 @@ export const Utils = () => {
     return dialog
       .showOpenDialog(mainWindow, {
         properties: ['openFile'],
-        title: 'ファイルを選択する',
+        message: 'ファイルを選択する',
         filters: [
           {
             name: '映像ファイル',

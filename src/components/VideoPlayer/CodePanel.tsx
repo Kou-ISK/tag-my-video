@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { CodeButton } from './CodeButton';
 import { useEffect, useState } from 'react';
+import React from 'react';
 
 interface CodePanelProps {
   metaDataConfigFilePath: string;
@@ -48,6 +49,7 @@ export const CodePanel = ({
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
               {teamNames.map((teamName, index) => (
                 <CodeButton
+                  key={index}
                   actionName={teamName + ' ' + value}
                   addTimelineData={addTimelineData}
                   color={index === 0 ? 'error' : 'primary'}
