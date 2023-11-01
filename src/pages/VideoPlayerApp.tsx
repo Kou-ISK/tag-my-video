@@ -50,7 +50,7 @@ export const VideoPlayerApp = () => {
             sx={{
               display: 'flex',
               flexDirection: 'row',
-              maxHeight: '50vh',
+              // maxHeight: '50vh',
               margin: '0px',
             }}
           >

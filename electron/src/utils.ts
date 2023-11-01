@@ -72,8 +72,23 @@ export const Utils = () => {
         newPackagePath.lastIndexOf('/') + 1,
       );
       fs.mkdirSync(newPackagePath);
+      fs.mkdirSync(newPackagePath + '/videos');
+      // 新しいビデオファイルパスを変数に格納
+      const newTightViewPath =
+        newPackagePath + '/videos/' + newFilePath + ' 寄り.mp4';
+      // TODO 存在しない場合に書き込まないように修正
+      const newWideViewPath =
+        newPackagePath + '/videos/' + newFilePath + ' 引き.mp4';
+      fs.renameSync(tightViewPath, newTightViewPath);
+      fs.renameSync(wideViewPath, newWideViewPath);
+      // タイムラインファイルを作成
+      fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
+        if (err) console.log(err);
+      });
       // .metadataファイルを作成
       fs.mkdirSync(newPackagePath + '/.metadata');
+      metaDataConfig.tightViewPath = newTightViewPath;
+      metaDataConfig.wideViewPath = newWideViewPath;
       const metaDataText = JSON.stringify(metaDataConfig);
       console.log(metaDataConfig);
       console.log(metaDataText);
@@ -84,18 +99,6 @@ export const Utils = () => {
           if (err) console.log(err);
         },
       );
-      fs.mkdirSync(newPackagePath + '/videos');
-      // 新しいビデオファイルパスを変数に格納
-      const newTightViewPath =
-        newPackagePath + '/videos/' + newFilePath + ' 寄り.mp4';
-      const newWideViewPath =
-        newPackagePath + '/videos/' + newFilePath + ' 引き.mp4';
-      fs.renameSync(tightViewPath, newTightViewPath);
-      fs.renameSync(wideViewPath, newWideViewPath);
-      // タイムラインファイルを作成
-      fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
-        if (err) console.log(err);
-      });
       /* 
         PackageName.pkg
         ┗ .metadata

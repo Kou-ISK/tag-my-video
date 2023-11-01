@@ -25,27 +25,34 @@ export const VideoPathSelector = ({
   const [packageName, setPackageName] = useState<string>('');
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
+  const [metaData, setMetaData] = useState<MetaData>();
 
   const handleHasOpenModal = () => {
     setHasOpenModal(true);
   };
 
   // パッケージを選択した場合
+  // TODO metaDataに映像ファイルパスを記載する。(metadataの中身が読みこめていない問題に対応する)
+  // パッケージ読み込み時にmetaDataを読み込み、記載されているパスのビデオを読み込む。
   const setVideoPathByPackagePath = async () => {
     try {
       const packagePath = await window.electronAPI.openDirectory();
       if (packagePath) {
+        setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
         setTimelineFilePath(packagePath + '/timeline.json');
-        const fileName = packagePath.substring(
-          packagePath.lastIndexOf('/') + 1,
-        );
-        setVideoList([
-          packagePath + '/videos/' + fileName + ' 寄り.mp4',
-          packagePath + '/videos/' + fileName + ' 引き.mp4',
-        ]);
+        console.log(packagePath + '/.metadata/config.json');
+        fetch(packagePath + '/.metadata/config.json')
+          .then((response) => response.json())
+          .then((data) => setMetaData(data))
+          .catch((error) => console.error('Error loading JSON:', error));
+        console.log(metaData);
+        if (metaData?.wideViewPath) {
+          setVideoList([metaData?.tightViewPath, metaData?.wideViewPath]);
+        } else {
+          setVideoList([metaData?.tightViewPath]);
+        }
         setPackagePath(packagePath);
         setIsFileSelected(!isFileSelected);
-        setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
         console.log('Selected file:', packagePath);
       } else {
         console.log('No file selected.');
@@ -61,6 +68,8 @@ export const VideoPathSelector = ({
     const tightViewPath: string = await window.electronAPI.openFile();
     const wideViewPath: string = await window.electronAPI.openFile();
     const metaDataConfig: MetaData = {
+      tightViewPath: tightViewPath,
+      wideViewPath: wideViewPath,
       team1Name: team1Name,
       team2Name: team2Name,
       actionList: [
