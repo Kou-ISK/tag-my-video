@@ -32,24 +32,23 @@ export const VideoPathSelector = ({
   };
 
   // パッケージを選択した場合
-  // TODO metaDataに映像ファイルパスを記載する。(metadataの中身が読みこめていない問題に対応する)
-  // パッケージ読み込み時にmetaDataを読み込み、記載されているパスのビデオを読み込む。
+  // TODO パッケージ読み込み時にmetaDataを読み込み、記載されているパスのビデオを読み込む。
   const setVideoPathByPackagePath = async () => {
     try {
       const packagePath = await window.electronAPI.openDirectory();
       if (packagePath) {
         setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
         setTimelineFilePath(packagePath + '/timeline.json');
-        console.log(packagePath + '/.metadata/config.json');
-        fetch(packagePath + '/.metadata/config.json')
-          .then((response) => response.json())
-          .then((data) => setMetaData(data))
-          .catch((error) => console.error('Error loading JSON:', error));
-        console.log(metaData);
-        if (metaData?.wideViewPath) {
-          setVideoList([metaData?.tightViewPath, metaData?.wideViewPath]);
-        } else {
-          setVideoList([metaData?.tightViewPath]);
+        // Fetchをawaitして非同期操作が完了するのを待つ
+        const response = await fetch(packagePath + '/.metadata/config.json');
+        if (response.ok) {
+          const data = await response.json();
+          setMetaData(data);
+          if (metaData?.wideViewPath) {
+            setVideoList([metaData?.tightViewPath, metaData?.wideViewPath]);
+          } else {
+            setVideoList([metaData?.tightViewPath]);
+          }
         }
         setPackagePath(packagePath);
         setIsFileSelected(!isFileSelected);
@@ -66,6 +65,7 @@ export const VideoPathSelector = ({
   const createPackage = async (packageName: string) => {
     const directoryName = await window.electronAPI.openDirectory();
     const tightViewPath: string = await window.electronAPI.openFile();
+    // TODO wideViewPath選択を任意にする
     const wideViewPath: string = await window.electronAPI.openFile();
     const metaDataConfig: MetaData = {
       tightViewPath: tightViewPath,
