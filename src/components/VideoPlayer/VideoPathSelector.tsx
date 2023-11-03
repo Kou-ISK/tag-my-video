@@ -1,5 +1,5 @@
 import { Box, Button, Input } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
 import React from 'react';
@@ -25,34 +25,48 @@ export const VideoPathSelector = ({
   const [packageName, setPackageName] = useState<string>('');
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
-  const [metaData, setMetaData] = useState<MetaData>();
+  const [metaData, setMetaData] = useState<MetaData | null>(null);
 
   const handleHasOpenModal = () => {
     setHasOpenModal(true);
   };
 
+  useEffect(() => {
+    console.log(metaData); // metaDataの変更を監視してログを表示
+  }, [metaData]); // metaDataが変更されたときに実行
+
   // パッケージを選択した場合
   // TODO パッケージ読み込み時にmetaDataを読み込み、記載されているパスのビデオを読み込む。
+  // TODO setMetaDataがうまくいかない問題に対応する
   const setVideoPathByPackagePath = async () => {
     try {
       const packagePath = await window.electronAPI.openDirectory();
       if (packagePath) {
         setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
         setTimelineFilePath(packagePath + '/timeline.json');
+        console.log(packagePath + '/.metadata/config.json');
+
         // Fetchをawaitして非同期操作が完了するのを待つ
         const response = await fetch(packagePath + '/.metadata/config.json');
         if (response.ok) {
           const data = await response.json();
-          setMetaData(data);
+          if (data) {
+            console.log(data);
+            setMetaData(data);
+          }
           if (metaData?.wideViewPath) {
             setVideoList([metaData?.tightViewPath, metaData?.wideViewPath]);
           } else {
             setVideoList([metaData?.tightViewPath]);
           }
+
+          setPackagePath(packagePath);
+          setIsFileSelected(!isFileSelected);
+          console.log(metaData);
+          console.log('Selected file:', packagePath);
+        } else {
+          console.error('Error loading JSON:', response.status);
         }
-        setPackagePath(packagePath);
-        setIsFileSelected(!isFileSelected);
-        console.log('Selected file:', packagePath);
       } else {
         console.log('No file selected.');
       }
