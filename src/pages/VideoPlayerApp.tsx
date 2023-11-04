@@ -126,6 +126,7 @@ export const VideoPlayerApp = () => {
           setTimelineFilePath={setTimelineFilePath}
           setPackagePath={setPackagePath}
           setMetaDataConfigFilePath={setMetaDataConfigFilePath}
+          metaDataConfigFilePath={metaDataConfigFilePath}
         />
       )}
     </>
