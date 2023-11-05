@@ -7,7 +7,7 @@ export const useVideoPlayerApp = () => {
   const [selectedTimelineIdList, setSelectedTimelineIdList] = useState<
     string[]
   >([]);
-  const [videoList, setVideoList] = useState<string[]>();
+  const [videoList, setVideoList] = useState<string[]>(['']);
   const [currentTime, setCurrentTime] = useState(0);
   const [timelineFilePath, setTimelineFilePath] = useState<string>('');
   const [metaDataConfigFilePath, setMetaDataConfigFilePath] =

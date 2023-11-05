@@ -23,29 +23,35 @@ export const VideoPathSelector = ({
   setMetaDataConfigFilePath,
   metaDataConfigFilePath,
 }: VideoPathSelectorProps) => {
-  useEffect(() => {
-    console.log(metaDataConfigFilePath);
-    if (metaDataConfigFilePath !== '') {
-      console.log(metaDataConfigFilePath);
-      fetch(metaDataConfigFilePath)
-        .then((response) => response.json())
-        .then((data) => setMetaData(data))
-        .catch((error) => console.error('Error loading JSON:', error));
-      if (metaData) {
-        if (metaData.wideViewPath) {
-          setVideoList([metaData.tightViewPath, metaData.wideViewPath]);
-        } else {
-          setVideoList([metaData.tightViewPath]);
-        }
-      }
-    }
-  }, [metaDataConfigFilePath]);
-
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false);
   const [packageName, setPackageName] = useState<string>('');
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
   const [metaData, setMetaData] = useState<MetaData>();
+
+  useEffect(() => {
+    console.log(metaDataConfigFilePath);
+    if (metaDataConfigFilePath !== '') {
+      fetch(metaDataConfigFilePath)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setMetaData(data);
+          if (data.wideViewPath) {
+            setVideoList([data.tightViewPath, data.wideViewPath]);
+          } else {
+            setVideoList([data.tightViewPath]);
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading JSON:', error);
+        });
+    }
+  }, [metaDataConfigFilePath]);
 
   const handleHasOpenModal = () => {
     setHasOpenModal(true);
