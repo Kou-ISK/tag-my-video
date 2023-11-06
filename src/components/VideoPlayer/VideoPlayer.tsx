@@ -65,7 +65,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [currentTime]);
   console.log('videoSrc:', videoSrc);
   return (
-    <Box width="100%" height="100%">
+    <Box width="50%" height="100%">
       <video
         ref={videoRef}
         className="video-js"

@@ -1,8 +1,7 @@
 import { Box, Button, Input } from '@mui/material';
-import { useEffect, useState } from 'react';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface VideoPathSelectorProps {
   setVideoList: any;
@@ -11,7 +10,6 @@ interface VideoPathSelectorProps {
   setTimelineFilePath: any;
   setPackagePath: any;
   setMetaDataConfigFilePath: any;
-  metaDataConfigFilePath: string;
 }
 
 export const VideoPathSelector = ({
@@ -21,18 +19,23 @@ export const VideoPathSelector = ({
   setTimelineFilePath,
   setPackagePath,
   setMetaDataConfigFilePath,
-  metaDataConfigFilePath,
 }: VideoPathSelectorProps) => {
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false);
   const [packageName, setPackageName] = useState<string>('');
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
-  const [metaData, setMetaData] = useState<MetaData>();
 
-  useEffect(() => {
-    console.log(metaDataConfigFilePath);
-    if (metaDataConfigFilePath !== '') {
-      fetch(metaDataConfigFilePath)
+  const handleHasOpenModal = () => {
+    setHasOpenModal(true);
+  };
+
+  // パッケージを選択した場合
+  const setVideoPathByPackagePath = async () => {
+    const packagePath = await window.electronAPI.openDirectory();
+    if (packagePath) {
+      console.log(packagePath + '/.metadata/config.json');
+      setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
+      fetch(packagePath + '/.metadata/config.json')
         .then((response) => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -40,34 +43,18 @@ export const VideoPathSelector = ({
           return response.json();
         })
         .then((data) => {
-          setMetaData(data);
           if (data.wideViewPath) {
             setVideoList([data.tightViewPath, data.wideViewPath]);
           } else {
             setVideoList([data.tightViewPath]);
           }
+          setIsFileSelected(!isFileSelected);
         })
         .catch((error) => {
           console.error('Error loading JSON:', error);
         });
-    }
-  }, [metaDataConfigFilePath]);
-
-  const handleHasOpenModal = () => {
-    setHasOpenModal(true);
-  };
-
-  // パッケージを選択した場合
-  // TODO パッケージ読み込み時にmetaDataを読み込み、記載されているパスのビデオを読み込む。
-  // TODO setMetaDataがうまくいかない問題に対応する
-  const setVideoPathByPackagePath = async () => {
-    const packagePath = await window.electronAPI.openDirectory();
-    if (packagePath) {
-      console.log(packagePath + '/.metadata/config.json');
-      setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
       setTimelineFilePath(packagePath + '/timeline.json');
       setPackagePath(packagePath);
-      setIsFileSelected(!isFileSelected);
       console.log('Selected file:', packagePath);
     } else {
       console.log('No file selected.');
