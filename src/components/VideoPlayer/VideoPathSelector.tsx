@@ -65,8 +65,14 @@ export const VideoPathSelector = ({
   const createPackage = async (packageName: string) => {
     const directoryName = await window.electronAPI.openDirectory();
     const tightViewPath: string = await window.electronAPI.openFile();
-    // TODO wideViewPath選択を任意にする
-    const wideViewPath: string = await window.electronAPI.openFile();
+    let wideViewPath = null; // 初期値をnullに設定
+
+    // ワイドビューパスを選択するダイアログを表示
+    const shouldSelectWideView =
+      window.confirm('ワイドビューパスを選択しますか？');
+    if (shouldSelectWideView) {
+      wideViewPath = await window.electronAPI.openFile();
+    }
     const metaDataConfig: MetaData = {
       tightViewPath: tightViewPath,
       wideViewPath: wideViewPath,
@@ -93,7 +99,11 @@ export const VideoPathSelector = ({
       wideViewPath,
       metaDataConfig,
     );
-    setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
+    if (wideViewPath) {
+      setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
+    } else {
+      setVideoList([packageDatas.tightViewPath]);
+    }
     setTimelineFilePath(packageDatas.timelinePath);
     setHasOpenModal(!hasOpenModal);
     setIsFileSelected(!isFileSelected);

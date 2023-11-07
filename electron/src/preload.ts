@@ -44,7 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     directoryName: string,
     packageName: string,
     tightViewPath: string,
-    wideViewPath: string,
+    wideViewPath: string | null,
     metaData: any,
   ) => {
     try {

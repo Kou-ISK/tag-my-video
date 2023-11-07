@@ -76,11 +76,14 @@ export const Utils = () => {
       // 新しいビデオファイルパスを変数に格納
       const newTightViewPath =
         newPackagePath + '/videos/' + newFilePath + ' 寄り.mp4';
-      // TODO 存在しない場合に書き込まないように修正
-      const newWideViewPath =
-        newPackagePath + '/videos/' + newFilePath + ' 引き.mp4';
       fs.renameSync(tightViewPath, newTightViewPath);
-      fs.renameSync(wideViewPath, newWideViewPath);
+      // wideViewPathが存在する場合のみ書き出し
+      let newWideViewPath = null;
+      if (wideViewPath) {
+        newWideViewPath =
+          newPackagePath + '/videos/' + newFilePath + ' 引き.mp4';
+        fs.renameSync(wideViewPath, newWideViewPath);
+      }
       // タイムラインファイルを作成
       fs.writeFile(newPackagePath + '/timeline.json', '[]', (err) => {
         if (err) console.log(err);
@@ -91,7 +94,6 @@ export const Utils = () => {
       metaDataConfig.wideViewPath = newWideViewPath;
       const metaDataText = JSON.stringify(metaDataConfig);
       console.log(metaDataConfig);
-      console.log(metaDataText);
       fs.writeFile(
         newPackagePath + '/.metadata/config.json',
         metaDataText,
