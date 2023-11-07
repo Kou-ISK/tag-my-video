@@ -6,6 +6,7 @@ import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
 import { CodePanel } from '../components/VideoPlayer/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 import { StatsModal } from '../components/VideoPlayer/StatsModal';
+import React from 'react';
 
 export const VideoPlayerApp = () => {
   const {
@@ -40,7 +41,6 @@ export const VideoPlayerApp = () => {
     getSelectedTimelineId,
     sortTimelineDatas,
   } = useVideoPlayerApp();
-
   return (
     <>
       {isFileSelected && (
@@ -49,14 +49,15 @@ export const VideoPlayerApp = () => {
             sx={{
               display: 'flex',
               flexDirection: 'row',
-              maxHeight: '50vh',
               margin: '0px',
+              justifyContent: 'center', // 映像を中央に配置
+              alignItems: 'center', // 垂直方向にも中央に配置
             }}
           >
             {videoList !== undefined &&
               videoList.map((filePath, index) => (
                 <VideoPlayer
-                  key={'video_' + index}
+                  key={index}
                   videoSrc={filePath}
                   id={'video_' + index}
                   isVideoPlaying={isVideoPlaying}

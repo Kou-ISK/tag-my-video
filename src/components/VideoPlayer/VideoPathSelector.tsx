@@ -1,7 +1,7 @@
 import { Box, Button, Input } from '@mui/material';
-import { useState } from 'react';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
+import React, { useState } from 'react';
 
 interface VideoPathSelectorProps {
   setVideoList: any;
@@ -31,26 +31,33 @@ export const VideoPathSelector = ({
 
   // パッケージを選択した場合
   const setVideoPathByPackagePath = async () => {
-    try {
-      const packagePath = await window.electronAPI.openDirectory();
-      if (packagePath) {
-        setTimelineFilePath(packagePath + '/timeline.json');
-        const fileName = packagePath.substring(
-          packagePath.lastIndexOf('/') + 1,
-        );
-        setVideoList([
-          packagePath + '/videos/' + fileName + ' 寄り.mp4',
-          packagePath + '/videos/' + fileName + ' 引き.mp4',
-        ]);
-        setPackagePath(packagePath);
-        setIsFileSelected(!isFileSelected);
-        setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
-        console.log('Selected file:', packagePath);
-      } else {
-        console.log('No file selected.');
-      }
-    } catch (error) {
-      console.error('Error:', error);
+    const packagePath = await window.electronAPI.openDirectory();
+    if (packagePath) {
+      console.log(packagePath + '/.metadata/config.json');
+      setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
+      fetch(packagePath + '/.metadata/config.json')
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.wideViewPath) {
+            setVideoList([data.tightViewPath, data.wideViewPath]);
+          } else {
+            setVideoList([data.tightViewPath]);
+          }
+          setIsFileSelected(!isFileSelected);
+        })
+        .catch((error) => {
+          console.error('Error loading JSON:', error);
+        });
+      setTimelineFilePath(packagePath + '/timeline.json');
+      setPackagePath(packagePath);
+      console.log('Selected file:', packagePath);
+    } else {
+      console.log('No file selected.');
     }
   };
 
@@ -58,8 +65,17 @@ export const VideoPathSelector = ({
   const createPackage = async (packageName: string) => {
     const directoryName = await window.electronAPI.openDirectory();
     const tightViewPath: string = await window.electronAPI.openFile();
-    const wideViewPath: string = await window.electronAPI.openFile();
+    let wideViewPath = null; // 初期値をnullに設定
+
+    // ワイドビューパスを選択するダイアログを表示
+    const shouldSelectWideView =
+      window.confirm('ワイドビューパスを選択しますか？');
+    if (shouldSelectWideView) {
+      wideViewPath = await window.electronAPI.openFile();
+    }
     const metaDataConfig: MetaData = {
+      tightViewPath: tightViewPath,
+      wideViewPath: wideViewPath,
       team1Name: team1Name,
       team2Name: team2Name,
       actionList: [
@@ -83,7 +99,11 @@ export const VideoPathSelector = ({
       wideViewPath,
       metaDataConfig,
     );
-    setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
+    if (wideViewPath) {
+      setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
+    } else {
+      setVideoList([packageDatas.tightViewPath]);
+    }
     setTimelineFilePath(packageDatas.timelinePath);
     setHasOpenModal(!hasOpenModal);
     setIsFileSelected(!isFileSelected);

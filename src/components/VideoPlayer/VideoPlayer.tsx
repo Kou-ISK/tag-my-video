@@ -35,7 +35,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [videoRef]);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && videoSrc) {
+      // videoSrc が存在する場合のみ処理
       const option = { autoplay: true, aspectRatio: '16:9' };
       const player = videojs(videoRef.current, option);
 
@@ -52,7 +53,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       }
       player.playbackRate(videoPlayBackRate);
     }
-  }, [isVideoPlaying, videoRef, videoPlayBackRate]);
+  }, [videoSrc, isVideoPlaying, videoRef, videoPlayBackRate]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -62,9 +63,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       }
     }
   }, [currentTime]);
-
+  console.log('videoSrc:', videoSrc);
   return (
-    <Box width="100%" height="100%">
+    <Box width="50%" height="100%">
       <video
         ref={videoRef}
         className="video-js"

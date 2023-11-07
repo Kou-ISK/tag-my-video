@@ -7,7 +7,7 @@ import { menuBar } from './menuBar';
 const mainURL = `file:${__dirname}/../../index.html`;
 
 const createWindow = () => {
-  let mainWindow = new BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: 1400,
     height: 1000,
     webPreferences: {

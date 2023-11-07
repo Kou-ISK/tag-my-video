@@ -6,7 +6,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { ActionList } from '../../ActionList';
-import { useState } from 'react';
+import React from 'react';
 
 interface ActionTypeSelectorProps {
   id: string;
@@ -45,7 +45,11 @@ export const ActionTypeSelector = ({
             <em>None</em>
           </MenuItem>
           {types &&
-            types.map((value) => <MenuItem value={value}>{value}</MenuItem>)}
+            types.map((value, index) => (
+              <MenuItem key={index} value={value}>
+                {value}
+              </MenuItem>
+            ))}
         </Select>
       </FormControl>
     </>

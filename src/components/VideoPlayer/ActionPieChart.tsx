@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
+import React from 'react';
 
 interface ActionPieChartProps {
   countActionFunction: any;

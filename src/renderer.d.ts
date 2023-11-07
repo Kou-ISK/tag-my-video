@@ -6,7 +6,7 @@ export interface IElectronAPI {
     directoryName: string,
     packageName: string,
     tightViewPath: string,
-    wideViewPath: string,
+    wideViewPath: string | null,
     metaDataConfig: any,
   ) => Promise<PackageDatas>;
   on: (channel: string, listener: (event: any, args: any) => void) => void;
@@ -15,7 +15,7 @@ export interface IElectronAPI {
 export interface PackageDatas {
   timelinePath: string;
   tightViewPath: string;
-  wideViewPath: string;
+  wideViewPath: string | null;
   metaDataConfigFilePath: string;
 }
 

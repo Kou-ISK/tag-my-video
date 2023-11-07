@@ -5,7 +5,6 @@ import {
   ResponsiveContainer,
   XAxis,
   YAxis,
-  Legend,
 } from 'recharts';
 import React from 'react';
 import { Box } from '@mui/material';

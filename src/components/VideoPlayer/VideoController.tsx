@@ -1,6 +1,7 @@
 import { Box, Button, Slider } from '@mui/material';
 import { useEffect, useState } from 'react';
 import videojs from 'video.js';
+import React from 'react';
 
 interface VideoControllerProps {
   setIsVideoPlaying: any;
