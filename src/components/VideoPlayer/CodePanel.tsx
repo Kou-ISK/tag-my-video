@@ -20,8 +20,8 @@ export const CodePanel = ({
   const [actionList, setActionList] = useState([]);
 
   useEffect(() => {
-    if (metaDataConfigFilePath !== undefined) {
-      // TODO fetchが上手くいっていない問題に対応する(undefinedになる)
+    if (metaDataConfigFilePath !== undefined && metaDataConfigFilePath !== '') {
+      console.log(`metadata config: ${metaDataConfigFilePath}`);
       fetch(metaDataConfigFilePath)
         .then((response) => response.json())
         .then((data) => {

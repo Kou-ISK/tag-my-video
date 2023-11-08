@@ -9,7 +9,6 @@ interface VideoPlayerProps {
   isVideoPlaying: boolean;
   videoPlayBackRate: number;
   currentTime: number;
-  setCurrentTime: any;
   setMaxSec: Dispatch<SetStateAction<number>>;
 }
 
@@ -19,7 +18,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   isVideoPlaying,
   videoPlayBackRate,
   currentTime,
-  setCurrentTime,
   setMaxSec,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
