@@ -44,6 +44,7 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
     countActionTypeByTeamName,
     createMomentumData,
   } = useAnalysis(timeline);
+
   // ラベル名
   const formatDuration = (seconds: number) => {
     const min = Math.floor((seconds % 3600) / 60);
