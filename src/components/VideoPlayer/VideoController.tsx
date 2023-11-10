@@ -6,7 +6,7 @@ import React from 'react';
 interface VideoControllerProps {
   setIsVideoPlaying: any;
   isVideoPlaying: any;
-  setPlayBackRate: any;
+  setVideoPlayBackRate: any;
   setCurrentTime: any;
   handleCurrentTime: any;
   maxSec: number;
@@ -15,7 +15,7 @@ interface VideoControllerProps {
 export const VideoController = ({
   setIsVideoPlaying,
   isVideoPlaying,
-  setPlayBackRate,
+  setVideoPlayBackRate,
   setCurrentTime,
   handleCurrentTime,
   maxSec,
@@ -25,7 +25,7 @@ export const VideoController = ({
   useEffect(() => {
     window.electronAPI.on('video-shortcut-event', (event, args) => {
       if (args > 0) {
-        setPlayBackRate(args);
+        setVideoPlayBackRate(args);
         if (args === 1) {
           setIsVideoPlaying(!isVideoPlaying);
         }
@@ -59,10 +59,10 @@ export const VideoController = ({
         </Button>
         <Button onClick={() => setCurrentTime(videoTime - 10)}>10秒戻る</Button>
         <Button onClick={() => setCurrentTime(videoTime - 5)}>5秒戻る</Button>
-        <Button onClick={() => setPlayBackRate(0.5)}>0.5倍速</Button>
-        <Button onClick={() => setPlayBackRate(1)}>1倍速</Button>
-        <Button onClick={() => setPlayBackRate(2)}>2倍速</Button>
-        <Button onClick={() => setPlayBackRate(6)}>6倍速</Button>
+        <Button onClick={() => setVideoPlayBackRate(0.5)}>0.5倍速</Button>
+        <Button onClick={() => setVideoPlayBackRate(1)}>1倍速</Button>
+        <Button onClick={() => setVideoPlayBackRate(2)}>2倍速</Button>
+        <Button onClick={() => setVideoPlayBackRate(6)}>6倍速</Button>
         <Box sx={{ paddingLeft: '30px' }} width={500}>
           <Slider
             aria-label="Time"

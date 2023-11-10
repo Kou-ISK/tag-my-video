@@ -1,5 +1,4 @@
 import { Box, Button } from '@mui/material';
-import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 import { VideoController } from '../components/VideoPlayer/VideoController';
 import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
 import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
@@ -7,6 +6,7 @@ import { CodePanel } from '../components/VideoPlayer/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 import { StatsModal } from '../components/VideoPlayer/StatsModal';
 import React from 'react';
+import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 
 export const VideoPlayerApp = () => {
   const {
@@ -29,8 +29,8 @@ export const VideoPlayerApp = () => {
     setMaxSec,
     isVideoPlaying,
     setisVideoPlaying,
-    playBackRate,
-    setPlayBackRate,
+    videoPlayBackRate,
+    setVideoPlayBackRate,
     handleCurrentTime,
     setPackagePath,
     addTimelineData,
@@ -45,33 +45,18 @@ export const VideoPlayerApp = () => {
     <>
       {isFileSelected && (
         <>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              margin: '0px',
-              justifyContent: 'center', // 映像を中央に配置
-              alignItems: 'center', // 垂直方向にも中央に配置
-            }}
-          >
-            {videoList !== undefined &&
-              videoList.map((filePath, index) => (
-                <VideoPlayer
-                  key={index}
-                  videoSrc={filePath}
-                  id={'video_' + index}
-                  isVideoPlaying={isVideoPlaying}
-                  videoPlayBackRate={playBackRate}
-                  currentTime={currentTime}
-                  setMaxSec={setMaxSec}
-                />
-              ))}
-          </Box>
+          <VideoPlayer
+            videoList={videoList}
+            isVideoPlaying={isVideoPlaying}
+            videoPlayBackRate={videoPlayBackRate}
+            currentTime={currentTime}
+            setMaxSec={setMaxSec}
+          />
           <Box sx={{ maxHeight: '5vh', display: 'flex', flexDirection: 'row' }}>
             <VideoController
               setIsVideoPlaying={setisVideoPlaying}
               isVideoPlaying={isVideoPlaying}
-              setPlayBackRate={setPlayBackRate}
+              setVideoPlayBackRate={setVideoPlayBackRate}
               setCurrentTime={setCurrentTime}
               handleCurrentTime={handleCurrentTime}
               maxSec={maxSec}

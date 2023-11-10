@@ -1,80 +1,44 @@
 import { Box } from '@mui/material';
-import React, { Dispatch, SetStateAction, useEffect, useRef } from 'react';
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
+import React, { Dispatch, SetStateAction } from 'react';
+import { SingleVideoPlayer } from './SingleVideoPlayer';
 
 interface VideoPlayerProps {
-  videoSrc: string;
-  id: string;
+  videoList: string[];
   isVideoPlaying: boolean;
   videoPlayBackRate: number;
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({
-  videoSrc,
-  id,
+export const VideoPlayer = ({
+  videoList,
   isVideoPlaying,
   videoPlayBackRate,
   currentTime,
   setMaxSec,
-}) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      const option = { autoplay: true, aspectRatio: '16:9' };
-      const player = videojs(videoRef.current, option);
-      return () => {
-        player.dispose();
-      };
-    }
-  }, [videoRef]);
-
-  useEffect(() => {
-    if (videoRef.current && videoSrc) {
-      // videoSrc が存在する場合のみ処理
-      const option = { autoplay: true, aspectRatio: '16:9' };
-      const player = videojs(videoRef.current, option);
-
-      player.ready(() => {
-        const duration = player.duration();
-        if (duration !== undefined) {
-          setMaxSec(duration);
-        }
-      });
-      if (isVideoPlaying) {
-        player.play();
-      } else if (!isVideoPlaying) {
-        player.pause();
-      }
-      player.playbackRate(videoPlayBackRate);
-    }
-  }, [videoSrc, isVideoPlaying, videoRef, videoPlayBackRate]);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      const player = videojs(videoRef.current);
-      if (!isNaN(currentTime)) {
-        player.currentTime(currentTime);
-      }
-    }
-  }, [currentTime]);
-  console.log('videoSrc:', videoSrc);
+}: VideoPlayerProps) => {
   return (
-    <Box width="50%" height="100%">
-      <video
-        ref={videoRef}
-        className="video-js"
-        preload="auto"
-        width="640"
-        height="360"
-        id={id}
-        controls
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        margin: '0px',
+        justifyContent: 'center', // 映像を中央に配置
+        alignItems: 'center', // 垂直方向にも中央に配置
+      }}
+    >
+      {videoList !== undefined &&
+        videoList.map((filePath, index) => (
+          <SingleVideoPlayer
+            key={index}
+            videoSrc={filePath}
+            id={'video_' + index}
+            isVideoPlaying={isVideoPlaying}
+            videoPlayBackRate={videoPlayBackRate}
+            currentTime={currentTime}
+            setMaxSec={setMaxSec}
+          />
+        ))}
     </Box>
   );
 };
