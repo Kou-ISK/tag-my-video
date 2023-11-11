@@ -76,8 +76,8 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
           justifyContent: 'space-evenly',
         }}
       >
-        <p>{teamNames[0]}</p>
-        <p>{teamNames[1]}</p>
+        {teamNames &&
+          teamNames.map((value, index) => <h3 key={index}>{value}</h3>)}
       </Box>
       <LegendComponent />
       <ResponsiveContainer height={500} width="90%">
