@@ -10,7 +10,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
@@ -20,14 +20,14 @@ import React from 'react';
 
 interface TimelineTableProps {
   timelineFilePath: string;
-  setCurrentTime: any;
+  setCurrentTime: Dispatch<SetStateAction<number>>;
   timeline: TimelineData[];
-  setTimeline: any;
+  setTimeline: Dispatch<SetStateAction<TimelineData[]>>;
   getSelectedTimelineId: any;
-  updateQualifier: any;
-  updateActionResult: any;
-  updateActionType: any;
-  sortTimelineDatas: any;
+  updateQualifier: (id: string, qualifier: string) => void;
+  updateActionResult: (id: string, actionResult: string) => void;
+  updateActionType: (id: string, actionType: string) => void;
+  sortTimelineDatas: (column: string, sortDesc: boolean) => void;
 }
 
 export const TimelineTable = ({

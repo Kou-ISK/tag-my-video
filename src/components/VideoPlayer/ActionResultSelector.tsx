@@ -12,7 +12,7 @@ interface ActionResultSelectorProps {
   id: string;
   actionName: string;
   actionResult: string;
-  updateActionResult: any;
+  updateActionResult: (id: string, actionResult: string) => void;
 }
 export const ActionResultSelector = ({
   id,

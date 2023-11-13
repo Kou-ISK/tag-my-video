@@ -1,14 +1,13 @@
 import { Box, Button, Slider } from '@mui/material';
-import { useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import videojs from 'video.js';
-import React from 'react';
 
 interface VideoControllerProps {
-  setIsVideoPlaying: any;
-  isVideoPlaying: any;
-  setVideoPlayBackRate: any;
-  setCurrentTime: any;
-  handleCurrentTime: any;
+  setIsVideoPlaying: Dispatch<SetStateAction<boolean>>;
+  isVideoPlaying: boolean;
+  setVideoPlayBackRate: Dispatch<SetStateAction<number>>;
+  setCurrentTime: Dispatch<SetStateAction<number>>;
+  handleCurrentTime: (event: Event, newValue: number | number[]) => void;
   maxSec: number;
 }
 

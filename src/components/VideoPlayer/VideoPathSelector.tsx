@@ -1,15 +1,15 @@
 import { Box, Button, Input } from '@mui/material';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
-import React, { useState } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 
 interface VideoPathSelectorProps {
-  setVideoList: any;
-  setIsFileSelected: any;
+  setVideoList: Dispatch<SetStateAction<string[]>>;
+  setIsFileSelected: Dispatch<SetStateAction<boolean>>;
   isFileSelected: boolean;
-  setTimelineFilePath: any;
-  setPackagePath: any;
-  setMetaDataConfigFilePath: any;
+  setTimelineFilePath: Dispatch<SetStateAction<string>>;
+  setPackagePath: Dispatch<SetStateAction<string>>;
+  setMetaDataConfigFilePath: Dispatch<SetStateAction<string>>;
 }
 
 export const VideoPathSelector = ({
@@ -99,7 +99,7 @@ export const VideoPathSelector = ({
       wideViewPath,
       metaDataConfig,
     );
-    if (wideViewPath) {
+    if (packageDatas.wideViewPath) {
       setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
     } else {
       setVideoList([packageDatas.tightViewPath]);

@@ -5,7 +5,12 @@ import React from 'react';
 
 interface CodeButtonProps {
   actionName: string;
-  addTimelineData: any;
+  addTimelineData: (
+    actionName: string,
+    startTime: number,
+    endTime: number,
+    qualifier: string,
+  ) => void;
   color:
     | 'inherit'
     | 'primary'
