@@ -1,13 +1,18 @@
 import { Box } from '@mui/material';
 import { CodeButton } from './CodeButton';
-import { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import React from 'react';
 
 interface CodePanelProps {
   metaDataConfigFilePath: string;
-  addTimelineData: any;
+  addTimelineData: (
+    actionName: string,
+    startTime: number,
+    endTime: number,
+    qualifier: string,
+  ) => void;
   teamNames: string[];
-  setTeamNames: any;
+  setTeamNames: Dispatch<SetStateAction<string[]>>;
 }
 
 export const CodePanel = ({
@@ -20,8 +25,8 @@ export const CodePanel = ({
   const [actionList, setActionList] = useState([]);
 
   useEffect(() => {
-    if (metaDataConfigFilePath !== undefined) {
-      // TODO fetchが上手くいっていない問題に対応する(undefinedになる)
+    if (metaDataConfigFilePath !== undefined && metaDataConfigFilePath !== '') {
+      console.log(`metadata config: ${metaDataConfigFilePath}`);
       fetch(metaDataConfigFilePath)
         .then((response) => response.json())
         .then((data) => {

@@ -12,7 +12,7 @@ interface ActionTypeSelectorProps {
   id: string;
   actionName: string;
   actionType: string;
-  updateActionType: any;
+  updateActionType: (id: string, actionType: string) => void;
 }
 export const ActionTypeSelector = ({
   id,

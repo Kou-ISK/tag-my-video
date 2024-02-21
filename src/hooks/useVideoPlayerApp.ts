@@ -20,7 +20,7 @@ export const useVideoPlayerApp = () => {
   const [maxSec, setMaxSec] = useState(0);
 
   const [isVideoPlaying, setisVideoPlaying] = useState<boolean>(false);
-  const [playBackRate, setPlayBackRate] = useState(1);
+  const [videoPlayBackRate, setVideoPlayBackRate] = useState(1);
 
   const handleCurrentTime = (event: Event, newValue: number | number[]) => {
     setCurrentTime(newValue as number);
@@ -85,7 +85,6 @@ export const useVideoPlayerApp = () => {
     }
   };
 
-  // TODO ソートするとactionResult, actionTypeが消える問題に対応する
   const sortTimelineDatas = (column: string, sortDesc: boolean) => {
     if (sortDesc) {
       if (column === 'startTime') {
@@ -136,8 +135,8 @@ export const useVideoPlayerApp = () => {
     setMaxSec,
     isVideoPlaying,
     setisVideoPlaying,
-    playBackRate,
-    setPlayBackRate,
+    videoPlayBackRate,
+    setVideoPlayBackRate,
     handleCurrentTime,
     packagePath,
     setPackagePath,

@@ -1,7 +1,6 @@
-import * as React from 'react';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { useAnalysis } from '../../hooks/useAnalysis';
 import { Pie, PieChart } from 'recharts';
@@ -40,12 +39,12 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
   }, []);
 
   const {
-    countActions,
     calculateActionDuration,
     countActionResultByTeamName,
     countActionTypeByTeamName,
     createMomentumData,
   } = useAnalysis(timeline);
+
   // ラベル名
   const formatDuration = (seconds: number) => {
     const min = Math.floor((seconds % 3600) / 60);
@@ -57,7 +56,7 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
   };
 
   const renderCustomizedLabel = ({ name, value }: any) => {
-    return name.replace(' ポゼッション', '') + ' ' + formatDuration(value);
+    return `${name.replace(' ポゼッション', '')} ${formatDuration(value)}`;
   };
   // 参考: https://recharts.org/en-US/
 
@@ -106,8 +105,6 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
                     teamName={teamName}
                     actionName={value}
                   />
-                  {/* <ActionResultPieChart countActionResultByTeamName={countActionResultByTeamName} teamName={teamName} actionName={value} />
-                                <ActionTypePieChart countActionTypeByTeamName={countActionTypeByTeamName} teamName={teamName} actionName={value} /> */}
                 </Box>
               ))}
             </Box>

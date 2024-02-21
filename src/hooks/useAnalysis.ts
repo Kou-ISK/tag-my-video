@@ -28,7 +28,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
     return actionData.sort((a, b) => b.value - a.value);
   };
 
-  const countActions = () => {
+  const countActions = (): rechartsData[] => {
     const actionData: rechartsData[] = [];
     timeline.forEach((item) => {
       // actionDataに対応するアクション名がすでに存在するかチェック

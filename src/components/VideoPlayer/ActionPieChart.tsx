@@ -1,9 +1,10 @@
 import { Box } from '@mui/material';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
 import React from 'react';
+import { rechartsData } from '../../types/RechartsData';
 
 interface ActionPieChartProps {
-  countActionFunction: any;
+  countActionFunction: (teamName: string, actionName: string) => rechartsData[];
   teamName: string;
   actionName: string;
 }
@@ -45,7 +46,7 @@ export const ActionPieChart = ({
             outerRadius={80}
             label={({ value }) => value}
           >
-            {data.map((entry: any, index: number) => (
+            {data.map((_, index: number) => (
               <Cell key={`cell-${index}`} fill={CUSTOM_COLORS[index]} />
             ))}
           </Pie>
