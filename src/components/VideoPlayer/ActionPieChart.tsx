@@ -27,6 +27,8 @@ export const ActionPieChart = ({
   actionName,
 }: ActionPieChartProps) => {
   const data = countActionFunction(teamName, actionName);
+  // 全体の合計値を計算
+  const total = data.reduce((sum, entry) => sum + entry.value, 0);
   return (
     <>
       <Box
@@ -44,7 +46,9 @@ export const ActionPieChart = ({
             cy="100%"
             innerRadius={50}
             outerRadius={80}
-            label={({ value }) => value}
+            label={({ value }) =>
+              `${((value / total) * 100).toFixed(1)}% - ` + value
+            }
           >
             {data.map((_, index: number) => (
               <Cell key={`cell-${index}`} fill={CUSTOM_COLORS[index]} />

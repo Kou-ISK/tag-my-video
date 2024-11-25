@@ -55,11 +55,11 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
   const getBarColor = (entry: any) => {
     const defaultColor = 'lightslategrey'; // 該当する色がない場合はデフォルトの色
     // ポゼッションの終わり方によって異なる色を割り当て
-    if (entry.possessionResult === 'Try') {
+    if (entry.outcome === 'Try') {
       return 'orangered';
-    } else if (entry.possessionResult === 'Positive') {
+    } else if (entry.outcome === 'Positive') {
       return 'green';
-    } else if (entry.possessionResult === 'Negative') {
+    } else if (entry.outcome === 'Negative') {
       return 'mediumpurple';
     } else {
       return defaultColor;

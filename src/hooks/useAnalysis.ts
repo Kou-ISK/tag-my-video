@@ -55,14 +55,18 @@ export const useAnalysis = (timeline: TimelineData[]) => {
     timeline
       .filter((value) => value.actionName === `${teamName} ${actionName}`)
       .forEach((item) => {
-        // qualifierに対応するアクション名がすでに存在するかチェック
-        const existingResult = actionData.find(
-          (data) => data.name === item.actionResult,
-        );
-        if (existingResult) {
-          existingResult.value += 1;
+        if (item.actionResult == 'Reset') {
+          return;
         } else {
-          actionData.push({ name: item.actionResult, value: 1 });
+          // qualifierに対応するアクション名がすでに存在するかチェック
+          const existingResult = actionData.find(
+            (data) => data.name === item.actionResult,
+          );
+          if (existingResult) {
+            existingResult.value += 1;
+          } else {
+            actionData.push({ name: item.actionResult, value: 1 });
+          }
         }
       });
     return actionData.sort(rechartsDataComparator);
@@ -86,6 +90,7 @@ export const useAnalysis = (timeline: TimelineData[]) => {
     return actionData.sort(rechartsDataComparator);
   };
 
+  // TODO: possessionStartを追加する
   const createMomentumData = (team1Name: string, team2Name: string) => {
     const momentumData: any[] = [];
     timeline
@@ -95,28 +100,32 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         const teamName = item.actionName.includes(team1Name)
           ? team1Name
           : team2Name;
-        let possessionResult: string;
+        const possessionStart = item.actionType;
+        const possessionResult = item.actionResult;
+        let outcome: string;
         if (item.actionResult === 'Try') {
-          possessionResult = 'Try';
+          outcome = 'Try';
         } else if (
           ['Kick Error', 'Pen Con', 'Turnover', 'Turnover (Scrum)'].includes(
             item.actionResult,
           )
         ) {
-          possessionResult = 'Negative';
+          outcome = 'Negative';
         } else if (
           ['Try', 'Drop Goal', 'Pen Won', 'Scrum', 'Own Lineout'].includes(
             item.actionResult,
           )
         ) {
-          possessionResult = 'Positive';
+          outcome = 'Positive';
         } else {
-          possessionResult = 'Neutral';
+          outcome = 'Neutral';
         }
         const momentumItem = {
           teamName: teamName,
           value: `${teamName === team1Name ? -duration : duration}`, //チーム1の場合、負の数を返す
+          possessionStart,
           possessionResult,
+          outcome,
         };
         momentumData.push(momentumItem);
       });
