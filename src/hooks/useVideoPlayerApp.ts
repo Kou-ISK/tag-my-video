@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TimelineData } from '../types/TimelineData';
+import { VideoSyncData } from '../types/VideoSync';
 import { ulid } from 'ulid';
 
 export const useVideoPlayerApp = () => {
@@ -21,6 +22,9 @@ export const useVideoPlayerApp = () => {
 
   const [isVideoPlaying, setisVideoPlaying] = useState<boolean>(false);
   const [videoPlayBackRate, setVideoPlayBackRate] = useState(1);
+  const [syncData, setSyncData] = useState<VideoSyncData | undefined>(
+    undefined,
+  );
 
   const handleCurrentTime = (event: Event, newValue: number | number[]) => {
     setCurrentTime(newValue as number);
@@ -114,6 +118,98 @@ export const useVideoPlayerApp = () => {
     }
   };
 
+  // 音声同期機能
+  const resyncAudio = async () => {
+    if (videoList.length < 2) {
+      console.warn('2つの映像が必要です');
+      return;
+    }
+
+    try {
+      const { AudioSyncAnalyzer } = await import('../utils/AudioSyncAnalyzer');
+      const analyzer = new AudioSyncAnalyzer();
+
+      console.log('音声同期を再実行中...');
+      const result = await analyzer.quickSyncAnalysis(
+        videoList[0],
+        videoList[1],
+      );
+
+      const newSyncData: VideoSyncData = {
+        syncOffset: result.offsetSeconds,
+        isAnalyzed: true,
+        confidenceScore: result.confidence,
+      };
+
+      setSyncData(newSyncData);
+      console.log('音声同期完了:', result);
+
+      // 同期後に映像プレイヤーを強制更新
+      await forceUpdateVideoPlayers(newSyncData);
+    } catch (error) {
+      console.error('音声同期エラー:', error);
+    }
+  };
+
+  const resetSync = () => {
+    const resetSyncData = {
+      syncOffset: 0,
+      isAnalyzed: false,
+      confidenceScore: 0,
+    };
+    setSyncData(resetSyncData);
+    console.log('同期をリセットしました');
+
+    // 同期リセット後に映像プレイヤーを強制更新
+    forceUpdateVideoPlayers(resetSyncData);
+  };
+
+  const adjustSyncOffset = async () => {
+    if (!syncData) return;
+
+    const newOffset = prompt(
+      '同期オフセットを入力してください（秒）:',
+      syncData.syncOffset.toString(),
+    );
+    if (newOffset !== null && !isNaN(Number(newOffset))) {
+      const adjustedSyncData = {
+        ...syncData,
+        syncOffset: Number(newOffset),
+        isAnalyzed: true,
+      };
+      setSyncData(adjustedSyncData);
+      console.log('同期オフセットを調整しました:', Number(newOffset));
+
+      // オフセット調整後に映像プレイヤーを強制更新
+      await forceUpdateVideoPlayers(adjustedSyncData);
+    }
+  };
+
+  // 映像プレイヤーを強制更新する関数
+  const forceUpdateVideoPlayers = async (
+    newSyncData: VideoSyncData,
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        videoList.forEach((_, index) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const player = (window as any).videojs(`video_${index}`);
+          if (player && index > 0 && newSyncData.isAnalyzed) {
+            const adjustedTime = Math.max(
+              0,
+              currentTime - newSyncData.syncOffset,
+            );
+            console.log(
+              `強制更新: Video ${index}の時刻を${adjustedTime}秒に設定`,
+            );
+            player.currentTime(adjustedTime);
+          }
+        });
+        resolve();
+      }, 200); // プレイヤーの更新を待つ
+    });
+  };
+
   return {
     timeline,
     setTimeline,
@@ -137,6 +233,8 @@ export const useVideoPlayerApp = () => {
     setisVideoPlaying,
     videoPlayBackRate,
     setVideoPlayBackRate,
+    syncData,
+    setSyncData,
     handleCurrentTime,
     packagePath,
     setPackagePath,
@@ -147,5 +245,8 @@ export const useVideoPlayerApp = () => {
     updateActionType,
     getSelectedTimelineId,
     sortTimelineDatas,
+    resyncAudio,
+    resetSync,
+    adjustSyncOffset,
   };
 };

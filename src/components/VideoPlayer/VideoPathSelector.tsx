@@ -1,6 +1,14 @@
-import { Box, Button, Input } from '@mui/material';
+import {
+  Box,
+  Button,
+  Input,
+  CircularProgress,
+  Typography,
+} from '@mui/material';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
+import { AudioSyncAnalyzer } from '../../utils/AudioSyncAnalyzer';
+import { VideoSyncData } from '../../types/VideoSync';
 import React, { Dispatch, SetStateAction, useState } from 'react';
 
 interface VideoPathSelectorProps {
@@ -10,6 +18,7 @@ interface VideoPathSelectorProps {
   setTimelineFilePath: Dispatch<SetStateAction<string>>;
   setPackagePath: Dispatch<SetStateAction<string>>;
   setMetaDataConfigFilePath: Dispatch<SetStateAction<string>>;
+  setSyncData: Dispatch<SetStateAction<VideoSyncData | undefined>>;
 }
 
 export const VideoPathSelector = ({
@@ -19,11 +28,13 @@ export const VideoPathSelector = ({
   setTimelineFilePath,
   setPackagePath,
   setMetaDataConfigFilePath,
+  setSyncData,
 }: VideoPathSelectorProps) => {
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false);
   const [packageName, setPackageName] = useState<string>('');
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
   const handleHasOpenModal = () => {
     setHasOpenModal(true);
@@ -42,11 +53,15 @@ export const VideoPathSelector = ({
           }
           return response.json();
         })
-        .then((data) => {
+        .then(async (data) => {
           if (data.wideViewPath) {
             setVideoList([data.tightViewPath, data.wideViewPath]);
+            // 2つの映像がある場合は音声同期分析を実行
+            await performAudioSync(data.tightViewPath, data.wideViewPath);
           } else {
             setVideoList([data.tightViewPath]);
+            // 1つの映像の場合は同期データをリセット
+            setSyncData(undefined);
           }
           setIsFileSelected(!isFileSelected);
         })
@@ -58,6 +73,37 @@ export const VideoPathSelector = ({
       console.log('Selected file:', packagePath);
     } else {
       console.log('No file selected.');
+    }
+  };
+
+  // 音声同期分析を実行する関数
+  const performAudioSync = async (tightPath: string, widePath: string) => {
+    setIsAnalyzing(true);
+    try {
+      const audioAnalyzer = new AudioSyncAnalyzer();
+      const syncResult = await audioAnalyzer.quickSyncAnalysis(
+        tightPath,
+        widePath,
+      );
+
+      const syncData: VideoSyncData = {
+        syncOffset: syncResult.offsetSeconds,
+        isAnalyzed: true,
+        confidenceScore: syncResult.confidence,
+      };
+
+      setSyncData(syncData);
+      console.log('音声同期完了:', syncResult);
+    } catch (error) {
+      console.error('音声同期分析エラー:', error);
+      // エラーの場合は同期なしでセット
+      setSyncData({
+        syncOffset: 0,
+        isAnalyzed: false,
+        confidenceScore: 0,
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -101,8 +147,15 @@ export const VideoPathSelector = ({
     );
     if (packageDatas.wideViewPath) {
       setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
+      // 2つの映像がある場合は音声同期分析を実行
+      await performAudioSync(
+        packageDatas.tightViewPath,
+        packageDatas.wideViewPath,
+      );
     } else {
       setVideoList([packageDatas.tightViewPath]);
+      // 1つの映像の場合は同期データをリセット
+      setSyncData(undefined);
     }
     setTimelineFilePath(packageDatas.timelinePath);
     setHasOpenModal(!hasOpenModal);
@@ -157,9 +210,24 @@ export const VideoPathSelector = ({
           <Button
             variant="contained"
             onClick={() => createPackage(packageName)}
+            disabled={isAnalyzing}
           >
             作成
           </Button>
+        </Box>
+      )}
+
+      {isAnalyzing && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mt: 2,
+          }}
+        >
+          <CircularProgress size={24} sx={{ mr: 2 }} />
+          <Typography>音声同期を分析中...</Typography>
         </Box>
       )}
     </div>

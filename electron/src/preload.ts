@@ -67,4 +67,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ) => {
     ipcRenderer.on(channel, (_event, ...args) => listener(_event, ...args));
   },
+  // メニューからの音声同期イベント
+  onResyncAudio: (callback: () => void) => {
+    ipcRenderer.on('menu-resync-audio', callback);
+  },
+  onResetSync: (callback: () => void) => {
+    ipcRenderer.on('menu-reset-sync', callback);
+  },
+  onAdjustSyncOffset: (callback: () => void) => {
+    ipcRenderer.on('menu-adjust-sync-offset', callback);
+  },
 });

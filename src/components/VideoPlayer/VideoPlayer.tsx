@@ -1,6 +1,6 @@
-import { Box } from '@mui/material';
 import React, { Dispatch, SetStateAction } from 'react';
-import { SingleVideoPlayer } from './SingleVideoPlayer';
+import { SyncedVideoPlayer } from './SyncedVideoPlayer';
+import { VideoSyncData } from '../../types/VideoSync';
 
 interface VideoPlayerProps {
   videoList: string[];
@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   videoPlayBackRate: number;
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
+  syncData?: VideoSyncData;
 }
 
 export const VideoPlayer = ({
@@ -16,29 +17,16 @@ export const VideoPlayer = ({
   videoPlayBackRate,
   currentTime,
   setMaxSec,
+  syncData,
 }: VideoPlayerProps) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        margin: '0px',
-        justifyContent: 'center', // 映像を中央に配置
-        alignItems: 'center', // 垂直方向にも中央に配置
-      }}
-    >
-      {videoList !== undefined &&
-        videoList.map((filePath, index) => (
-          <SingleVideoPlayer
-            key={index}
-            videoSrc={filePath}
-            id={'video_' + index}
-            isVideoPlaying={isVideoPlaying}
-            videoPlayBackRate={videoPlayBackRate}
-            currentTime={currentTime}
-            setMaxSec={setMaxSec}
-          />
-        ))}
-    </Box>
+    <SyncedVideoPlayer
+      videoList={videoList}
+      isVideoPlaying={isVideoPlaying}
+      videoPlayBackRate={videoPlayBackRate}
+      currentTime={currentTime}
+      setMaxSec={setMaxSec}
+      syncData={syncData}
+    />
   );
 };

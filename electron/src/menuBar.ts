@@ -56,6 +56,39 @@ export const menuBar = Menu.buildFromTemplate([
     ],
   },
   {
+    label: '映像',
+    submenu: [
+      {
+        label: '音声同期を再実行',
+        accelerator: 'CmdOrCtrl+Shift+S',
+        click: (menuItem, browserWindow) => {
+          if (browserWindow) {
+            browserWindow.webContents.send('menu-resync-audio');
+          }
+        },
+      },
+      {
+        label: '同期をリセット',
+        accelerator: 'CmdOrCtrl+Shift+R',
+        click: (menuItem, browserWindow) => {
+          if (browserWindow) {
+            browserWindow.webContents.send('menu-reset-sync');
+          }
+        },
+      },
+      { type: 'separator' },
+      {
+        label: '同期オフセット調整',
+        accelerator: 'CmdOrCtrl+Shift+O',
+        click: (menuItem, browserWindow) => {
+          if (browserWindow) {
+            browserWindow.webContents.send('menu-adjust-sync-offset');
+          }
+        },
+      },
+    ],
+  },
+  {
     label: 'ウィンドウ',
     submenu: [
       { role: 'minimize', label: '最小化' },

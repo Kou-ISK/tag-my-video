@@ -5,7 +5,7 @@ import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
 import { CodePanel } from '../components/VideoPlayer/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 import { StatsModal } from '../components/VideoPlayer/StatsModal';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 
 export const VideoPlayerApp = () => {
@@ -31,6 +31,8 @@ export const VideoPlayerApp = () => {
     setisVideoPlaying,
     videoPlayBackRate,
     setVideoPlayBackRate,
+    syncData,
+    setSyncData,
     handleCurrentTime,
     setPackagePath,
     addTimelineData,
@@ -40,7 +42,29 @@ export const VideoPlayerApp = () => {
     updateActionType,
     getSelectedTimelineId,
     sortTimelineDatas,
+    resyncAudio,
+    resetSync,
+    adjustSyncOffset,
   } = useVideoPlayerApp();
+
+  // メニューからの同期イベントを処理
+  useEffect(() => {
+    window.electronAPI.onResyncAudio(() => {
+      console.log('メニューから音声同期再実行');
+      resyncAudio();
+    });
+
+    window.electronAPI.onResetSync(() => {
+      console.log('メニューから同期リセット');
+      resetSync();
+    });
+
+    window.electronAPI.onAdjustSyncOffset(() => {
+      console.log('メニューから同期オフセット調整');
+      adjustSyncOffset();
+    });
+  }, [resyncAudio, resetSync, adjustSyncOffset]);
+
   return (
     <>
       {isFileSelected && (
@@ -51,6 +75,7 @@ export const VideoPlayerApp = () => {
             videoPlayBackRate={videoPlayBackRate}
             currentTime={currentTime}
             setMaxSec={setMaxSec}
+            syncData={syncData}
           />
           <Box sx={{ maxHeight: '5vh', display: 'flex', flexDirection: 'row' }}>
             <VideoController
@@ -60,6 +85,11 @@ export const VideoPlayerApp = () => {
               setCurrentTime={setCurrentTime}
               handleCurrentTime={handleCurrentTime}
               maxSec={maxSec}
+              videoList={videoList}
+              syncData={syncData}
+              resyncAudio={resyncAudio}
+              resetSync={resetSync}
+              adjustSyncOffset={adjustSyncOffset}
             />
             <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>
               選択したデータを削除
@@ -110,6 +140,7 @@ export const VideoPlayerApp = () => {
           setTimelineFilePath={setTimelineFilePath}
           setPackagePath={setPackagePath}
           setMetaDataConfigFilePath={setMetaDataConfigFilePath}
+          setSyncData={setSyncData}
         />
       )}
     </>

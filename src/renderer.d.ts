@@ -10,6 +10,10 @@ export interface IElectronAPI {
     metaDataConfig: any,
   ) => Promise<PackageDatas>;
   on: (channel: string, listener: (event: any, args: any) => void) => void;
+  // メニューからの音声同期イベント
+  onResyncAudio: (callback: () => void) => void;
+  onResetSync: (callback: () => void) => void;
+  onAdjustSyncOffset: (callback: () => void) => void;
 }
 
 export interface PackageDatas {

@@ -10,6 +10,7 @@ interface SingleVideoPlayerProps {
   videoPlayBackRate: number;
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
+  forceUpdate?: number; // 強制更新用のキー
 }
 
 export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
@@ -19,6 +20,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   videoPlayBackRate,
   currentTime,
   setMaxSec,
+  forceUpdate,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -60,7 +62,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         player.currentTime(currentTime);
       }
     }
-  }, [currentTime]);
+  }, [currentTime, forceUpdate]); // forceUpdateが変更されたときにも実行
   console.log('videoSrc:', videoSrc);
   return (
     <Box width="50%" height="100%">
