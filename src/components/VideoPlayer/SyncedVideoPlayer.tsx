@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { SingleVideoPlayer } from './SingleVideoPlayer';
 import { VideoSyncData } from '../../types/VideoSync';
+import videojs from 'video.js';
 
 interface SyncedVideoPlayerProps {
   videoList: string[];
@@ -68,24 +69,69 @@ export const SyncedVideoPlayer = ({
         // 強制更新キーを更新してプレイヤーを強制更新
         setForceUpdateKey((prev) => prev + 1);
 
-        // Video.jsプレイヤーを直接操作して即座に同期を反映
+        // フリッカリング防止：Video.jsプレイヤーの直接操作を最適化
         setTimeout(() => {
           videoList.forEach((_, index) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const player = (window as any).videojs(`video_${index}`);
-            if (player && index > 0) {
-              const adjustedTime = Math.max(
-                0,
-                currentTime - (syncData.syncOffset || 0),
-              );
-              console.log(`Video ${index}の時刻を${adjustedTime}秒に設定`);
-              player.currentTime(adjustedTime);
+            if (index === 0) return; // 基準動画はスキップ
+
+            try {
+              const player = videojs(`video_${index}`);
+              if (player) {
+                let duration = 0;
+                try {
+                  const dur = player.duration ? player.duration() : undefined;
+                  duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
+                } catch (durationError) {
+                  duration = 0;
+                }
+
+                if (
+                  typeof duration === 'number' &&
+                  !isNaN(duration) &&
+                  duration > 0
+                ) {
+                  const offset = syncData.syncOffset || 0;
+                  const adjustedTime = Math.max(0, currentTime - offset);
+
+                  // 現在時刻との差が大きい場合のみシーク実行
+                  let currentPlayerTime = 0;
+                  try {
+                    currentPlayerTime = player.currentTime() || 0;
+                  } catch (timeError) {
+                    currentPlayerTime = 0;
+                  }
+
+                  if (
+                    typeof currentPlayerTime === 'number' &&
+                    !isNaN(currentPlayerTime) &&
+                    Math.abs(currentPlayerTime - adjustedTime) > 1.0
+                  ) {
+                    console.log(
+                      `Video ${index}の時刻を${adjustedTime}秒に設定`,
+                    );
+
+                    // フリッカリング防止のため非同期実行
+                    requestAnimationFrame(() => {
+                      if (player) {
+                        player.currentTime(adjustedTime);
+                      }
+                    });
+                  }
+                }
+              }
+            } catch (error) {
+              console.debug(`プレイヤー${index}の同期エラー:`, error);
             }
           });
-        }, 100); // 少し遅延させてプレイヤーが準備完了するのを待つ
+        }, 300); // プレイヤーの準備を待つ時間を適切に設定
       }
     }
-  }, [syncData, currentTime, videoList.length]);
+  }, [
+    syncData?.syncOffset,
+    syncData?.isAnalyzed,
+    currentTime,
+    videoList.length,
+  ]); // 依存関係を明確に指定
 
   return (
     <Box
@@ -106,7 +152,13 @@ export const SyncedVideoPlayer = ({
             isVideoPlaying={isVideoPlaying}
             videoPlayBackRate={videoPlayBackRate}
             currentTime={adjustedCurrentTimes[index] || currentTime}
-            setMaxSec={setMaxSec}
+            setMaxSec={
+              index === 0
+                ? setMaxSec
+                : () => {
+                    /* 何もしない */
+                  }
+            } // 最初のプレイヤーのみmaxSecを設定
             forceUpdate={forceUpdateKey}
           />
         ))}

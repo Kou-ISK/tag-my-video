@@ -8,7 +8,10 @@ interface VideoControllerProps {
   isVideoPlaying: boolean;
   setVideoPlayBackRate: Dispatch<SetStateAction<number>>;
   setCurrentTime: Dispatch<SetStateAction<number>>;
-  handleCurrentTime: (event: Event, newValue: number | number[]) => void;
+  handleCurrentTime: (
+    event: React.SyntheticEvent | Event,
+    newValue: number | number[],
+  ) => void;
   maxSec: number;
   videoList: string[];
   syncData?: VideoSyncData;
@@ -32,32 +35,110 @@ export const VideoController = ({
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
 
-  // 映像の再生位置を監視（同期処理はSyncedVideoPlayerに委譲）
+  // videoTimeがNaNになった場合の修正
   useEffect(() => {
-    const players = videoList.map((_, index) => videojs(`video_${index}`));
+    if (isNaN(videoTime)) {
+      console.warn('videoTimeがNaNになっています。0にリセットします。');
+      setVideoTime(0);
+    }
+  }, [videoTime]);
+
+  // 映像の再生位置を監視（共通シークバーとの連動）
+  useEffect(() => {
+    if (videoList.length === 0) return;
+
+    let intervalId: NodeJS.Timeout;
+    let animationFrameId: number;
 
     const updateTimeHandler = () => {
-      const primaryPlayer = players[0];
-      if (primaryPlayer) {
-        const newVideoTime = primaryPlayer.currentTime();
-        if (newVideoTime !== undefined) {
-          setVideoTime(newVideoTime);
+      try {
+        const primaryPlayer = videojs(`video_0`);
+        if (primaryPlayer) {
+          let duration = 0;
+          try {
+            const dur = primaryPlayer.duration
+              ? primaryPlayer.duration()
+              : undefined;
+            duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
+          } catch (durationError) {
+            duration = 0;
+          }
+
+          if (
+            typeof duration === 'number' &&
+            !isNaN(duration) &&
+            duration > 0
+          ) {
+            let newVideoTime = 0;
+            try {
+              newVideoTime = primaryPlayer.currentTime() || 0;
+            } catch (timeError) {
+              newVideoTime = 0;
+            }
+
+            if (
+              typeof newVideoTime === 'number' &&
+              !isNaN(newVideoTime) &&
+              newVideoTime >= 0
+            ) {
+              // より細かい更新間隔でスムーズなシークバー移動を実現
+              if (Math.abs(newVideoTime - videoTime) > 0.05) {
+                setVideoTime(newVideoTime);
+              }
+            }
+          }
         }
+      } catch (error) {
+        console.debug('プレイヤーアクセスエラー:', error);
       }
     };
 
-    // 基準となる最初のプレイヤーのみ監視
-    const primaryPlayer = players[0];
-    if (primaryPlayer) {
-      primaryPlayer.on('timeupdate', updateTimeHandler);
-    }
+    const animationUpdateHandler = () => {
+      updateTimeHandler();
+      animationFrameId = requestAnimationFrame(animationUpdateHandler);
+    };
+
+    // プレイヤーの準備ができるまで待つ
+    const timer = setTimeout(() => {
+      try {
+        const primaryPlayer = videojs(`video_0`);
+        if (primaryPlayer) {
+          primaryPlayer.ready(() => {
+            // timeupdate イベントでリアルタイム更新
+            primaryPlayer.on('timeupdate', updateTimeHandler);
+
+            // アニメーションフレームベースでスムーズ更新（再生中のみ）
+            if (isVideoPlaying) {
+              animationFrameId = requestAnimationFrame(animationUpdateHandler);
+            }
+
+            // ポーリングによるバックアップ
+            intervalId = setInterval(updateTimeHandler, 200);
+          });
+        }
+      } catch (error) {
+        console.debug('プレイヤー初期化待機中:', error);
+      }
+    }, 500);
 
     return () => {
-      if (primaryPlayer) {
-        primaryPlayer.off('timeupdate', updateTimeHandler);
+      clearTimeout(timer);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      try {
+        const primaryPlayer = videojs(`video_0`);
+        if (primaryPlayer) {
+          primaryPlayer.off('timeupdate', updateTimeHandler);
+        }
+      } catch (error) {
+        console.debug('プレイヤークリーンアップエラー:', error);
       }
     };
-  }, [videoList]);
+  }, [videoList, isVideoPlaying]); // videoTimeを依存関係から除去して無限ループを防止
 
   // 同期データが変更された時の処理は不要（SyncedVideoPlayerが担当）
   // useEffect(() => { ... }, [syncData?.syncOffset, syncData?.isAnalyzed, videoList.length]);
@@ -125,10 +206,30 @@ export const VideoController = ({
           <Slider
             aria-label="Time"
             valueLabelDisplay="auto"
-            value={videoTime}
+            value={
+              typeof videoTime === 'number' &&
+              !isNaN(videoTime) &&
+              videoTime >= 0
+                ? videoTime
+                : 0
+            }
             onChange={handleCurrentTime}
             min={0}
-            max={maxSec}
+            max={
+              typeof maxSec === 'number' && !isNaN(maxSec) && maxSec > 0
+                ? maxSec
+                : 100
+            }
+            step={0.1} // より細かいステップでスムーズな操作
+            disabled={maxSec <= 0 || isNaN(maxSec)} // 無効な値の場合はスライダーを無効化
+            sx={{
+              '& .MuiSlider-thumb': {
+                transition: 'box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms', // スムーズなアニメーション
+              },
+              '& .MuiSlider-track': {
+                transition: 'none', // トラックのアニメーションを無効にしてパフォーマンス向上
+              },
+            }}
           />
           {syncData?.isAnalyzed && (
             <Typography

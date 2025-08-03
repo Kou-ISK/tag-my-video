@@ -26,8 +26,57 @@ export const useVideoPlayerApp = () => {
     undefined,
   );
 
-  const handleCurrentTime = (event: Event, newValue: number | number[]) => {
-    setCurrentTime(newValue as number);
+  const handleCurrentTime = (
+    event: React.SyntheticEvent | Event,
+    newValue: number | number[],
+  ) => {
+    const time = newValue as number;
+    if (!isNaN(time) && time >= 0) {
+      setCurrentTime(time);
+
+      // シーク操作時に全ての動画を即座に同期
+      setTimeout(() => {
+        videoList.forEach((_, index) => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const player = (window as any).videojs(`video_${index}`);
+            if (player) {
+              let duration = 0;
+              try {
+                const dur = player.duration ? player.duration() : undefined;
+                duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
+              } catch (durationError) {
+                duration = 0;
+              }
+
+              if (
+                typeof duration === 'number' &&
+                !isNaN(duration) &&
+                duration > 0
+              ) {
+                let targetTime = time;
+
+                // 2番目以降の動画には同期オフセットを適用
+                if (index > 0 && syncData?.isAnalyzed) {
+                  const offset = syncData.syncOffset || 0;
+                  targetTime = Math.max(0, time - offset);
+                }
+
+                console.log(
+                  `シーク: Video ${index}の時刻を${targetTime}秒に設定`,
+                );
+                player.currentTime(targetTime);
+              }
+            }
+          } catch (error) {
+            console.debug(`プレイヤー${index}のシークでエラー:`, error);
+          }
+        });
+      }, 50); // 短いディレイで即座に反映
+    } else {
+      console.warn('無効な時間値が設定されようとしました:', time);
+      setCurrentTime(0);
+    }
   };
   const [packagePath, setPackagePath] = useState<string>('');
 
@@ -192,21 +241,60 @@ export const useVideoPlayerApp = () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         videoList.forEach((_, index) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const player = (window as any).videojs(`video_${index}`);
-          if (player && index > 0 && newSyncData.isAnalyzed) {
-            const adjustedTime = Math.max(
-              0,
-              currentTime - newSyncData.syncOffset,
-            );
-            console.log(
-              `強制更新: Video ${index}の時刻を${adjustedTime}秒に設定`,
-            );
-            player.currentTime(adjustedTime);
+          if (index === 0) return; // 基準動画はスキップ
+
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const player = (window as any).videojs(`video_${index}`);
+            if (player && newSyncData.isAnalyzed) {
+              let duration = 0;
+              try {
+                const dur = player.duration ? player.duration() : undefined;
+                duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
+              } catch (durationError) {
+                duration = 0;
+              }
+
+              if (
+                typeof duration === 'number' &&
+                !isNaN(duration) &&
+                duration > 0
+              ) {
+                const offset = newSyncData.syncOffset || 0;
+                const adjustedTime = Math.max(0, currentTime - offset);
+
+                // 現在時刻との差が大きい場合のみシーク実行
+                let currentPlayerTime = 0;
+                try {
+                  currentPlayerTime = player.currentTime() || 0;
+                } catch (timeError) {
+                  currentPlayerTime = 0;
+                }
+
+                if (
+                  typeof currentPlayerTime === 'number' &&
+                  !isNaN(currentPlayerTime) &&
+                  Math.abs(currentPlayerTime - adjustedTime) > 0.5
+                ) {
+                  console.log(
+                    `強制更新: Video ${index}の時刻を${adjustedTime}秒に設定`,
+                  );
+
+                  // フリッカリング防止のため非同期実行
+                  requestAnimationFrame(() => {
+                    if (player) {
+                      player.currentTime(adjustedTime);
+                    }
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.debug(`プレイヤー${index}の強制更新でエラー:`, error);
           }
         });
         resolve();
-      }, 200); // プレイヤーの更新を待つ
+      }, 400); // プレイヤーの更新を待つ時間を調整
     });
   };
 
