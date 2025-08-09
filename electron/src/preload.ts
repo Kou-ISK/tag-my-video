@@ -77,4 +77,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAdjustSyncOffset: (callback: () => void) => {
     ipcRenderer.on('menu-adjust-sync-offset', callback);
   },
+  // ファイル存在確認
+  checkFileExists: async (filePath: string) => {
+    try {
+      const exists = await ipcRenderer.invoke('check-file-exists', filePath);
+      return exists;
+    } catch (error) {
+      console.error('Error checking file:', error);
+      return false;
+    }
+  },
 });

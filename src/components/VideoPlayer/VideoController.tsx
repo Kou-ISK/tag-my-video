@@ -143,18 +143,22 @@ export const VideoController = ({
   // 同期データが変更された時の処理は不要（SyncedVideoPlayerが担当）
   // useEffect(() => { ... }, [syncData?.syncOffset, syncData?.isAnalyzed, videoList.length]);
 
-  // キーボードショートカットのイベントリスナー
+  // キーボードショートカットのイベントリスナー（Electron環境でのみ実行）
   useEffect(() => {
-    window.electronAPI.on('video-shortcut-event', (event, args) => {
-      if (args > 0) {
-        setVideoPlayBackRate(args);
-        if (args === 1) {
-          setIsVideoPlaying(!isVideoPlaying);
+    if (window.electronAPI && typeof window.electronAPI.on === 'function') {
+      window.electronAPI.on('video-shortcut-event', (event, args) => {
+        if (args > 0) {
+          setVideoPlayBackRate(args);
+          if (args === 1) {
+            setIsVideoPlaying(!isVideoPlaying);
+          }
+        } else {
+          setCurrentTime(videoTime + args);
         }
-      } else {
-        setCurrentTime(videoTime + args);
-      }
-    });
+      });
+    } else {
+      console.log('ブラウザ環境: Electron APIは利用できません');
+    }
   }, [isVideoPlaying, videoTime]);
 
   return (

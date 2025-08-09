@@ -9,6 +9,11 @@ import React, { useEffect } from 'react';
 import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 
 export const VideoPlayerApp = () => {
+  console.log(
+    '🚀 VideoPlayerApp: アプリケーション起動',
+    new Date().toISOString(),
+  );
+
   const {
     timeline,
     setTimeline,
@@ -47,22 +52,48 @@ export const VideoPlayerApp = () => {
     adjustSyncOffset,
   } = useVideoPlayerApp();
 
-  // メニューからの同期イベントを処理
+  // デバッグ: videoListの変更を監視
   useEffect(() => {
-    window.electronAPI.onResyncAudio(() => {
-      console.log('メニューから音声同期再実行');
-      resyncAudio();
+    console.log('=== VideoPlayerApp: videoList changed ===', {
+      length: videoList.length,
+      list: videoList,
+      isFileSelected,
+      hasSecondVideo: videoList.length > 1,
+      secondVideoDetails:
+        videoList.length > 1
+          ? {
+              path: videoList[1],
+              valid: !!videoList[1] && videoList[1].trim() !== '',
+              type: typeof videoList[1],
+            }
+          : null,
     });
+  }, [videoList, isFileSelected]);
 
-    window.electronAPI.onResetSync(() => {
-      console.log('メニューから同期リセット');
-      resetSync();
-    });
+  // メニューからの同期イベントを処理（Electron環境でのみ実行）
+  useEffect(() => {
+    // Electron環境かどうかをチェック
+    if (
+      window.electronAPI &&
+      typeof window.electronAPI.onResyncAudio === 'function'
+    ) {
+      window.electronAPI.onResyncAudio(() => {
+        console.log('メニューから音声同期再実行');
+        resyncAudio();
+      });
 
-    window.electronAPI.onAdjustSyncOffset(() => {
-      console.log('メニューから同期オフセット調整');
-      adjustSyncOffset();
-    });
+      window.electronAPI.onResetSync(() => {
+        console.log('メニューから同期リセット');
+        resetSync();
+      });
+
+      window.electronAPI.onAdjustSyncOffset(() => {
+        console.log('メニューから同期オフセット調整');
+        adjustSyncOffset();
+      });
+    } else {
+      console.log('ブラウザ環境: Electron APIは利用できません');
+    }
   }, [resyncAudio, resetSync, adjustSyncOffset]);
 
   return (
@@ -95,9 +126,15 @@ export const VideoPlayerApp = () => {
               選択したデータを削除
             </Button>
             <Button
-              onClick={() =>
-                window.electronAPI.exportTimeline(timelineFilePath, timeline)
-              }
+              onClick={() => {
+                if (window.electronAPI) {
+                  window.electronAPI.exportTimeline(timelineFilePath, timeline);
+                } else {
+                  alert(
+                    'この機能はElectronアプリケーション内でのみ利用できます。',
+                  );
+                }
+              }}
             >
               タイムラインを保存
             </Button>

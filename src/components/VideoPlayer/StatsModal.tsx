@@ -31,11 +31,15 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
   const [open, setOpen] = useState<boolean>(false);
   const toggleOpen = () => setOpen(!open);
   useEffect(() => {
-    window.electronAPI.on('general-shortcut-event', (event, args) => {
-      if (args === 'analyze') {
-        setOpen(!open);
-      }
-    });
+    if (window.electronAPI && typeof window.electronAPI.on === 'function') {
+      window.electronAPI.on('general-shortcut-event', (event, args) => {
+        if (args === 'analyze') {
+          setOpen(!open);
+        }
+      });
+    } else {
+      console.log('ブラウザ環境: Electron APIは利用できません');
+    }
   }, []);
 
   const {

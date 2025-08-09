@@ -42,6 +42,11 @@ export const VideoPathSelector = ({
 
   // パッケージを選択した場合
   const setVideoPathByPackagePath = async () => {
+    if (!window.electronAPI) {
+      alert('この機能はElectronアプリケーション内でのみ利用できます。');
+      return;
+    }
+
     const packagePath = await window.electronAPI.openDirectory();
     if (packagePath) {
       console.log(packagePath + '/.metadata/config.json');
@@ -54,12 +59,35 @@ export const VideoPathSelector = ({
           return response.json();
         })
         .then(async (data) => {
+          console.log('Config.json loaded:', data);
+
           if (data.wideViewPath) {
-            setVideoList([data.tightViewPath, data.wideViewPath]);
+            // ファイルパスをそのまま使用（Video.jsで適切に処理される）
+            const newVideoList = [data.tightViewPath, data.wideViewPath];
+            console.log('Setting video list with 2 videos:', {
+              list: newVideoList,
+              validPaths: newVideoList.map((path) => ({
+                path,
+                exists: !!path,
+                length: path?.length,
+                isAbsolute: path?.startsWith('/'),
+              })),
+            });
+            setVideoList(newVideoList);
             // 2つの映像がある場合は音声同期分析を実行
             await performAudioSync(data.tightViewPath, data.wideViewPath);
           } else {
-            setVideoList([data.tightViewPath]);
+            const newVideoList = [data.tightViewPath];
+            console.log('Setting video list with 1 video:', {
+              list: newVideoList,
+              validPaths: newVideoList.map((path) => ({
+                path,
+                exists: !!path,
+                length: path?.length,
+                isAbsolute: path?.startsWith('/'),
+              })),
+            });
+            setVideoList(newVideoList);
             // 1つの映像の場合は同期データをリセット
             setSyncData(undefined);
           }
@@ -109,6 +137,11 @@ export const VideoPathSelector = ({
 
   // ファイル選択後にチーム名を選択し、.metadata/config.jsonに書き込む
   const createPackage = async (packageName: string) => {
+    if (!window.electronAPI) {
+      alert('この機能はElectronアプリケーション内でのみ利用できます。');
+      return;
+    }
+
     const directoryName = await window.electronAPI.openDirectory();
     const tightViewPath: string = await window.electronAPI.openFile();
     let wideViewPath = null; // 初期値をnullに設定

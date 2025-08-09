@@ -14,6 +14,8 @@ export interface IElectronAPI {
   onResyncAudio: (callback: () => void) => void;
   onResetSync: (callback: () => void) => void;
   onAdjustSyncOffset: (callback: () => void) => void;
+  // ファイル存在確認
+  checkFileExists: (filePath: string) => Promise<boolean>;
 }
 
 export interface PackageDatas {
@@ -25,6 +27,6 @@ export interface PackageDatas {
 
 declare global {
   interface Window {
-    electronAPI: IElectronAPI;
+    electronAPI?: IElectronAPI;
   }
 }

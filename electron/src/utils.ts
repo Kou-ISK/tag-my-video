@@ -120,4 +120,16 @@ export const Utils = () => {
       return packageDatas;
     },
   );
+
+  // ファイル存在確認ハンドラーを追加
+  ipcMain.handle('check-file-exists', async (event, filePath: string) => {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      console.log(`ファイル存在確認: ${filePath} - 存在します`);
+      return true;
+    } catch (error) {
+      console.log(`ファイル存在確認: ${filePath} - 存在しません`, error);
+      return false;
+    }
+  });
 };

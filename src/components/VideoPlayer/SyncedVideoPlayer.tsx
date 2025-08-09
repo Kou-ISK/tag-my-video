@@ -28,6 +28,91 @@ export const SyncedVideoPlayer = ({
   );
   const [forceUpdateKey, setForceUpdateKey] = useState<number>(0);
 
+  // スタートアップデバッグ - アプリ起動時の状態確認
+  console.log('🚀 SyncedVideoPlayer: コンポーネント起動', {
+    videoListLength: videoList.length,
+    videoList: videoList,
+    timestamp: new Date().toISOString(),
+  });
+
+  // デバッグ用：videoListの変更を監視
+  useEffect(() => {
+    console.log('=== SyncedVideoPlayer: videoListが変更されました ===');
+    console.log('映像数:', videoList.length);
+    console.log('videoList配列の内容:', videoList);
+
+    videoList.forEach((path, index) => {
+      console.log(`映像${index}:`, {
+        path: path,
+        type: typeof path,
+        length: path?.length,
+        isEmpty: !path || path.trim() === '',
+        isValidPath: path && path.startsWith('/'),
+      });
+
+      // Electronを使ったファイル存在確認
+      if (path && path.trim() !== '' && window.electronAPI) {
+        window.electronAPI
+          .checkFileExists(path)
+          .then((exists) => {
+            console.log(`Video ${index}: ファイル存在確認結果:`, {
+              path: path,
+              exists: exists,
+            });
+            if (!exists) {
+              console.error(`Video ${index}: ファイルが存在しません: ${path}`);
+            }
+          })
+          .catch((error) => {
+            console.error(`Video ${index}: ファイル存在確認エラー:`, error);
+          });
+      }
+
+      // ファイルアクセステスト
+      if (path && path.trim() !== '') {
+        const fileUrl = path.startsWith('file://') ? path : `file://${path}`;
+
+        // テスト用のビデオ要素を作成してファイルアクセスを確認
+        const testVideo = document.createElement('video');
+        testVideo.preload = 'metadata';
+
+        const testLoadStart = () => {
+          console.log(`Video ${index}: ファイルアクセス成功 - loadstart`);
+        };
+
+        const testError = (e: Event) => {
+          console.error(`Video ${index}: ファイルアクセスエラー:`, e);
+          console.error(`Video ${index}: エラー詳細:`, testVideo.error);
+        };
+
+        const testCanPlay = () => {
+          console.log(`Video ${index}: ファイル読み込み成功 - canplay`);
+          // テスト完了後にクリーンアップ
+          testVideo.removeEventListener('loadstart', testLoadStart);
+          testVideo.removeEventListener('error', testError);
+          testVideo.removeEventListener('canplay', testCanPlay);
+        };
+
+        testVideo.addEventListener('loadstart', testLoadStart);
+        testVideo.addEventListener('error', testError);
+        testVideo.addEventListener('canplay', testCanPlay);
+
+        console.log(`Video ${index}: ファイルアクセステスト開始:`, fileUrl);
+        testVideo.src = fileUrl;
+      }
+    });
+
+    // ファイルの存在確認（簡易版）
+    if (videoList.length > 1) {
+      console.log('二番目のビデオのパス詳細:', {
+        secondVideoPath: videoList[1],
+        isString: typeof videoList[1] === 'string',
+        hasContent: !!videoList[1],
+        trimmedLength: videoList[1]?.trim().length,
+      });
+    }
+  }, [videoList]);
+
   // 同期オフセットを考慮した再生時間の計算
   useEffect(() => {
     if (videoList.length > 0) {
@@ -66,22 +151,39 @@ export const SyncedVideoPlayer = ({
         setAdjustedCurrentTimes(times);
         console.log('調整済み再生時間を更新:', times);
 
-        // 強制更新キーを更新してプレイヤーを強制更新
-        setForceUpdateKey((prev) => prev + 1);
+        // 強制更新は最小限に抑制（表示消失の原因を防ぐ）
+        const shouldForceUpdate = !syncData.isAnalyzed && forceUpdateKey === 0; // 初回同期時のみ
 
-        // フリッカリング防止：Video.jsプレイヤーの直接操作を最適化
+        if (shouldForceUpdate) {
+          console.log('強制更新キーを増加:', forceUpdateKey + 1);
+          setForceUpdateKey((prev) => prev + 1);
+        }
+
+        // プレイヤー直接操作は非同期かつ慎重に実行
         setTimeout(() => {
           videoList.forEach((_, index) => {
             if (index === 0) return; // 基準動画はスキップ
 
             try {
               const player = videojs(`video_${index}`);
-              if (player) {
+              // プレイヤーの健全性チェックを改善
+              if (player && player.el() && !player.error()) {
+                // ビデオ要素が実際に存在するかチェック
+                const videoElement = player.el().querySelector('video');
+                if (!videoElement) {
+                  console.warn(`Video ${index}: ビデオ要素が見つかりません`);
+                  return;
+                }
+
                 let duration = 0;
                 try {
                   const dur = player.duration ? player.duration() : undefined;
                   duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
                 } catch (durationError) {
+                  console.debug(
+                    `Video ${index}: duration取得エラー:`,
+                    durationError,
+                  );
                   duration = 0;
                 }
 
@@ -98,40 +200,64 @@ export const SyncedVideoPlayer = ({
                   try {
                     currentPlayerTime = player.currentTime() || 0;
                   } catch (timeError) {
+                    console.debug(
+                      `Video ${index}: currentTime取得エラー:`,
+                      timeError,
+                    );
                     currentPlayerTime = 0;
                   }
 
                   if (
                     typeof currentPlayerTime === 'number' &&
                     !isNaN(currentPlayerTime) &&
-                    Math.abs(currentPlayerTime - adjustedTime) > 1.0
+                    Math.abs(currentPlayerTime - adjustedTime) > 2.0 // 閾値を大きくして頻繁なシークを避ける
                   ) {
                     console.log(
-                      `Video ${index}の時刻を${adjustedTime}秒に設定`,
+                      `Video ${index}の時刻を${adjustedTime}秒に設定 (現在: ${currentPlayerTime}秒)`,
                     );
 
-                    // フリッカリング防止のため非同期実行
-                    requestAnimationFrame(() => {
-                      if (player) {
-                        player.currentTime(adjustedTime);
-                      }
-                    });
+                    // シーク実行前にプレイヤーの状態を再確認
+                    if (player.el() && !player.error()) {
+                      requestAnimationFrame(() => {
+                        try {
+                          if (player && !player.error()) {
+                            player.currentTime(adjustedTime);
+                          }
+                        } catch (seekError) {
+                          console.warn(
+                            `Video ${index}: シークエラー:`,
+                            seekError,
+                          );
+                        }
+                      });
+                    }
                   }
+                } else {
+                  console.debug(`Video ${index}: duration無効 (${duration})`);
                 }
+              } else {
+                console.warn(`Video ${index}: プレイヤー状態異常`, {
+                  hasPlayer: !!player,
+                  hasElement: player?.el?.(),
+                  hasError: player?.error?.(),
+                });
               }
             } catch (error) {
-              console.debug(`プレイヤー${index}の同期エラー:`, error);
+              console.error(`プレイヤー${index}の同期処理でエラー:`, error);
             }
           });
-        }, 300); // プレイヤーの準備を待つ時間を適切に設定
+        }, 500); // 待機時間を延長してプレイヤーの安定性を向上
       }
     }
-  }, [
-    syncData?.syncOffset,
-    syncData?.isAnalyzed,
-    currentTime,
-    videoList.length,
-  ]); // 依存関係を明確に指定
+  }, [syncData?.syncOffset, syncData?.isAnalyzed, videoList.length]); // currentTimeを依存関係から削除して過度な更新を防止
+
+  // デバッグ情報をログ出力
+  console.log('SyncedVideoPlayer render:', {
+    videoListLength: videoList.length,
+    videoList: videoList,
+    adjustedCurrentTimes: adjustedCurrentTimes,
+    forceUpdateKey: forceUpdateKey,
+  });
 
   return (
     <Box
@@ -140,28 +266,65 @@ export const SyncedVideoPlayer = ({
         flexDirection: 'row',
         margin: '0px',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'stretch', // 子要素の高さを揃える
+        position: 'relative',
+        minHeight: '360px', // 最小高度を確保
+        flexWrap: 'nowrap', // 折り返しを防ぐ
       }}
     >
       {videoList !== undefined &&
-        videoList.map((filePath, index) => (
-          <SingleVideoPlayer
-            key={`${index}-${forceUpdateKey}`} // forceUpdateKeyをkeyに含める
-            videoSrc={filePath}
-            id={'video_' + index}
-            isVideoPlaying={isVideoPlaying}
-            videoPlayBackRate={videoPlayBackRate}
-            currentTime={adjustedCurrentTimes[index] || currentTime}
-            setMaxSec={
-              index === 0
-                ? setMaxSec
-                : () => {
-                    /* 何もしない */
-                  }
-            } // 最初のプレイヤーのみmaxSecを設定
-            forceUpdate={forceUpdateKey}
-          />
-        ))}
+        videoList.map((filePath, index) => {
+          // デバッグログ
+          console.log(`=== Rendering video ${index} ===`, {
+            filePath,
+            exists: !!filePath,
+            filePathLength: filePath?.length,
+            isEmpty: !filePath || filePath.trim() === '',
+            currentTime: adjustedCurrentTimes[index] || currentTime,
+            forceUpdateKey: forceUpdateKey,
+            videoListTotal: videoList.length,
+            isSecondVideo: index === 1,
+          });
+
+          // 空のファイルパスをスキップ
+          if (!filePath || filePath.trim() === '') {
+            console.warn(`Video ${index}: 空のファイルパスのためスキップ`);
+            return null;
+          }
+
+          console.log(
+            `Video ${index}: SingleVideoPlayerコンポーネントを作成中...`,
+          );
+
+          const component = (
+            <SingleVideoPlayer
+              key={`${index}-${forceUpdateKey}`}
+              videoSrc={filePath}
+              id={'video_' + index}
+              isVideoPlaying={isVideoPlaying}
+              videoPlayBackRate={videoPlayBackRate}
+              currentTime={adjustedCurrentTimes[index] || currentTime}
+              setMaxSec={
+                index === 0
+                  ? setMaxSec
+                  : () => {
+                      /* 何もしない */
+                    }
+              }
+              forceUpdate={forceUpdateKey}
+            />
+          );
+
+          console.log(
+            `Video ${index}: SingleVideoPlayerコンポーネント作成完了`,
+            {
+              component: component,
+              key: `${index}-${forceUpdateKey}`,
+            },
+          );
+
+          return component;
+        })}
 
       {/* 同期状態インジケーター */}
       {syncData && syncData.isAnalyzed && (

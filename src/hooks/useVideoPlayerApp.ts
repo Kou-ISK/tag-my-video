@@ -8,7 +8,7 @@ export const useVideoPlayerApp = () => {
   const [selectedTimelineIdList, setSelectedTimelineIdList] = useState<
     string[]
   >([]);
-  const [videoList, setVideoList] = useState<string[]>(['']);
+  const [videoList, setVideoList] = useState<string[]>([]); // 空の配列に修正
   const [currentTime, setCurrentTime] = useState(0);
   const [timelineFilePath, setTimelineFilePath] = useState<string>('');
   const [metaDataConfigFilePath, setMetaDataConfigFilePath] =
@@ -40,7 +40,8 @@ export const useVideoPlayerApp = () => {
           try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const player = (window as any).videojs(`video_${index}`);
-            if (player) {
+            if (player && player.el() && !player.error() && !player.disposed) {
+              // プレイヤーの状態をチェック
               let duration = 0;
               try {
                 const dur = player.duration ? player.duration() : undefined;
@@ -65,7 +66,16 @@ export const useVideoPlayerApp = () => {
                 console.log(
                   `シーク: Video ${index}の時刻を${targetTime}秒に設定`,
                 );
-                player.currentTime(targetTime);
+
+                // より安全なシーク処理
+                try {
+                  player.currentTime(targetTime);
+                } catch (seekError) {
+                  console.debug(
+                    `プレイヤー${index}のシークでエラー:`,
+                    seekError,
+                  );
+                }
               }
             }
           } catch (error) {
@@ -246,7 +256,14 @@ export const useVideoPlayerApp = () => {
           try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const player = (window as any).videojs(`video_${index}`);
-            if (player && newSyncData.isAnalyzed) {
+            if (
+              player &&
+              player.el() &&
+              !player.error() &&
+              !player.disposed &&
+              newSyncData.isAnalyzed
+            ) {
+              // プレイヤーの状態を厳密にチェック
               let duration = 0;
               try {
                 const dur = player.duration ? player.duration() : undefined;
@@ -280,12 +297,15 @@ export const useVideoPlayerApp = () => {
                     `強制更新: Video ${index}の時刻を${adjustedTime}秒に設定`,
                   );
 
-                  // フリッカリング防止のため非同期実行
-                  requestAnimationFrame(() => {
-                    if (player) {
-                      player.currentTime(adjustedTime);
-                    }
-                  });
+                  // より安全なシーク処理
+                  try {
+                    player.currentTime(adjustedTime);
+                  } catch (seekError) {
+                    console.debug(
+                      `プレイヤー${index}の強制更新シークでエラー:`,
+                      seekError,
+                    );
+                  }
                 }
               }
             }
