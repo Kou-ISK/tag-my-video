@@ -285,124 +285,65 @@ export const SyncedVideoPlayer = ({
       sx={{
         display: 'flex',
         flexDirection: 'row',
+        width: '100%',
         margin: 0,
         justifyContent: 'center',
-        alignItems: 'stretch', // 子の高さを合わせる
+        alignItems: 'flex-start',
         position: 'relative',
-        minHeight: '420px',
-        height: 'calc(100vh - 220px)',
-        maxHeight: '100vh',
+        height: 'auto',
+        maxHeight: 'none',
         flexWrap: 'nowrap',
         gap: 0,
         boxSizing: 'border-box',
         backgroundColor: '#000',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       {videoList !== undefined &&
         videoList.map((filePath, index) => {
-          // デバッグログ
-          console.log(`=== Rendering video ${index} ===`, {
-            filePath,
-            exists: !!filePath,
-            filePathLength: filePath?.length,
-            isEmpty: !filePath || filePath.trim() === '',
-            currentTime: adjustedCurrentTimes[index] || currentTime,
-            forceUpdateKey: forceUpdateKey,
-            videoListTotal: videoList.length,
-            isSecondVideo: index === 1,
-          });
-
-          // 空のファイルパスをスキップ
           if (!filePath || filePath.trim() === '') {
-            console.warn(`Video ${index}: 空のファイルパスのためスキップ`);
             return null;
           }
 
-          console.log(
-            `Video ${index}: SingleVideoPlayerコンポーネントを作成中...`,
+          return (
+            <Box
+              key={index}
+              sx={{
+                width: '50%',
+                flex: '0 0 50%',
+                minWidth: 0,
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#000',
+                boxSizing: 'border-box',
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '100%',
+                  aspectRatio: '16/9',
+                  backgroundColor: '#000',
+                  display: 'flex',
+                }}
+              >
+                <SingleVideoPlayer
+                  videoSrc={filePath}
+                  id={`video_${index}`}
+                  isVideoPlaying={isVideoPlaying}
+                  videoPlayBackRate={videoPlayBackRate}
+                  currentTime={adjustedCurrentTimes[index] || currentTime}
+                  setMaxSec={index === 0 ? setMaxSec : () => void 0}
+                  forceUpdate={forceUpdateKey}
+                />
+              </Box>
+            </Box>
           );
-
-          const component = (
-            <SingleVideoPlayer
-              key={`${index}`}
-              videoSrc={filePath}
-              id={'video_' + index}
-              isVideoPlaying={isVideoPlaying}
-              videoPlayBackRate={videoPlayBackRate}
-              currentTime={adjustedCurrentTimes[index] || currentTime}
-              setMaxSec={
-                index === 0
-                  ? setMaxSec
-                  : () => {
-                      /* noop */
-                      return void 0;
-                    }
-              }
-              forceUpdate={forceUpdateKey}
-            />
-          );
-
-          console.log(
-            `Video ${index}: SingleVideoPlayerコンポーネント作成完了`,
-            {
-              component: component,
-              key: `${index}-${forceUpdateKey}`,
-            },
-          );
-
-          return component;
         })}
-
-      {/* 同期状態インジケーター */}
-      {syncData && syncData.isAnalyzed && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            backgroundColor:
-              syncData.confidenceScore && syncData.confidenceScore > 0.8
-                ? 'rgba(0, 128, 0, 0.8)' // 高信頼度は緑
-                : 'rgba(255, 165, 0, 0.8)', // 低信頼度はオレンジ
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: 1000,
-            minWidth: '200px',
-          }}
-        >
-          <div>🎯 同期済み</div>
-          <div>オフセット: {syncData.syncOffset.toFixed(3)}秒</div>
-          {syncData.confidenceScore && (
-            <div>信頼度: {(syncData.confidenceScore * 100).toFixed(1)}%</div>
-          )}
-          <div style={{ fontSize: '10px', marginTop: '4px' }}>
-            {syncData.confidenceScore && syncData.confidenceScore > 0.8
-              ? '✅ 高精度同期'
-              : '⚠️ 要確認'}
-          </div>
-        </Box>
-      )}
-
-      {syncData && !syncData.isAnalyzed && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            backgroundColor: 'rgba(255, 0, 0, 0.8)',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: 1000,
-          }}
-        >
-          ❌ 同期未完了
-        </Box>
-      )}
     </Box>
   );
 };

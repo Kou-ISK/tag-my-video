@@ -13,6 +13,21 @@ contextBridge.exposeInMainWorld('versions', {
   // we can also expose variables, not just functions
 });
 
+// 元リスナー -> ラップしたリスナーの対応表（チャンネル毎）
+const __listenerStore: Map<
+  string,
+  Map<Function, (...args: unknown[]) => void>
+> = new Map();
+
+// 任意: 警告閾値を引き上げ（根本対処は off の修正）
+try {
+  (
+    ipcRenderer as unknown as { setMaxListeners?: (n: number) => void }
+  ).setMaxListeners?.(50);
+} catch {
+  // noop
+}
+
 contextBridge.exposeInMainWorld('electronAPI', {
   openFile: async () => {
     try {
@@ -63,9 +78,34 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   on: (
     channel: string,
-    listener: (event: IpcRendererEvent, ...args: any[]) => IpcRenderer,
+    listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
   ) => {
-    ipcRenderer.on(channel, (_event, ...args) => listener(_event, ...args));
+    const wrapped = (event: IpcRendererEvent, ...args: unknown[]) =>
+      listener(event, ...args);
+
+    let map = __listenerStore.get(channel);
+    if (!map) {
+      map = new Map();
+      __listenerStore.set(channel, map);
+    }
+    map.set(listener, wrapped);
+    ipcRenderer.on(channel, wrapped as any);
+  },
+  off: (channel: string, listener: (...args: unknown[]) => void) => {
+    try {
+      const map = __listenerStore.get(channel);
+      const wrapped = map?.get(listener as unknown as Function);
+      if (wrapped) {
+        ipcRenderer.removeListener(channel, wrapped as any);
+        map?.delete(listener as unknown as Function);
+        if (map && map.size === 0) __listenerStore.delete(channel);
+      } else {
+        // フォールバック（互換性）
+        ipcRenderer.removeListener(channel, listener as any);
+      }
+    } catch (e) {
+      console.warn('ipcRenderer.removeListener error', e);
+    }
   },
   // メニューからの音声同期イベント
   onResyncAudio: (callback: () => void) => {
@@ -76,6 +116,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onAdjustSyncOffset: (callback: () => void) => {
     ipcRenderer.on('menu-adjust-sync-offset', callback);
+  },
+  // 追加: メニューイベントの解除用API
+  offResyncAudio: (callback: () => void) => {
+    ipcRenderer.removeListener('menu-resync-audio', callback);
+  },
+  offResetSync: (callback: () => void) => {
+    ipcRenderer.removeListener('menu-reset-sync', callback);
+  },
+  offAdjustSyncOffset: (callback: () => void) => {
+    ipcRenderer.removeListener('menu-adjust-sync-offset', callback);
   },
   // ファイル存在確認
   checkFileExists: async (filePath: string) => {

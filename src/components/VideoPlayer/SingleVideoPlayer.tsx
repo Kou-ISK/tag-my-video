@@ -126,8 +126,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               console.log(`${id}: canplay イベント`);
               if (isPlayingRef.current) {
                 try {
-                  // Autoplay対策：ミュートしてから再生
-                  playerRef.current.muted?.(true);
+                  // デフォルトはミュートしない
+                  playerRef.current.muted?.(false);
                   const p = playerRef.current.play?.();
                   if (
                     p &&
@@ -135,24 +135,33 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                   ) {
                     (p as Promise<unknown>)
                       .catch(async (e) => {
-                        console.warn(`${id}: playエラー (Video.js)`, e);
-                        // HTMLVideoElementにフォールバック
+                        console.warn(`${id}: playエラー (unmuted)`, e);
+                        // 失敗時のみ一時的にミュートして再試行
                         try {
-                          const ve = playerRef.current
-                            .el()
-                            ?.querySelector('video') as HTMLVideoElement | null;
-                          if (ve) {
-                            ve.muted = true;
-                            await ve.play();
+                          playerRef.current.muted?.(true);
+                          const p2 = playerRef.current.play?.();
+                          if (
+                            p2 &&
+                            typeof (p2 as Promise<unknown>).catch === 'function'
+                          ) {
+                            await (p2 as Promise<unknown>).catch(() => {
+                              /* noop */
+                            });
+                          }
+                          // 再生開始後にミュート解除
+                          try {
+                            playerRef.current.muted?.(false);
+                          } catch {
+                            /* noop */
                           }
                         } catch (ee) {
-                          console.warn(`${id}: フォールバックplayエラー`, ee);
+                          console.warn(`${id}: 再試行playエラー`, ee);
                         }
                       })
                       .then(() => {
-                        // フォールバック後の整合
+                        // 再生成功時はミュート解除を確実に
                         try {
-                          playerRef.current.muted?.(true);
+                          playerRef.current.muted?.(false);
                         } catch {
                           /* noop */
                         }
@@ -672,35 +681,14 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   return (
     <Box
       ref={containerRef}
-      width="50%"
-      height="100%"
       sx={{
-        border: '2px solid red',
-        margin: '5px',
-        position: 'relative',
-        minHeight: '360px',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#000',
+        position: 'absolute',
+        inset: 0,
+        // 親の16:9ボックスにピッタリ合わせる
         '& .video-js': { height: '100%', width: '100%' },
         '& .vjs-tech': { objectFit: 'contain' },
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '2px 5px',
-          fontSize: '12px',
-          zIndex: 1000,
-        }}
-      >
-        {id}
-      </div>
       <video
         ref={videoRef}
         className="video-js vjs-big-play-centered"
@@ -708,9 +696,9 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         controls
         preload="auto"
         playsInline
-      >
-        {/* Video.jsがソースを管理するため<source>は置かない */}
-      </video>
+        // ミュートをデフォルトにしない
+        muted={false as unknown as undefined}
+      />
     </Box>
   );
 };

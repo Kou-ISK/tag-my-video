@@ -17,14 +17,15 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: 900,
-  height: '90vh', // モーダルの高さを0％に固定
+  maxHeight: '90vh',
   bgcolor: 'background.paper',
-  border: '2px solid #000',
+  border: 'none',
+  borderRadius: '8px',
   boxShadow: 10,
-  p: 4,
+  p: 3,
   zIndex: 2000,
   justifyItem: 'center',
-  overflowY: 'scroll',
+  overflowY: 'auto',
 };
 
 export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
@@ -32,11 +33,38 @@ export const StatsModal = ({ timeline, teamNames }: StatsModalProps) => {
   const toggleOpen = () => setOpen(!open);
   useEffect(() => {
     if (window.electronAPI && typeof window.electronAPI.on === 'function') {
-      window.electronAPI.on('general-shortcut-event', (event, args) => {
+      const channel = 'general-shortcut-event';
+      const handler = (_event: unknown, args: string) => {
         if (args === 'analyze') {
-          setOpen(!open);
+          setOpen((prev) => !prev);
         }
-      });
+      };
+
+      // 登録前に同一ハンドラを解除して重複回避
+      try {
+        window.electronAPI?.off?.(
+          channel,
+          handler as unknown as (...args: unknown[]) => void,
+        );
+      } catch {
+        // ignore
+      }
+
+      window.electronAPI.on(
+        channel,
+        handler as unknown as (event: Event, args: string) => void,
+      );
+
+      return () => {
+        try {
+          window.electronAPI?.off?.(
+            channel,
+            handler as unknown as (...args: unknown[]) => void,
+          );
+        } catch (e) {
+          console.debug('general-shortcut-event off error', e);
+        }
+      };
     } else {
       console.log('ブラウザ環境: Electron APIは利用できません');
     }

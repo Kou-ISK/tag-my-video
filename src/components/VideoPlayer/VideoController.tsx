@@ -76,6 +76,50 @@ export const VideoController = ({
     }
   };
 
+  // キーボードショートカットのイベントリスナー（Electron環境でのみ実行）
+  useEffect(() => {
+    if (window.electronAPI && typeof window.electronAPI.on === 'function') {
+      const channel = 'video-shortcut-event';
+      const handler = (_event: unknown, args: number) => {
+        if (args > 0) {
+          setVideoPlayBackRate(args);
+          if (args === 1) {
+            setIsVideoPlaying((prev) => !prev);
+          }
+        } else {
+          setCurrentTime((prev) => prev + args);
+        }
+      };
+
+      // 既存の同一ハンドラを一旦解除してから登録（重複回避）
+      try {
+        window.electronAPI?.off?.(
+          channel,
+          handler as unknown as (...args: unknown[]) => void,
+        );
+      } catch {
+        // ignore if not previously registered
+      }
+
+      window.electronAPI.on(
+        channel,
+        handler as unknown as (event: Event, args: number) => void,
+      );
+      return () => {
+        try {
+          window.electronAPI?.off?.(
+            channel,
+            handler as unknown as (...args: unknown[]) => void,
+          );
+        } catch (e) {
+          console.debug('keyboard off error', e);
+        }
+      };
+    } else {
+      console.log('ブラウザ環境: Electron APIは利用できません');
+    }
+  }, []);
+
   // 映像の再生位置を監視（共通シークバーとの連動）
   useEffect(() => {
     if (videoList.length === 0) return;
@@ -168,24 +212,6 @@ export const VideoController = ({
     };
   }, [videoList, isVideoPlaying]); // videoTimeを依存関係から除去して無限ループを防止
 
-  // キーボードショートカットのイベントリスナー（Electron環境でのみ実行）
-  useEffect(() => {
-    if (window.electronAPI && typeof window.electronAPI.on === 'function') {
-      window.electronAPI.on('video-shortcut-event', (event, args) => {
-        if (args > 0) {
-          setVideoPlayBackRate(args);
-          if (args === 1) {
-            setIsVideoPlaying(!isVideoPlaying);
-          }
-        } else {
-          setCurrentTime(videoTime + args);
-        }
-      });
-    } else {
-      console.log('ブラウザ環境: Electron APIは利用できません');
-    }
-  }, [isVideoPlaying, videoTime]);
-
   // PLAY ALLを押した直後、全プレイヤーに対して再生を試行（既存のみ）
   useEffect(() => {
     if (isVideoPlaying && videoList.length > 0) {
@@ -232,8 +258,6 @@ export const VideoController = ({
     }
   }, [isVideoPlaying, videoList]);
 
-  const noop = (e?: unknown) => void e; // 参照だけして黙殺
-
   const handlePlayPauseClick = () => {
     const next = !isVideoPlaying;
     setIsVideoPlaying(next);
@@ -247,24 +271,55 @@ export const VideoController = ({
 
         if (next) {
           try {
-            // Autoplay対策：ミュートしてから再生
-            p.muted?.(true);
             const rs = p.readyState?.() ?? 0;
+            // まずはミュートせずに再生
+            p.muted?.(false);
             if (rs >= 1) {
               const pr = p.play?.();
               if (pr && typeof (pr as Promise<unknown>).catch === 'function') {
-                (pr as Promise<unknown>).catch(noop);
+                (pr as Promise<unknown>).catch(async () => {
+                  // 失敗時のみミュートして再試行
+                  try {
+                    p.muted?.(true);
+                    const pr2 = p.play?.();
+                    if (
+                      pr2 &&
+                      typeof (pr2 as Promise<unknown>).catch === 'function'
+                    ) {
+                      await (pr2 as Promise<unknown>).catch(() => {
+                        /* noop */
+                      });
+                    }
+                  } catch {
+                    /* noop */
+                  }
+                });
               }
             } else {
               const onReady = () => {
                 try {
-                  p.muted?.(true);
+                  p.muted?.(false);
                   const pr2 = p.play?.();
                   if (
                     pr2 &&
                     typeof (pr2 as Promise<unknown>).catch === 'function'
                   ) {
-                    (pr2 as Promise<unknown>).catch(noop);
+                    (pr2 as Promise<unknown>).catch(async () => {
+                      try {
+                        p.muted?.(true);
+                        const pr3 = p.play?.();
+                        if (
+                          pr3 &&
+                          typeof (pr3 as Promise<unknown>).catch === 'function'
+                        ) {
+                          await (pr3 as Promise<unknown>).catch(() => {
+                            /* noop */
+                          });
+                        }
+                      } catch {
+                        /* noop */
+                      }
+                    });
                   }
                 } finally {
                   p.off?.('loadedmetadata', onReady);

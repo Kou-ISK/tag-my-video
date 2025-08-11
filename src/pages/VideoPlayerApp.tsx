@@ -72,25 +72,36 @@ export const VideoPlayerApp = () => {
 
   // メニューからの同期イベントを処理（Electron環境でのみ実行）
   useEffect(() => {
-    // Electron環境かどうかをチェック
     if (
       window.electronAPI &&
       typeof window.electronAPI.onResyncAudio === 'function'
     ) {
-      window.electronAPI.onResyncAudio(() => {
+      const onResync = () => {
         console.log('メニューから音声同期再実行');
         resyncAudio();
-      });
-
-      window.electronAPI.onResetSync(() => {
+      };
+      const onReset = () => {
         console.log('メニューから同期リセット');
         resetSync();
-      });
-
-      window.electronAPI.onAdjustSyncOffset(() => {
+      };
+      const onAdjust = () => {
         console.log('メニューから同期オフセット調整');
         adjustSyncOffset();
-      });
+      };
+
+      window.electronAPI.onResyncAudio(onResync);
+      window.electronAPI.onResetSync(onReset);
+      window.electronAPI.onAdjustSyncOffset(onAdjust);
+
+      return () => {
+        try {
+          window.electronAPI?.offResyncAudio?.(onResync);
+          window.electronAPI?.offResetSync?.(onReset);
+          window.electronAPI?.offAdjustSyncOffset?.(onAdjust);
+        } catch (e) {
+          console.debug('メニューイベントの解除エラー', e);
+        }
+      };
     } else {
       console.log('ブラウザ環境: Electron APIは利用できません');
     }
