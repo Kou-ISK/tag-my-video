@@ -1,5 +1,11 @@
 import { Box } from '@mui/material';
-import React, { Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
@@ -23,8 +29,17 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   forceUpdate,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
+  // PLAY ALL中に遅延初期化でも再生できるよう、最新の再生フラグを保持
+  const isPlayingRef = useRef<boolean>(isVideoPlaying);
+  const [isPlayerReady, setIsPlayerReady] = useState<boolean>(false);
+
+  // isVideoPlayingの最新値をrefに反映
+  useEffect(() => {
+    isPlayingRef.current = isVideoPlaying;
+  }, [isVideoPlaying]);
 
   // Video.jsプレイヤーの初期化（一度だけ）
   useEffect(() => {
@@ -50,20 +65,18 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     }
 
     if (videoRef.current && !playerRef.current) {
-      // 空のソースの場合は初期化をスキップ
-      if (!videoSrc || videoSrc.trim() === '') {
-        console.warn(`${id}: 空のビデオソースのため初期化をスキップ`);
-        return;
-      }
+      // 空のソースでも初期化はスキップしない
+      // ソースは後段のuseEffectで設定する
 
       const option = {
         autoplay: false,
-        aspectRatio: '16:9',
-        fluid: true,
-        responsive: true,
-        fill: true,
         controls: true,
-        preload: 'metadata',
+        // aspectRatio: '16:9', // fill使用時は不要
+        fluid: false,
+        fill: true, // コンテナにフィットさせる
+        preload: 'auto', // src設定後すぐ再生可能に
+        playsinline: true,
+        bigPlayButton: true,
       };
 
       try {
@@ -74,7 +87,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         });
 
         // 2番目以降のプレイヤーは初期化を少し遅延させて競合を避ける
-        const initDelay = id === 'video_0' ? 0 : 1000; // 遅延時間を延長
+        const initDelay = id === 'video_0' ? 0 : 250; // 遅延を短縮しすぎない
 
         setTimeout(() => {
           if (!videoRef.current || playerRef.current) {
@@ -84,7 +97,6 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             return;
           }
 
-          // Video.jsプレイヤーを作成
           console.log(`${id}: Video.jsプレイヤー作成開始...`);
 
           try {
@@ -109,8 +121,47 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               console.log(`${id}: loadstart イベント`);
             });
 
+            // 再生可能になったタイミングでも自動再生を試行
             playerRef.current.on('canplay', () => {
               console.log(`${id}: canplay イベント`);
+              if (isPlayingRef.current) {
+                try {
+                  // Autoplay対策：ミュートしてから再生
+                  playerRef.current.muted?.(true);
+                  const p = playerRef.current.play?.();
+                  if (
+                    p &&
+                    typeof (p as Promise<unknown>).catch === 'function'
+                  ) {
+                    (p as Promise<unknown>)
+                      .catch(async (e) => {
+                        console.warn(`${id}: playエラー (Video.js)`, e);
+                        // HTMLVideoElementにフォールバック
+                        try {
+                          const ve = playerRef.current
+                            .el()
+                            ?.querySelector('video') as HTMLVideoElement | null;
+                          if (ve) {
+                            ve.muted = true;
+                            await ve.play();
+                          }
+                        } catch (ee) {
+                          console.warn(`${id}: フォールバックplayエラー`, ee);
+                        }
+                      })
+                      .then(() => {
+                        // フォールバック後の整合
+                        try {
+                          playerRef.current.muted?.(true);
+                        } catch {
+                          /* noop */
+                        }
+                      });
+                  }
+                } catch (e) {
+                  console.warn(`${id}: play例外`, e);
+                }
+              }
             });
 
             playerRef.current.on('canplaythrough', () => {
@@ -127,6 +178,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                   ?.src,
               });
 
+              setIsPlayerReady(true);
+
               // DOMに実際に要素が存在するかチェック
               const domElement = document.getElementById(id);
               console.log(`${id}: DOM要素確認`, {
@@ -136,7 +189,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                 videoSrcInDOM: domElement?.querySelector('video')?.src,
               });
 
-              // プレイヤーが完全に準備完了してからdurationを取得
+              // メタデータが読み込まれてからdurationを設定
               const setDuration = () => {
                 if (!playerRef.current) return;
 
@@ -172,8 +225,22 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                 }
               };
 
-              // メタデータが読み込まれてからdurationを設定
-              playerRef.current.on('loadedmetadata', setDuration);
+              playerRef.current.on('loadedmetadata', () => {
+                setDuration();
+                // PLAY ALL中に遅延初期化でも自動再生されるようにする
+                if (isPlayingRef.current) {
+                  try {
+                    const p = playerRef.current?.play();
+                    if (p && typeof p.catch === 'function') {
+                      p.catch((e: unknown) =>
+                        console.warn(`${id}: loadedmetadata時の再生エラー:`, e),
+                      );
+                    }
+                  } catch (e) {
+                    console.warn(`${id}: loadedmetadata時の再生例外:`, e);
+                  }
+                }
+              });
 
               // すでにメタデータが読み込まれている場合は即座に実行
               setTimeout(setDuration, 200);
@@ -199,18 +266,19 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         playerRef.current = null;
       }
     };
-  }, [setMaxSec, id]);
+  }, [id]);
 
-  // 映像ソースの変更
+  // 映像ソースの変更（プレイヤー準備完了後に必ず設定）
   useEffect(() => {
     console.log(`=== ${id}: ソース変更useEffect実行 ===`, {
       hasPlayer: !!playerRef.current,
+      isPlayerReady,
       videoSrc: videoSrc,
       videoSrcLength: videoSrc?.length,
       isEmpty: !videoSrc || videoSrc.trim() === '',
     });
 
-    if (playerRef.current && videoSrc) {
+    if (playerRef.current && isPlayerReady && videoSrc) {
       try {
         // プレイヤーの状態確認
         if (playerRef.current.isDisposed?.()) {
@@ -234,16 +302,19 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           return;
         }
 
-        // ファイルパスをfile:// URLに変換（日本語文字対応）
-        const fileUrl = videoSrc.startsWith('file://')
-          ? videoSrc
-          : `file://${videoSrc}`;
+        // ファイルパスをfile:// URLに変換（日本語/スペース対応）
+        const toFileUrl = (p: string) => {
+          if (p.startsWith('file://')) {
+            const raw = p.replace(/^file:\/\//, '');
+            return `file://${encodeURI(raw)}`;
+          }
+          return `file://${encodeURI(p)}`;
+        };
+        const fileUrl = toFileUrl(videoSrc);
         console.log(`${id}: ファイルパス変換:`, {
           original: videoSrc,
           converted: fileUrl,
-          hasJapanese: /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(
-            videoSrc,
-          ),
+          hasJapanese: /[\u3040-\u30FF\u4E00-\u9FAF]/.test(videoSrc),
           pathLength: videoSrc.length,
           convertedLength: fileUrl.length,
         });
@@ -251,47 +322,24 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         // Video.jsプレイヤーにソースを設定
         try {
           playerRef.current.src({ src: fileUrl, type: 'video/mp4' });
-          console.log(`${id}: Video.jsソース設定完了`);
+          console.log(`${id}: Video.jsソース設定完了 (ready後)`);
 
-          // ソース設定後の状態確認
-          setTimeout(() => {
-            const srcObj = playerRef.current.src();
-            console.log(`${id}: 設定されたソース確認:`, srcObj);
-
-            const playerError = playerRef.current.error();
-            if (playerError) {
-              console.error(`${id}: プレイヤーエラー検出:`, playerError);
+          // ソース設定後、再生要求が出ている場合は再生を試行
+          if (isPlayingRef.current) {
+            const p = playerRef.current.play?.();
+            if (p && typeof (p as Promise<unknown>).catch === 'function') {
+              (p as Promise<unknown>).catch((e: unknown) =>
+                console.warn(`${id}: ソース設定後の再生エラー:`, e),
+              );
             }
-          }, 100);
+          }
         } catch (srcError) {
           console.error(`${id}: Video.jsソース設定エラー:`, srcError);
           return;
         }
 
-        // HTMLビデオ要素にも直接設定
-        const videoElement = playerRef.current.el()?.querySelector('video');
-        if (videoElement) {
-          videoElement.src = fileUrl;
-          console.log(`${id}: HTMLビデオ要素にもソース設定完了`);
-
-          // ファイルアクセステスト
-          videoElement.addEventListener('loadstart', () => {
-            console.log(`${id}: HTMLビデオ loadstart`);
-          });
-
-          videoElement.addEventListener('error', (e: Event) => {
-            console.error(`${id}: HTMLビデオエラー:`, e);
-            console.error(`${id}: ビデオ要素エラー詳細:`, videoElement.error);
-          });
-
-          videoElement.addEventListener('canplay', () => {
-            console.log(`${id}: HTMLビデオ canplay`);
-          });
-        } else {
-          console.warn(`${id}: HTMLビデオ要素が見つかりません`);
-        }
-
-        // ソース変更後の処理
+        // HTMLビデオ要素へ直接srcを設定するのは中止（競合の原因）
+        // 以後のロードイベント監視はVideo.jsのイベントで実施
         playerRef.current.on('loadstart', () => {
           console.log(`${id}: ビデオ読み込み開始`);
         });
@@ -311,12 +359,13 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         console.error(`${id}: ソース変更エラー:`, srcError);
       }
     } else {
-      console.warn(`${id}: プレイヤーまたはソースが未設定`, {
-        hasPlayer: !!playerRef.current,
-        videoSrc: videoSrc,
-      });
+      if (!isPlayerReady) {
+        console.warn(`${id}: プレイヤー未準備のためソース設定を保留`);
+      } else if (!videoSrc) {
+        console.warn(`${id}: 空のソースのため設定せず`);
+      }
     }
-  }, [videoSrc, id]);
+  }, [videoSrc, id, isPlayerReady]);
 
   // 再生状態の制御 - 修正版（エラーハンドリング強化）
   useEffect(() => {
@@ -328,6 +377,78 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
 
     if (playerRef.current && !playerRef.current.isDisposed?.()) {
       try {
+        // 再生制御の実処理を先に定義（早期returnでも参照可能に）
+        const runPlayback = () => {
+          if (!playerRef.current || playerRef.current.isDisposed?.()) {
+            console.warn(`${id}: プレイヤーが利用できません`);
+            return;
+          }
+          try {
+            const rootEl = playerRef.current.el();
+            if (!rootEl || !document.contains(rootEl)) {
+              console.error(`${id}: DOM要素が見つからない/削除されています`);
+              return;
+            }
+            const rs = playerRef.current.readyState?.() ?? 0;
+            if (rs < 1) {
+              console.warn(`${id}: メタデータ未読込 (readyState=${rs})`);
+              return;
+            }
+
+            if (isVideoPlaying) {
+              const paused = playerRef.current.paused();
+              if (paused) {
+                try {
+                  // Autoplay対策：ミュートしてから再生
+                  playerRef.current.muted?.(true);
+                  const p = playerRef.current.play?.();
+                  if (
+                    p &&
+                    typeof (p as Promise<unknown>).catch === 'function'
+                  ) {
+                    (p as Promise<unknown>)
+                      .catch(async (e) => {
+                        console.warn(`${id}: playエラー (Video.js)`, e);
+                        // HTMLVideoElementにフォールバック
+                        try {
+                          const ve = playerRef.current
+                            .el()
+                            ?.querySelector('video') as HTMLVideoElement | null;
+                          if (ve) {
+                            ve.muted = true;
+                            await ve.play();
+                          }
+                        } catch (ee) {
+                          console.warn(`${id}: フォールバックplayエラー`, ee);
+                        }
+                      })
+                      .then(() => {
+                        // フォールバック後の整合
+                        try {
+                          playerRef.current.muted?.(true);
+                        } catch {
+                          /* noop */
+                        }
+                      });
+                  }
+                } catch (e) {
+                  console.warn(`${id}: play例外`, e);
+                }
+              }
+            } else {
+              if (!playerRef.current.paused?.()) {
+                try {
+                  playerRef.current.pause?.();
+                } catch (e) {
+                  console.warn(`${id}: pause例外`, e);
+                }
+              }
+            }
+          } catch (e) {
+            console.error(`${id}: 再生制御中エラー`, e);
+          }
+        };
+
         // プレイヤーの状態をより詳細にチェック
         const playerError = playerRef.current.error();
         if (playerError) {
@@ -338,35 +459,23 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           return;
         }
 
-        // ビデオ要素の存在確認
-        const videoElement = playerRef.current.el()?.querySelector('video');
-        if (!videoElement) {
-          console.warn(`${id}: ビデオ要素が見つからないため再生制御をスキップ`);
-          return;
-        }
-
-        // readyStateの確認（メタデータが読み込まれているかチェック）
+        // readyStateの確認（メタデータが読み込まれているか）
         const readyState = playerRef.current.readyState?.() || 0;
         if (readyState < 1) {
           console.warn(
             `${id}: ビデオ未準備 (readyState: ${readyState})のため再生制御を遅延`,
           );
 
-          // メタデータ読み込み完了まで待機
           const onLoadedMetadata = () => {
             console.log(`${id}: メタデータ読み込み完了、再生制御を再実行`);
             if (playerRef.current && !playerRef.current.isDisposed?.()) {
-              performPlaybackControl();
+              runPlayback();
             }
-            // イベントリスナーをクリーンアップ
-            if (playerRef.current) {
-              playerRef.current.off('loadedmetadata', onLoadedMetadata);
-            }
+            playerRef.current?.off('loadedmetadata', onLoadedMetadata);
           };
 
           playerRef.current.on('loadedmetadata', onLoadedMetadata);
 
-          // タイムアウト処理で無限待機を防ぐ
           setTimeout(() => {
             if (playerRef.current) {
               playerRef.current.off('loadedmetadata', onLoadedMetadata);
@@ -377,142 +486,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           return;
         }
 
-        // 再生制御の実際の処理
-        const performPlaybackControl = () => {
-          if (!playerRef.current || playerRef.current.isDisposed?.()) {
-            console.warn(`${id}: プレイヤーが利用できません`);
-            return;
-          }
-
-          try {
-            // DOM要素の存在確認
-            const videoElement = playerRef.current.el();
-            if (!videoElement || !document.contains(videoElement)) {
-              console.error(`${id}: DOM要素が見つからないか、削除されています`);
-              return;
-            }
-
-            // readyStateの確認
-            const readyState = playerRef.current.readyState();
-            if (readyState < 1) {
-              console.warn(
-                `${id}: メタデータが読み込まれていません (readyState=${readyState})`,
-              );
-              return;
-            }
-
-            if (isVideoPlaying) {
-              // 再生開始
-              const currentPaused = playerRef.current.paused();
-              console.log(
-                `${id}: 再生開始試行 (現在の状態: paused=${currentPaused})`,
-              );
-
-              if (currentPaused) {
-                // DOM要素の再確認（play前）
-                if (!document.contains(videoElement)) {
-                  console.error(`${id}: play実行前にDOM要素が削除されました`);
-                  return;
-                }
-
-                // play()メソッドはPromiseを返すので、エラーハンドリングを改善
-                const playPromise = playerRef.current.play();
-
-                if (playPromise && typeof playPromise.then === 'function') {
-                  playPromise
-                    .then(() => {
-                      console.log(`${id}: 再生開始成功`);
-
-                      // DOM要素の再確認（play後）
-                      if (!document.contains(videoElement)) {
-                        console.error(
-                          `${id}: play実行後にDOM要素が削除されました`,
-                        );
-                      }
-                    })
-                    .catch((playError: unknown) => {
-                      console.warn(`${id}: 再生開始エラー:`, playError);
-
-                      // エラー後のDOM要素確認
-                      if (!document.contains(videoElement)) {
-                        console.error(
-                          `${id}: 再生エラー後にDOM要素が削除されました`,
-                        );
-                      }
-
-                      // 再生エラーの場合、プレイヤーが破損している可能性があるのでスキップ
-                      // ただし、AutoplayPolicyエラーなどの場合は致命的ではない
-                      if (
-                        playError &&
-                        typeof playError === 'object' &&
-                        'name' in playError
-                      ) {
-                        const errorName = (playError as Error).name;
-                        if (
-                          errorName === 'NotAllowedError' ||
-                          errorName === 'NotSupportedError'
-                        ) {
-                          console.warn(
-                            `${id}: 自動再生ポリシーエラー、ユーザー操作が必要`,
-                          );
-                        }
-                      }
-                    });
-                } else {
-                  console.log(`${id}: 再生開始（同期メソッド）`);
-                }
-              } else {
-                console.log(`${id}: 既に再生中`);
-              }
-            } else {
-              // 再生停止
-              const currentPaused = playerRef.current.paused();
-              console.log(
-                `${id}: 再生停止試行 (現在の状態: paused=${currentPaused})`,
-              );
-
-              if (!currentPaused) {
-                // DOM要素の再確認（pause前）
-                if (!document.contains(videoElement)) {
-                  console.error(`${id}: pause実行前にDOM要素が削除されました`);
-                  return;
-                }
-
-                playerRef.current.pause();
-                console.log(`${id}: 再生停止完了`);
-
-                // DOM要素の再確認（pause後）
-                if (!document.contains(videoElement)) {
-                  console.error(`${id}: pause実行後にDOM要素が削除されました`);
-                }
-              } else {
-                console.log(`${id}: 既に停止中`);
-              }
-            }
-          } catch (playStateError) {
-            console.error(`${id}: 再生状態制御でエラー:`, playStateError);
-
-            // エラーが発生した場合、プレイヤーの状態を再確認
-            if (playerRef.current) {
-              const currentPlayerError = playerRef.current.error();
-              if (currentPlayerError) {
-                console.error(
-                  `${id}: プレイヤーエラー詳細:`,
-                  currentPlayerError,
-                );
-              }
-
-              const element = playerRef.current.el();
-              if (!element) {
-                console.error(`${id}: プレイヤー要素が破損しています`);
-              } else if (!document.contains(element)) {
-                console.error(`${id}: プレイヤー要素がDOMから削除されています`);
-              }
-            }
-          }
-        };
-
-        performPlaybackControl();
+        // すぐに実行
+        runPlayback();
       } catch (error) {
         console.error(`${id}: 再生状態制御useEffectでエラー:`, error);
       }
@@ -610,17 +585,17 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
       ) {
         // プレイヤーが準備完了してからシーク実行
         const performSeek = () => {
-          if (playerRef.current && !playerRef.current.error()) {
+          if (
+            playerRef.current &&
+            !playerRef.current.isDisposed?.() &&
+            !playerRef.current.error()
+          ) {
             try {
-              // ビデオ要素の存在確認
-              const videoElement = playerRef.current
-                .el()
-                ?.querySelector('video');
-              if (!videoElement) {
-                console.warn(`${id}: ビデオ要素が見つかりません`);
+              const el = playerRef.current.el()?.querySelector('video');
+              if (!el) {
+                console.warn(`${id}: 強制更新: ビデオ要素が見つかりません`);
                 return;
               }
-
               playerRef.current.currentTime(currentTime);
               console.log(`${id}: 強制更新でシーク完了: ${currentTime}秒`);
             } catch (seekError) {
@@ -653,6 +628,38 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     }
   }, [forceUpdate, currentTime, id]);
 
+  // コンテナサイズ変化に追従して Video.js をリサイズ
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let ro: ResizeObserver | undefined;
+    try {
+      ro = new ResizeObserver(() => {
+        try {
+          if (playerRef.current && !playerRef.current.isDisposed?.()) {
+            // Video.js にリサイズを通知
+            if (typeof playerRef.current.resize === 'function') {
+              playerRef.current.resize();
+            }
+          }
+        } catch (e) {
+          console.debug(`${id}: ResizeObserver resizeエラー`, e);
+        }
+      });
+      ro.observe(containerRef.current);
+    } catch (e) {
+      console.debug(`${id}: ResizeObserver未対応/初期化エラー`, e);
+    }
+
+    return () => {
+      try {
+        ro?.disconnect();
+      } catch (e) {
+        console.debug(`${id}: ResizeObserver disconnectエラー`, e);
+      }
+    };
+  }, [id]);
+
   console.log(`SingleVideoPlayer ${id} props:`, {
     videoSrc,
     id,
@@ -664,16 +671,20 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
 
   return (
     <Box
+      ref={containerRef}
       width="50%"
       height="100%"
       sx={{
-        border: '2px solid red', // デバッグ用：コンテナを視覚化
+        border: '2px solid red',
         margin: '5px',
         position: 'relative',
-        minHeight: '300px', // 最小高度を確保してコンテナの縮小を防ぐ
-        flexShrink: 0, // フレックスボックス内での縮小を防ぐ
+        minHeight: '360px',
+        flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
+        backgroundColor: '#000',
+        '& .video-js': { height: '100%', width: '100%' },
+        '& .vjs-tech': { objectFit: 'contain' },
       }}
     >
       <div
@@ -692,19 +703,13 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
       </div>
       <video
         ref={videoRef}
-        className="video-js"
-        preload="auto"
-        width="640"
-        height="360"
+        className="video-js vjs-big-play-centered"
         id={id}
         controls
-        style={{
-          width: '100%',
-          height: '100%',
-          border: '1px solid blue', // デバッグ用：ビデオエレメントを視覚化
-        }}
+        preload="auto"
+        playsInline
       >
-        <source src={videoSrc} type="video/mp4" />
+        {/* Video.jsがソースを管理するため<source>は置かない */}
       </video>
     </Box>
   );

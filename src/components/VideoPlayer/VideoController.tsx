@@ -43,16 +43,49 @@ export const VideoController = ({
     }
   }, [videoTime]);
 
+  // 既存のVideo.jsプレイヤー取得（新規作成はしない）
+  type VjsPlayer = {
+    isDisposed?: () => boolean;
+    readyState?: () => number;
+    play?: () => Promise<void> | void;
+    pause?: () => void;
+    on?: (event: string, handler: () => void) => void;
+    off?: (event: string, handler: () => void) => void;
+    muted?: (val: boolean) => void;
+    ready?: (cb: () => void) => void;
+    currentTime?: () => number;
+    duration?: () => number;
+  };
+  type VjsNamespace = {
+    (el: string): VjsPlayer | undefined;
+    getPlayer?: (id: string) => VjsPlayer | undefined;
+  };
+  const getExistingPlayer = (id: string): VjsPlayer | undefined => {
+    try {
+      const anyVjs: VjsNamespace = videojs as unknown as VjsNamespace;
+
+      if (typeof anyVjs.getPlayer === 'function') {
+        const p = anyVjs.getPlayer?.(id);
+        if (p && !p.isDisposed?.()) return p;
+      }
+      // ここで videojs(id) を呼ぶと新規生成される可能性があるため禁止
+      return undefined;
+    } catch (e) {
+      console.debug('getExistingPlayer error', e);
+      return undefined;
+    }
+  };
+
   // 映像の再生位置を監視（共通シークバーとの連動）
   useEffect(() => {
     if (videoList.length === 0) return;
 
-    let intervalId: NodeJS.Timeout;
-    let animationFrameId: number;
+    let intervalId: NodeJS.Timeout | undefined;
+    let animationFrameId: number | undefined;
 
     const updateTimeHandler = () => {
       try {
-        const primaryPlayer = videojs(`video_0`);
+        const primaryPlayer = getExistingPlayer('video_0');
         if (primaryPlayer) {
           let duration = 0;
           try {
@@ -60,7 +93,7 @@ export const VideoController = ({
               ? primaryPlayer.duration()
               : undefined;
             duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
-          } catch (durationError) {
+          } catch {
             duration = 0;
           }
 
@@ -71,8 +104,10 @@ export const VideoController = ({
           ) {
             let newVideoTime = 0;
             try {
-              newVideoTime = primaryPlayer.currentTime() || 0;
-            } catch (timeError) {
+              newVideoTime = primaryPlayer.currentTime
+                ? primaryPlayer.currentTime() || 0
+                : 0;
+            } catch {
               newVideoTime = 0;
             }
 
@@ -81,7 +116,6 @@ export const VideoController = ({
               !isNaN(newVideoTime) &&
               newVideoTime >= 0
             ) {
-              // より細かい更新間隔でスムーズなシークバー移動を実現
               if (Math.abs(newVideoTime - videoTime) > 0.05) {
                 setVideoTime(newVideoTime);
               }
@@ -101,20 +135,18 @@ export const VideoController = ({
     // プレイヤーの準備ができるまで待つ
     const timer = setTimeout(() => {
       try {
-        const primaryPlayer = videojs(`video_0`);
+        const primaryPlayer = getExistingPlayer('video_0');
         if (primaryPlayer) {
-          primaryPlayer.ready(() => {
-            // timeupdate イベントでリアルタイム更新
-            primaryPlayer.on('timeupdate', updateTimeHandler);
+          // timeupdate イベントでリアルタイム更新
+          primaryPlayer.on?.('timeupdate', updateTimeHandler);
 
-            // アニメーションフレームベースでスムーズ更新（再生中のみ）
-            if (isVideoPlaying) {
-              animationFrameId = requestAnimationFrame(animationUpdateHandler);
-            }
+          // アニメーションフレームベースでスムーズ更新（再生中のみ）
+          if (isVideoPlaying) {
+            animationFrameId = requestAnimationFrame(animationUpdateHandler);
+          }
 
-            // ポーリングによるバックアップ
-            intervalId = setInterval(updateTimeHandler, 200);
-          });
+          // ポーリングによるバックアップ
+          intervalId = setInterval(updateTimeHandler, 200);
         }
       } catch (error) {
         console.debug('プレイヤー初期化待機中:', error);
@@ -123,25 +155,18 @@ export const VideoController = ({
 
     return () => {
       clearTimeout(timer);
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
+      if (intervalId) clearInterval(intervalId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       try {
-        const primaryPlayer = videojs(`video_0`);
+        const primaryPlayer = getExistingPlayer('video_0');
         if (primaryPlayer) {
-          primaryPlayer.off('timeupdate', updateTimeHandler);
+          primaryPlayer.off?.('timeupdate', updateTimeHandler);
         }
       } catch (error) {
         console.debug('プレイヤークリーンアップエラー:', error);
       }
     };
   }, [videoList, isVideoPlaying]); // videoTimeを依存関係から除去して無限ループを防止
-
-  // 同期データが変更された時の処理は不要（SyncedVideoPlayerが担当）
-  // useEffect(() => { ... }, [syncData?.syncOffset, syncData?.isAnalyzed, videoList.length]);
 
   // キーボードショートカットのイベントリスナー（Electron環境でのみ実行）
   useEffect(() => {
@@ -161,10 +186,114 @@ export const VideoController = ({
     }
   }, [isVideoPlaying, videoTime]);
 
+  // PLAY ALLを押した直後、全プレイヤーに対して再生を試行（既存のみ）
+  useEffect(() => {
+    if (isVideoPlaying && videoList.length > 0) {
+      const tryPlayAll = () => {
+        videoList.forEach((_, index) => {
+          try {
+            const id = `video_${index}`;
+            const player = getExistingPlayer(id);
+            if (player && !player.isDisposed?.()) {
+              const rs = player.readyState?.() ?? 0;
+              if (rs >= 1) {
+                const p = player.play?.();
+                if (p && typeof (p as Promise<unknown>).catch === 'function') {
+                  (p as Promise<unknown>).catch(() => {
+                    /* Autoplay policy等は無視 */
+                  });
+                }
+              } else {
+                // 準備完了イベントで再試行
+                const onReady = () => {
+                  const pp = player.play?.();
+                  if (
+                    pp &&
+                    typeof (pp as Promise<unknown>).catch === 'function'
+                  ) {
+                    (pp as Promise<unknown>).catch(() => {
+                      /* noop */
+                    });
+                  }
+                  player.off?.('loadedmetadata', onReady);
+                  player.off?.('canplay', onReady);
+                };
+                player.on?.('loadedmetadata', onReady);
+                player.on?.('canplay', onReady);
+              }
+            }
+          } catch {
+            /* noop */
+          }
+        });
+      };
+      const t = setTimeout(tryPlayAll, 150);
+      return () => clearTimeout(t);
+    }
+  }, [isVideoPlaying, videoList]);
+
+  const noop = (e?: unknown) => void e; // 参照だけして黙殺
+
+  const handlePlayPauseClick = () => {
+    const next = !isVideoPlaying;
+    setIsVideoPlaying(next);
+
+    try {
+      // クリックイベント内で直接play/pauseしてAutoplayポリシーを回避
+      videoList.forEach((_, index) => {
+        const id = `video_${index}`;
+        const p = getExistingPlayer(id);
+        if (!p || p.isDisposed?.()) return;
+
+        if (next) {
+          try {
+            // Autoplay対策：ミュートしてから再生
+            p.muted?.(true);
+            const rs = p.readyState?.() ?? 0;
+            if (rs >= 1) {
+              const pr = p.play?.();
+              if (pr && typeof (pr as Promise<unknown>).catch === 'function') {
+                (pr as Promise<unknown>).catch(noop);
+              }
+            } else {
+              const onReady = () => {
+                try {
+                  p.muted?.(true);
+                  const pr2 = p.play?.();
+                  if (
+                    pr2 &&
+                    typeof (pr2 as Promise<unknown>).catch === 'function'
+                  ) {
+                    (pr2 as Promise<unknown>).catch(noop);
+                  }
+                } finally {
+                  p.off?.('loadedmetadata', onReady);
+                  p.off?.('canplay', onReady);
+                }
+              };
+              p.on?.('loadedmetadata', onReady);
+              p.on?.('canplay', onReady);
+            }
+          } catch (e) {
+            console.debug('playAll error', e);
+          }
+        } else {
+          try {
+            p.pause?.();
+          } catch (e) {
+            console.debug('pauseAll error', e);
+          }
+        }
+      });
+    } catch (e) {
+      console.debug('handlePlayPauseClick error', e);
+    }
+  };
+
   return (
     <>
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <Button onClick={() => setIsVideoPlaying(!isVideoPlaying)}>
+        <Button onClick={handlePlayPauseClick}>
           {isVideoPlaying ? 'Pause All' : 'Play All'}
         </Button>
         <Button onClick={() => setCurrentTime(videoTime - 10)}>10秒戻る</Button>
@@ -224,15 +353,13 @@ export const VideoController = ({
                 ? maxSec
                 : 100
             }
-            step={0.1} // より細かいステップでスムーズな操作
-            disabled={maxSec <= 0 || isNaN(maxSec)} // 無効な値の場合はスライダーを無効化
+            step={0.1}
+            disabled={maxSec <= 0 || isNaN(maxSec)}
             sx={{
               '& .MuiSlider-thumb': {
-                transition: 'box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms', // スムーズなアニメーション
+                transition: 'box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
               },
-              '& .MuiSlider-track': {
-                transition: 'none', // トラックのアニメーションを無効にしてパフォーマンス向上
-              },
+              '& .MuiSlider-track': { transition: 'none' },
             }}
           />
           {syncData?.isAnalyzed && (

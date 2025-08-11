@@ -117,14 +117,10 @@ export const SyncedVideoPlayer = ({
   useEffect(() => {
     if (videoList.length > 0) {
       const times = videoList.map((_, index) => {
-        if (index === 0) {
-          return currentTime; // 最初の映像は基準時間
-        }
-        // 2番目の映像は同期オフセットを適用
-        // オフセットが正の場合: 2番目の映像が遅れているので、基準時間から引く
-        // オフセットが負の場合: 2番目の映像が進んでいるので、基準時間に足す
+        if (index === 0) return currentTime;
         const offset = syncData?.syncOffset || 0;
-        return Math.max(0, currentTime - offset);
+        const t = currentTime - offset;
+        return t < 0 ? 0 : t; // マイナスは0に固定
       });
       setAdjustedCurrentTimes(times);
     }
@@ -207,20 +203,45 @@ export const SyncedVideoPlayer = ({
                     currentPlayerTime = 0;
                   }
 
+                  const timeDiff = Math.abs(currentPlayerTime - adjustedTime);
+                  // Player APIに依存せず、基礎のHTMLVideoElementから状態を取得
+                  const videoEl: HTMLVideoElement | null =
+                    player.el && player.el()
+                      ? (player
+                          .el()
+                          .querySelector('video') as HTMLVideoElement | null)
+                      : null;
+                  const rs = videoEl ? videoEl.readyState : 0;
+                  const isSeeking = videoEl ? videoEl.seeking : false;
+
                   if (
                     typeof currentPlayerTime === 'number' &&
                     !isNaN(currentPlayerTime) &&
-                    Math.abs(currentPlayerTime - adjustedTime) > 2.0 // 閾値を大きくして頻繁なシークを避ける
+                    timeDiff > 2.0 &&
+                    rs >= 1 &&
+                    !isSeeking
                   ) {
                     console.log(
-                      `Video ${index}の時刻を${adjustedTime}秒に設定 (現在: ${currentPlayerTime}秒)`,
+                      `Video ${index}の時刻を${adjustedTime}秒に設定 (現在: ${currentPlayerTime}秒, 差分:${timeDiff}, readyState:${rs}, seeking:${isSeeking})`,
                     );
 
                     // シーク実行前にプレイヤーの状態を再確認
                     if (player.el() && !player.error()) {
                       requestAnimationFrame(() => {
                         try {
-                          if (player && !player.error()) {
+                          const ve: HTMLVideoElement | null =
+                            player.el && player.el()
+                              ? (player
+                                  .el()
+                                  .querySelector(
+                                    'video',
+                                  ) as HTMLVideoElement | null)
+                              : null;
+                          if (
+                            player &&
+                            !player.error() &&
+                            !(ve && ve.seeking)
+                          ) {
                             player.currentTime(adjustedTime);
                           }
                         } catch (seekError) {
@@ -264,12 +285,18 @@ export const SyncedVideoPlayer = ({
       sx={{
         display: 'flex',
         flexDirection: 'row',
-        margin: '0px',
+        margin: 0,
         justifyContent: 'center',
-        alignItems: 'stretch', // 子要素の高さを揃える
+        alignItems: 'stretch', // 子の高さを合わせる
         position: 'relative',
-        minHeight: '360px', // 最小高度を確保
-        flexWrap: 'nowrap', // 折り返しを防ぐ
+        minHeight: '420px',
+        height: 'calc(100vh - 220px)',
+        maxHeight: '100vh',
+        flexWrap: 'nowrap',
+        gap: 0,
+        boxSizing: 'border-box',
+        backgroundColor: '#000',
+        overflow: 'hidden',
       }}
     >
       {videoList !== undefined &&
@@ -298,7 +325,7 @@ export const SyncedVideoPlayer = ({
 
           const component = (
             <SingleVideoPlayer
-              key={`${index}-${forceUpdateKey}`}
+              key={`${index}`}
               videoSrc={filePath}
               id={'video_' + index}
               isVideoPlaying={isVideoPlaying}
@@ -308,7 +335,8 @@ export const SyncedVideoPlayer = ({
                 index === 0
                   ? setMaxSec
                   : () => {
-                      /* 何もしない */
+                      /* noop */
+                      return void 0;
                     }
               }
               forceUpdate={forceUpdateKey}

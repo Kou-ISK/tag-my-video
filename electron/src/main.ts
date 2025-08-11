@@ -4,6 +4,9 @@ import { Utils, setMainWindow } from './utils';
 import { shortCutKeys } from './shortCutKey';
 import { menuBar } from './menuBar';
 
+// ローカル動画の自動再生を許可
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 const mainURL = `file:${__dirname}/../../index.html`;
 
 const createWindow = () => {
@@ -12,6 +15,11 @@ const createWindow = () => {
     height: 1000,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      // ローカル file:// リソースを許可
+      webSecurity: false,
+      // Preload からのみブリッジする
+      contextIsolation: true,
+      sandbox: false,
     },
   });
   setMainWindow(mainWindow);
