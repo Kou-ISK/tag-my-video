@@ -1,4 +1,11 @@
-import { Box, Button, Slider, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Slider,
+  Typography,
+  TextField,
+  Stack,
+} from '@mui/material';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
@@ -34,6 +41,16 @@ export const VideoController = ({
   adjustSyncOffset,
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
+  const [offsetLocal, setOffsetLocal] = useState<number>(
+    syncData?.syncOffset || 0,
+  );
+
+  useEffect(() => {
+    // syncDataが更新されたら表示用のローカルオフセットも更新
+    if (typeof syncData?.syncOffset === 'number') {
+      setOffsetLocal(syncData.syncOffset);
+    }
+  }, [syncData?.syncOffset]);
 
   // videoTimeがNaNになった場合の修正
   useEffect(() => {
@@ -84,6 +101,36 @@ export const VideoController = ({
         if (args > 0) {
           setVideoPlayBackRate(args);
           if (args === 1) {
+            try {
+              // 全プレイヤーのミュート解除を先に試行
+              ['video_0', 'video_1'].forEach((id) => {
+                try {
+                  // anyを使わずにgetPlayerを厳密化
+                  type VjsNSLocal = {
+                    getPlayer?: (pid: string) => VjsPlayer | undefined;
+                  };
+                  const vjsLocal = videojs as unknown as VjsNSLocal;
+                  const p = vjsLocal.getPlayer?.(id);
+                  if (p && !p.isDisposed?.()) {
+                    try {
+                      p.muted?.(false);
+                    } catch (e) {
+                      console.debug('unmute via vjs error', e);
+                    }
+                    const ve = (p as unknown as { el?: () => Element | null })
+                      .el?.()
+                      ?.querySelector('video') as HTMLVideoElement | null;
+                    if (ve) {
+                      ve.muted = false;
+                    }
+                  }
+                } catch (e) {
+                  console.debug('getPlayer/unmute loop error', e);
+                }
+              });
+            } catch (e) {
+              console.debug('unmute-all try block error', e);
+            }
             setIsVideoPlaying((prev) => !prev);
           }
         } else {
@@ -97,8 +144,9 @@ export const VideoController = ({
           channel,
           handler as unknown as (...args: unknown[]) => void,
         );
-      } catch {
+      } catch (e) {
         // ignore if not previously registered
+        console.debug('keyboard pre-off ignored', e);
       }
 
       window.electronAPI.on(
@@ -161,7 +209,12 @@ export const VideoController = ({
               newVideoTime >= 0
             ) {
               if (Math.abs(newVideoTime - videoTime) > 0.05) {
+                // ローカル表示用
                 setVideoTime(newVideoTime);
+                // グローバルcurrentTimeも更新（再生中のみ）
+                if (isVideoPlaying) {
+                  setCurrentTime(newVideoTime);
+                }
               }
             }
           }
@@ -226,7 +279,8 @@ export const VideoController = ({
                 const p = player.play?.();
                 if (p && typeof (p as Promise<unknown>).catch === 'function') {
                   (p as Promise<unknown>).catch(() => {
-                    /* Autoplay policy等は無視 */
+                    // Autoplay policy等は無視
+                    console.debug('play promise rejected (autoplay policy)');
                   });
                 }
               } else {
@@ -238,7 +292,8 @@ export const VideoController = ({
                     typeof (pp as Promise<unknown>).catch === 'function'
                   ) {
                     (pp as Promise<unknown>).catch(() => {
-                      /* noop */
+                      // noop
+                      console.debug('delayed play promise rejected');
                     });
                   }
                   player.off?.('loadedmetadata', onReady);
@@ -263,92 +318,86 @@ export const VideoController = ({
     setIsVideoPlaying(next);
 
     try {
-      // クリックイベント内で直接play/pauseしてAutoplayポリシーを回避
-      videoList.forEach((_, index) => {
-        const id = `video_${index}`;
-        const p = getExistingPlayer(id);
-        if (!p || p.isDisposed?.()) return;
+      type MinimalVjsPlayer = {
+        isDisposed?: () => boolean;
+        muted?: (val: boolean) => void;
+        play?: () => Promise<void> | void;
+      };
+      type VjsNS = { getPlayer?: (id: string) => MinimalVjsPlayer | undefined };
+      const vjs = videojs as unknown as VjsNS;
 
-        if (next) {
+      const ids: string[] = ['video_0', 'video_1', 'video_2'];
+      ids.forEach((vid) => {
+        const p = vjs.getPlayer?.(vid);
+        if (p && !p.isDisposed?.()) {
           try {
-            const rs = p.readyState?.() ?? 0;
-            // まずはミュートせずに再生
             p.muted?.(false);
-            if (rs >= 1) {
-              const pr = p.play?.();
-              if (pr && typeof (pr as Promise<unknown>).catch === 'function') {
-                (pr as Promise<unknown>).catch(async () => {
-                  // 失敗時のみミュートして再試行
-                  try {
-                    p.muted?.(true);
-                    const pr2 = p.play?.();
-                    if (
-                      pr2 &&
-                      typeof (pr2 as Promise<unknown>).catch === 'function'
-                    ) {
-                      await (pr2 as Promise<unknown>).catch(() => {
-                        /* noop */
-                      });
-                    }
-                  } catch {
-                    /* noop */
-                  }
-                });
-              }
-            } else {
-              const onReady = () => {
-                try {
-                  p.muted?.(false);
-                  const pr2 = p.play?.();
-                  if (
-                    pr2 &&
-                    typeof (pr2 as Promise<unknown>).catch === 'function'
-                  ) {
-                    (pr2 as Promise<unknown>).catch(async () => {
-                      try {
-                        p.muted?.(true);
-                        const pr3 = p.play?.();
-                        if (
-                          pr3 &&
-                          typeof (pr3 as Promise<unknown>).catch === 'function'
-                        ) {
-                          await (pr3 as Promise<unknown>).catch(() => {
-                            /* noop */
-                          });
-                        }
-                      } catch {
-                        /* noop */
-                      }
-                    });
-                  }
-                } finally {
-                  p.off?.('loadedmetadata', onReady);
-                  p.off?.('canplay', onReady);
-                }
-              };
-              p.on?.('loadedmetadata', onReady);
-              p.on?.('canplay', onReady);
-            }
           } catch (e) {
-            console.debug('playAll error', e);
+            // ignore
+            console.debug('unmute error', e);
           }
-        } else {
-          try {
-            p.pause?.();
-          } catch (e) {
-            console.debug('pauseAll error', e);
+          if (next) {
+            const pr = p.play?.();
+            if (pr && typeof (pr as Promise<unknown>).catch === 'function') {
+              (pr as Promise<unknown>).catch(() => {
+                // autoplay policy等は無視
+                console.debug('play promise rejected (autoplay policy)');
+              });
+            }
           }
         }
       });
     } catch (e) {
+      // ignore
       console.debug('handlePlayPauseClick error', e);
+    }
+  };
+
+  const handleSliderChange = (
+    _e: React.SyntheticEvent | Event,
+    newValue: number | number[],
+  ) => {
+    // ドラッグ中はローカル表示のみ更新（実際の反映はコミット時）
+    if (typeof newValue === 'number') setVideoTime(newValue);
+  };
+
+  const handleSliderChangeCommitted = (
+    e: React.SyntheticEvent | Event,
+    newValue: number | number[],
+  ) => {
+    handleCurrentTime(e, newValue);
+  };
+
+  const saveOffsetToConfig = async () => {
+    if (!window.electronAPI) return;
+    try {
+      // パッケージフォルダを選択して .metadata/config.json に保存
+      const packageDir = await window.electronAPI.openDirectory();
+      if (!packageDir) return;
+      const configPath = `${packageDir}/.metadata/config.json`;
+      if (!syncData) return;
+      const ok = await window.electronAPI.saveSyncData(configPath, {
+        syncOffset: syncData.syncOffset || 0,
+        isAnalyzed: !!syncData.isAnalyzed,
+        confidenceScore: syncData.confidenceScore,
+      });
+      if (!ok) console.warn('オフセット保存に失敗しました');
+    } catch (e) {
+      console.warn('オフセット保存エラー', e);
     }
   };
 
   return (
     <>
-      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <Button onClick={handlePlayPauseClick}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Button onClick={handlePlayPauseClick} variant="contained">
           {isVideoPlaying ? 'Pause All' : 'Play All'}
         </Button>
         <Button onClick={() => setCurrentTime(videoTime - 10)}>10秒戻る</Button>
@@ -360,15 +409,14 @@ export const VideoController = ({
 
         {/* 同期機能ボタン（2つ以上の映像がある場合のみ表示） */}
         {videoList.length > 1 && (
-          <>
+          <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
             <Button
               onClick={resyncAudio}
               variant="outlined"
               size="small"
-              sx={{ ml: 2 }}
               disabled={!resyncAudio}
             >
-              同期再実行
+              音声から自動同期
             </Button>
             <Button
               onClick={resetSync}
@@ -383,11 +431,44 @@ export const VideoController = ({
               onClick={adjustSyncOffset}
               variant="outlined"
               size="small"
-              disabled={!adjustSyncOffset || !syncData?.isAnalyzed}
+              disabled={!adjustSyncOffset}
             >
-              オフセット調整
+              手動オフセット入力
             </Button>
-          </>
+          </Stack>
+        )}
+
+        {/* 現在のオフセット表示と保存 */}
+        {videoList.length > 1 && (
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ ml: 2, alignItems: 'center' }}
+          >
+            <Typography variant="caption" sx={{ minWidth: 120 }}>
+              現在のオフセット: {(syncData?.syncOffset || 0).toFixed(2)}s
+            </Typography>
+            <TextField
+              label="オフセット(秒)"
+              size="small"
+              type="number"
+              inputProps={{ step: 0.1 }}
+              value={Number.isFinite(offsetLocal) ? offsetLocal : 0}
+              onChange={(e) => setOffsetLocal(Number(e.target.value))}
+              onBlur={() => {
+                // 表示のみ更新（実際の適用は「手動オフセット入力」ボタンで）
+              }}
+              sx={{ width: 140 }}
+            />
+            <Button
+              onClick={saveOffsetToConfig}
+              size="small"
+              variant="text"
+              disabled={!window.electronAPI}
+            >
+              保存
+            </Button>
+          </Stack>
         )}
 
         <Box sx={{ paddingLeft: '30px' }} width={500}>
@@ -401,7 +482,8 @@ export const VideoController = ({
                 ? videoTime
                 : 0
             }
-            onChange={handleCurrentTime}
+            onChange={handleSliderChange}
+            onChangeCommitted={handleSliderChangeCommitted}
             min={0}
             max={
               typeof maxSec === 'number' && !isNaN(maxSec) && maxSec > 0
@@ -445,7 +527,8 @@ export const VideoController = ({
                 textAlign: 'center',
               }}
             >
-              同期未完了 - 「同期再実行」ボタンで同期を開始
+              同期未完了 -
+              「音声から自動同期」または「手動オフセット入力」で設定
             </Typography>
           )}
         </Box>

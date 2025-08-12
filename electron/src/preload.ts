@@ -76,6 +76,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
       console.error('Error creating package:', error);
     }
   },
+  saveSyncData: async (
+    configPath: string,
+    syncData: {
+      syncOffset: number;
+      isAnalyzed: boolean;
+      confidenceScore?: number;
+    },
+  ) => {
+    try {
+      return await ipcRenderer.invoke('save-sync-data', configPath, syncData);
+    } catch (e) {
+      console.error('saveSyncData error:', e);
+      return false;
+    }
+  },
   on: (
     channel: string,
     listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
@@ -109,23 +124,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // メニューからの音声同期イベント
   onResyncAudio: (callback: () => void) => {
+    try {
+      ipcRenderer.removeAllListeners('menu-resync-audio');
+    } catch {}
     ipcRenderer.on('menu-resync-audio', callback);
   },
   onResetSync: (callback: () => void) => {
+    try {
+      ipcRenderer.removeAllListeners('menu-reset-sync');
+    } catch {}
     ipcRenderer.on('menu-reset-sync', callback);
   },
   onAdjustSyncOffset: (callback: () => void) => {
+    try {
+      ipcRenderer.removeAllListeners('menu-adjust-sync-offset');
+    } catch {}
     ipcRenderer.on('menu-adjust-sync-offset', callback);
   },
-  // 追加: メニューイベントの解除用API
-  offResyncAudio: (callback: () => void) => {
-    ipcRenderer.removeListener('menu-resync-audio', callback);
-  },
-  offResetSync: (callback: () => void) => {
-    ipcRenderer.removeListener('menu-reset-sync', callback);
-  },
-  offAdjustSyncOffset: (callback: () => void) => {
-    ipcRenderer.removeListener('menu-adjust-sync-offset', callback);
+  // 追加: まとめてクリアするAPI（必要なら使用）
+  clearMenuSyncListeners: () => {
+    try {
+      ipcRenderer.removeAllListeners('menu-resync-audio');
+      ipcRenderer.removeAllListeners('menu-reset-sync');
+      ipcRenderer.removeAllListeners('menu-adjust-sync-offset');
+    } catch {}
   },
   // ファイル存在確認
   checkFileExists: async (filePath: string) => {

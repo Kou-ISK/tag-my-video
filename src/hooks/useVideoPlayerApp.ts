@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TimelineData } from '../types/TimelineData';
 import { VideoSyncData } from '../types/VideoSync';
 import { ulid } from 'ulid';
@@ -317,6 +317,27 @@ export const useVideoPlayerApp = () => {
       }, 400); // プレイヤーの更新を待つ時間を調整
     });
   };
+
+  // syncDataが更新されたら永続化（config.json に保存）
+  useEffect(() => {
+    (async () => {
+      try {
+        if (
+          metaDataConfigFilePath &&
+          window.electronAPI &&
+          typeof window.electronAPI.saveSyncData === 'function' &&
+          syncData
+        ) {
+          await window.electronAPI.saveSyncData(
+            metaDataConfigFilePath,
+            syncData,
+          );
+        }
+      } catch (e) {
+        console.debug('saveSyncData failed', e);
+      }
+    })();
+  }, [syncData, metaDataConfigFilePath]);
 
   return {
     timeline,

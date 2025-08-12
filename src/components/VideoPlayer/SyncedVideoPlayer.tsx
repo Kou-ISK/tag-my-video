@@ -113,18 +113,70 @@ export const SyncedVideoPlayer = ({
     }
   }, [videoList]);
 
-  // 同期オフセットを考慮した再生時間の計算
+  // 同期オフセットを考慮した再生時間の計算（堅牢化）
   useEffect(() => {
     if (videoList.length > 0) {
       const times = videoList.map((_, index) => {
-        if (index === 0) return currentTime;
+        if (index === 0) return currentTime; // 基準映像はそのまま
         const offset = syncData?.syncOffset || 0;
         const t = currentTime - offset;
-        return t < 0 ? 0 : t; // マイナスは0に固定
+        return t < 0 ? 0 : t; // マイナスは0に固定して先頭を黒背景で埋める
       });
       setAdjustedCurrentTimes(times);
     }
-  }, [currentTime, syncData, videoList.length]);
+  }, [currentTime, syncData?.syncOffset, videoList.length]);
+
+  // Video.js 簡易型
+  type VjsPlayerLite = {
+    isDisposed?: () => boolean;
+    paused?: () => boolean;
+    play?: () => Promise<void> | void;
+    muted?: (v: boolean) => void;
+  };
+  type VjsNSLite = { getPlayer?: (id: string) => VjsPlayerLite | undefined };
+
+  // オフセット到達後に2本目以降の自動再生を確実に開始（保険）
+  useEffect(() => {
+    if (!isVideoPlaying) return;
+    if (videoList.length < 2) return;
+
+    const vjsNS = videojs as unknown as VjsNSLite;
+
+    videoList.forEach((_, index) => {
+      if (index === 0) return;
+      const offset = syncData?.isAnalyzed ? syncData.syncOffset || 0 : 0;
+      if (currentTime >= offset) {
+        try {
+          const p = vjsNS.getPlayer?.(`video_${index}`);
+          if (p && !p.isDisposed?.() && p.paused?.()) {
+            try {
+              p.muted?.(false);
+            } catch {
+              /* ignore */
+            }
+            try {
+              const r = p.play?.();
+              if (r && typeof (r as Promise<void>).catch === 'function') {
+                (r as Promise<void>).catch(async () => {
+                  try {
+                    p.muted?.(true);
+                    await p.play?.();
+                    p.muted?.(false);
+                  } catch {
+                    /* ignore */
+                  }
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    });
+  }, [isVideoPlaying, currentTime, syncData?.syncOffset, videoList.length]);
 
   // デバッグ用：同期データの変更を監視
   useEffect(() => {
@@ -305,6 +357,11 @@ export const SyncedVideoPlayer = ({
             return null;
           }
 
+          // 2本目以降に同期オフセットを適用し、開始前（currentTime < offset）は再生ブロック
+          const offset =
+            index > 0 && syncData?.isAnalyzed ? syncData?.syncOffset || 0 : 0;
+          const isBlocked = index > 0 && offset > 0 && currentTime < offset;
+
           return (
             <Box
               key={index}
@@ -339,6 +396,11 @@ export const SyncedVideoPlayer = ({
                   currentTime={adjustedCurrentTimes[index] || currentTime}
                   setMaxSec={index === 0 ? setMaxSec : () => void 0}
                   forceUpdate={forceUpdateKey}
+                  blockPlay={
+                    index > 0 && (syncData?.syncOffset || 0) > 0
+                      ? currentTime < (syncData?.syncOffset || 0)
+                      : false
+                  }
                 />
               </Box>
             </Box>

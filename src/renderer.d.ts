@@ -20,6 +20,14 @@ export interface IElectronAPI {
   offAdjustSyncOffset: (callback: () => void) => void; // 追加
   // ファイル存在確認
   checkFileExists: (filePath: string) => Promise<boolean>;
+  saveSyncData: (
+    configPath: string,
+    syncData: {
+      syncOffset: number;
+      isAnalyzed: boolean;
+      confidenceScore?: number;
+    },
+  ) => Promise<boolean>;
 }
 
 export interface PackageDatas {

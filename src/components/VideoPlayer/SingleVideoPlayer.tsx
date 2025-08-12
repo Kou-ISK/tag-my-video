@@ -17,6 +17,7 @@ interface SingleVideoPlayerProps {
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
   forceUpdate?: number;
+  blockPlay?: boolean; // オフセットによる遅延再生ブロック
 }
 
 export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
@@ -27,6 +28,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   currentTime,
   setMaxSec,
   forceUpdate,
+  blockPlay,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -124,7 +126,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             // 再生可能になったタイミングでも自動再生を試行
             playerRef.current.on('canplay', () => {
               console.log(`${id}: canplay イベント`);
-              if (isPlayingRef.current) {
+              if (isPlayingRef.current && !blockPlay) {
                 try {
                   // デフォルトはミュートしない
                   playerRef.current.muted?.(false);
@@ -145,14 +147,14 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                             typeof (p2 as Promise<unknown>).catch === 'function'
                           ) {
                             await (p2 as Promise<unknown>).catch(() => {
-                              /* noop */
+                              // ignore
                             });
                           }
                           // 再生開始後にミュート解除
                           try {
                             playerRef.current.muted?.(false);
                           } catch {
-                            /* noop */
+                            // ignore
                           }
                         } catch (ee) {
                           console.warn(`${id}: 再試行playエラー`, ee);
@@ -163,12 +165,19 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                         try {
                           playerRef.current.muted?.(false);
                         } catch {
-                          /* noop */
+                          // ignore
                         }
                       });
                   }
                 } catch (e) {
                   console.warn(`${id}: play例外`, e);
+                }
+              } else if (blockPlay) {
+                // ブロック中は確実に停止
+                try {
+                  playerRef.current.pause?.();
+                } catch (e) {
+                  console.debug(`${id}: ブロック中pause例外`, e);
                 }
               }
             });
@@ -236,8 +245,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
 
               playerRef.current.on('loadedmetadata', () => {
                 setDuration();
-                // PLAY ALL中に遅延初期化でも自動再生されるようにする
-                if (isPlayingRef.current) {
+                // PLAY ALL中に遅延初期化でも自動再生されるようにする（ただしブロック時は抑止）
+                if (isPlayingRef.current && !blockPlay) {
                   try {
                     const p = playerRef.current?.play();
                     if (p && typeof p.catch === 'function') {
@@ -247,6 +256,15 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                     }
                   } catch (e) {
                     console.warn(`${id}: loadedmetadata時の再生例外:`, e);
+                  }
+                } else if (blockPlay) {
+                  try {
+                    playerRef.current.pause?.();
+                  } catch (e) {
+                    console.debug(
+                      `${id}: loadedmetadata ブロック中pause例外`,
+                      e,
+                    );
                   }
                 }
               });
@@ -376,12 +394,13 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     }
   }, [videoSrc, id, isPlayerReady]);
 
-  // 再生状態の制御 - 修正版（エラーハンドリング強化）
+  // 再生状態の制御 - 修正版
   useEffect(() => {
     console.log(`${id}: 再生状態制御useEffect実行`, {
       hasPlayer: !!playerRef.current,
       isVideoPlaying: isVideoPlaying,
       playerDisposed: playerRef.current?.isDisposed?.(),
+      blockPlay,
     });
 
     if (playerRef.current && !playerRef.current.isDisposed?.()) {
@@ -404,12 +423,21 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               return;
             }
 
+            // オフセットによりブロック中は必ず停止
+            if (blockPlay) {
+              try {
+                playerRef.current.pause?.();
+              } catch (e) {
+                console.debug(`${id}: ブロック中pause例外`, e);
+              }
+              return;
+            }
+
             if (isVideoPlaying) {
               const paused = playerRef.current.paused();
               if (paused) {
                 try {
-                  // Autoplay対策：ミュートしてから再生
-                  playerRef.current.muted?.(true);
+                  playerRef.current.muted?.(false);
                   const p = playerRef.current.play?.();
                   if (
                     p &&
@@ -424,7 +452,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                             .el()
                             ?.querySelector('video') as HTMLVideoElement | null;
                           if (ve) {
-                            ve.muted = true;
+                            ve.muted = false;
                             await ve.play();
                           }
                         } catch (ee) {
@@ -432,11 +460,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                         }
                       })
                       .then(() => {
-                        // フォールバック後の整合
                         try {
-                          playerRef.current.muted?.(true);
+                          playerRef.current.muted?.(false);
                         } catch {
-                          /* noop */
+                          // ignore
                         }
                       });
                   }
@@ -457,7 +484,6 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             console.error(`${id}: 再生制御中エラー`, e);
           }
         };
-
         // プレイヤーの状態をより詳細にチェック
         const playerError = playerRef.current.error();
         if (playerError) {
@@ -506,7 +532,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         isDisposed: playerRef.current?.isDisposed?.(),
       });
     }
-  }, [isVideoPlaying, id]);
+  }, [isVideoPlaying, id, blockPlay]);
 
   // 再生速度の制御
   useEffect(() => {
@@ -687,6 +713,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         // 親の16:9ボックスにピッタリ合わせる
         '& .video-js': { height: '100%', width: '100%' },
         '& .vjs-tech': { objectFit: 'contain' },
+        // オフセット待機中はBig Playボタンを非表示
+        ...(blockPlay
+          ? { '& .vjs-big-play-button': { opacity: 0, pointerEvents: 'none' } }
+          : {}),
       }}
     >
       <video
@@ -696,9 +726,17 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         controls
         preload="auto"
         playsInline
-        // ミュートをデフォルトにしない
-        muted={false as unknown as undefined}
       />
+      {blockPlay && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: '#000',
+            zIndex: 2,
+          }}
+        />
+      )}
     </Box>
   );
 };
