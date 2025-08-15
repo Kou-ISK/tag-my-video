@@ -61,9 +61,12 @@ export const VideoPathSelector = ({
         .then(async (data) => {
           console.log('Config.json loaded:', data);
 
-          if (data.wideViewPath) {
-            // ファイルパスをそのまま使用（Video.jsで適切に処理される）
-            const newVideoList = [data.tightViewPath, data.wideViewPath];
+          const hasWide = !!data.wideViewPath;
+          const tight = data.tightViewPath as string;
+          const wide = (data.wideViewPath || undefined) as string | undefined;
+
+          if (hasWide && tight && wide) {
+            const newVideoList = [tight, wide];
             console.log('Setting video list with 2 videos:', {
               list: newVideoList,
               validPaths: newVideoList.map((path) => ({
@@ -74,10 +77,31 @@ export const VideoPathSelector = ({
               })),
             });
             setVideoList(newVideoList);
-            // 2つの映像がある場合は音声同期分析を実行
-            await performAudioSync(data.tightViewPath, data.wideViewPath);
+
+            // 既存の同期データがあれば復元し、なければ音声同期を実施
+            const sd = data.syncData as
+              | {
+                  syncOffset?: unknown;
+                  isAnalyzed?: unknown;
+                  confidenceScore?: unknown;
+                }
+              | undefined;
+            if (sd && typeof sd.syncOffset === 'number') {
+              const restored: VideoSyncData = {
+                syncOffset: Number(sd.syncOffset) || 0,
+                isAnalyzed: !!sd.isAnalyzed,
+                confidenceScore:
+                  typeof sd.confidenceScore === 'number'
+                    ? sd.confidenceScore
+                    : undefined,
+              };
+              setSyncData(restored);
+              console.log('既存の同期データを復元しました:', restored);
+            } else {
+              await performAudioSync(tight, wide);
+            }
           } else {
-            const newVideoList = [data.tightViewPath];
+            const newVideoList = [tight];
             console.log('Setting video list with 1 video:', {
               list: newVideoList,
               validPaths: newVideoList.map((path) => ({
@@ -88,8 +112,7 @@ export const VideoPathSelector = ({
               })),
             });
             setVideoList(newVideoList);
-            // 1つの映像の場合は同期データをリセット
-            setSyncData(undefined);
+            setSyncData(undefined); // 1本構成では同期なし
           }
           setIsFileSelected(!isFileSelected);
         })

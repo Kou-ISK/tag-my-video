@@ -1,11 +1,4 @@
-import {
-  Box,
-  Button,
-  Slider,
-  Typography,
-  TextField,
-  Stack,
-} from '@mui/material';
+import { Box, Button, Slider, Typography } from '@mui/material';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
@@ -24,7 +17,10 @@ interface VideoControllerProps {
   syncData?: VideoSyncData;
   resyncAudio?: () => void;
   resetSync?: () => void;
-  adjustSyncOffset?: () => void;
+  adjustSyncOffset?: () => void; // 追加
+  manualSyncFromPlayers?: () => void;
+  syncMode?: 'auto' | 'manual';
+  setSyncMode?: Dispatch<SetStateAction<'auto' | 'manual'>>;
 }
 
 export const VideoController = ({
@@ -35,25 +31,17 @@ export const VideoController = ({
   handleCurrentTime,
   maxSec,
   videoList,
-  syncData,
   resyncAudio,
   resetSync,
-  adjustSyncOffset,
+  adjustSyncOffset, // 追加
+  manualSyncFromPlayers,
+  syncMode = 'auto',
+  setSyncMode,
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
-  const [offsetLocal, setOffsetLocal] = useState<number>(
-    syncData?.syncOffset || 0,
-  );
 
   useEffect(() => {
-    // syncDataが更新されたら表示用のローカルオフセットも更新
-    if (typeof syncData?.syncOffset === 'number') {
-      setOffsetLocal(syncData.syncOffset);
-    }
-  }, [syncData?.syncOffset]);
-
-  // videoTimeがNaNになった場合の修正
-  useEffect(() => {
+    // videoTimeがNaNになった場合の修正
     if (isNaN(videoTime)) {
       console.warn('videoTimeがNaNになっています。0にリセットします。');
       setVideoTime(0);
@@ -313,226 +301,94 @@ export const VideoController = ({
     }
   }, [isVideoPlaying, videoList]);
 
-  const handlePlayPauseClick = () => {
-    const next = !isVideoPlaying;
-    setIsVideoPlaying(next);
+  const isManual = syncMode === 'manual';
 
-    try {
-      type MinimalVjsPlayer = {
-        isDisposed?: () => boolean;
-        muted?: (val: boolean) => void;
-        play?: () => Promise<void> | void;
-      };
-      type VjsNS = { getPlayer?: (id: string) => MinimalVjsPlayer | undefined };
-      const vjs = videojs as unknown as VjsNS;
-
-      const ids: string[] = ['video_0', 'video_1', 'video_2'];
-      ids.forEach((vid) => {
-        const p = vjs.getPlayer?.(vid);
-        if (p && !p.isDisposed?.()) {
-          try {
-            p.muted?.(false);
-          } catch (e) {
-            // ignore
-            console.debug('unmute error', e);
-          }
-          if (next) {
-            const pr = p.play?.();
-            if (pr && typeof (pr as Promise<unknown>).catch === 'function') {
-              (pr as Promise<unknown>).catch(() => {
-                // autoplay policy等は無視
-                console.debug('play promise rejected (autoplay policy)');
-              });
-            }
-          }
-        }
-      });
-    } catch (e) {
-      // ignore
-      console.debug('handlePlayPauseClick error', e);
-    }
-  };
-
-  const handleSliderChange = (
-    _e: React.SyntheticEvent | Event,
-    newValue: number | number[],
-  ) => {
-    // ドラッグ中はローカル表示のみ更新（実際の反映はコミット時）
-    if (typeof newValue === 'number') setVideoTime(newValue);
-  };
-
-  const handleSliderChangeCommitted = (
-    e: React.SyntheticEvent | Event,
-    newValue: number | number[],
-  ) => {
-    handleCurrentTime(e, newValue);
-  };
-
-  const saveOffsetToConfig = async () => {
-    if (!window.electronAPI) return;
-    try {
-      // パッケージフォルダを選択して .metadata/config.json に保存
-      const packageDir = await window.electronAPI.openDirectory();
-      if (!packageDir) return;
-      const configPath = `${packageDir}/.metadata/config.json`;
-      if (!syncData) return;
-      const ok = await window.electronAPI.saveSyncData(configPath, {
-        syncOffset: syncData.syncOffset || 0,
-        isAnalyzed: !!syncData.isAnalyzed,
-        confidenceScore: syncData.confidenceScore,
-      });
-      if (!ok) console.warn('オフセット保存に失敗しました');
-    } catch (e) {
-      console.warn('オフセット保存エラー', e);
-    }
-  };
-
+  // UI: コントロールバー（レイアウト調整）
   return (
-    <>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 1,
-        }}
-      >
-        <Button onClick={handlePlayPauseClick} variant="contained">
-          {isVideoPlaying ? 'Pause All' : 'Play All'}
+    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1 }}>
+      {/* 左: 再生/一時停止、速度 */}
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Button
+          variant="contained"
+          onClick={() => setIsVideoPlaying(!isVideoPlaying)}
+        >
+          {isVideoPlaying ? 'PAUSE' : 'PLAY ALL'}
         </Button>
-        <Button onClick={() => setCurrentTime(videoTime - 10)}>10秒戻る</Button>
-        <Button onClick={() => setCurrentTime(videoTime - 5)}>5秒戻る</Button>
-        <Button onClick={() => setVideoPlayBackRate(0.5)}>0.5倍速</Button>
-        <Button onClick={() => setVideoPlayBackRate(1)}>1倍速</Button>
-        <Button onClick={() => setVideoPlayBackRate(2)}>2倍速</Button>
-        <Button onClick={() => setVideoPlayBackRate(6)}>6倍速</Button>
-
-        {/* 同期機能ボタン（2つ以上の映像がある場合のみ表示） */}
-        {videoList.length > 1 && (
-          <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
-            <Button
-              onClick={resyncAudio}
-              variant="outlined"
-              size="small"
-              disabled={!resyncAudio}
-            >
-              音声から自動同期
-            </Button>
-            <Button
-              onClick={resetSync}
-              variant="outlined"
-              size="small"
-              color="warning"
-              disabled={!resetSync}
-            >
-              同期リセット
-            </Button>
-            <Button
-              onClick={adjustSyncOffset}
-              variant="outlined"
-              size="small"
-              disabled={!adjustSyncOffset}
-            >
-              手動オフセット入力
-            </Button>
-          </Stack>
-        )}
-
-        {/* 現在のオフセット表示と保存 */}
-        {videoList.length > 1 && (
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ ml: 2, alignItems: 'center' }}
-          >
-            <Typography variant="caption" sx={{ minWidth: 120 }}>
-              現在のオフセット: {(syncData?.syncOffset || 0).toFixed(2)}s
-            </Typography>
-            <TextField
-              label="オフセット(秒)"
-              size="small"
-              type="number"
-              inputProps={{ step: 0.1 }}
-              value={Number.isFinite(offsetLocal) ? offsetLocal : 0}
-              onChange={(e) => setOffsetLocal(Number(e.target.value))}
-              onBlur={() => {
-                // 表示のみ更新（実際の適用は「手動オフセット入力」ボタンで）
-              }}
-              sx={{ width: 140 }}
-            />
-            <Button
-              onClick={saveOffsetToConfig}
-              size="small"
-              variant="text"
-              disabled={!window.electronAPI}
-            >
-              保存
-            </Button>
-          </Stack>
-        )}
-
-        <Box sx={{ paddingLeft: '30px' }} width={500}>
-          <Slider
-            aria-label="Time"
-            valueLabelDisplay="auto"
-            value={
-              typeof videoTime === 'number' &&
-              !isNaN(videoTime) &&
-              videoTime >= 0
-                ? videoTime
-                : 0
-            }
-            onChange={handleSliderChange}
-            onChangeCommitted={handleSliderChangeCommitted}
-            min={0}
-            max={
-              typeof maxSec === 'number' && !isNaN(maxSec) && maxSec > 0
-                ? maxSec
-                : 100
-            }
-            step={0.1}
-            disabled={maxSec <= 0 || isNaN(maxSec)}
-            sx={{
-              '& .MuiSlider-thumb': {
-                transition: 'box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
-              },
-              '& .MuiSlider-track': { transition: 'none' },
-            }}
-          />
-          {syncData?.isAnalyzed && (
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: '10px',
-                color: 'text.secondary',
-                display: 'block',
-                textAlign: 'center',
-              }}
-            >
-              同期済み: {syncData.syncOffset.toFixed(2)}秒オフセット (信頼度:{' '}
-              {((syncData.confidenceScore || 0) * 100).toFixed(0)}%)
-              <br />
-              <span style={{ fontSize: '8px', color: 'text.disabled' }}>
-                Cmd+Shift+S: 再同期 | Cmd+Shift+R: リセット | Cmd+Shift+O: 調整
-              </span>
-            </Typography>
-          )}
-          {syncData && !syncData.isAnalyzed && (
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: '10px',
-                color: 'warning.main',
-                display: 'block',
-                textAlign: 'center',
-              }}
-            >
-              同期未完了 -
-              「音声から自動同期」または「手動オフセット入力」で設定
-            </Typography>
-          )}
-        </Box>
+        <Typography variant="body2">Speed</Typography>
+        <Slider
+          size="small"
+          min={0.25}
+          max={2}
+          step={0.25}
+          valueLabelDisplay="auto"
+          onChange={(_, v) => setVideoPlayBackRate(v as number)}
+          sx={{ width: 120 }}
+        />
       </Box>
-    </>
+
+      {/* 中央: 共通シークバー（手動以外は操作無効化） */}
+      <Box sx={{ flex: 1, px: 2 }}>
+        <Box
+          sx={{
+            pointerEvents: isManual ? 'auto' : 'none',
+            opacity: isManual ? 1 : 0.5,
+          }}
+        >
+          <Slider
+            size="small"
+            min={0}
+            max={Math.max(0, maxSec)}
+            step={0.01}
+            value={videoTime}
+            onChange={handleCurrentTime}
+            valueLabelDisplay="auto"
+          />
+        </Box>
+        {!isManual && (
+          <Typography variant="caption" color="text.secondary">
+            同期オフセット待機中…
+          </Typography>
+        )}
+      </Box>
+
+      {/* 右: 同期モードトグルと同期系操作 */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="body2">同期モード:</Typography>
+        <Button
+          variant={isManual ? 'outlined' : 'contained'}
+          size="small"
+          onClick={() => setSyncMode?.('auto')}
+        >
+          自動
+        </Button>
+        <Button
+          variant={isManual ? 'contained' : 'outlined'}
+          size="small"
+          onClick={() => setSyncMode?.('manual')}
+        >
+          手動
+        </Button>
+
+        {/* 自動（音声）同期 */}
+        <Button size="small" onClick={resyncAudio} disabled={isManual}>
+          音声同期
+        </Button>
+        {/* 手動同期（各プレイヤー現在位置から） */}
+        <Button
+          size="small"
+          onClick={manualSyncFromPlayers}
+          disabled={!isManual}
+        >
+          今の位置で同期
+        </Button>
+        {/* オフセットを直接入力 */}
+        <Button size="small" onClick={adjustSyncOffset}>
+          オフセット入力
+        </Button>
+        <Button size="small" onClick={resetSync}>
+          同期リセット
+        </Button>
+      </Box>
+    </Box>
   );
 };

@@ -25,6 +25,7 @@ export const useVideoPlayerApp = () => {
   const [syncData, setSyncData] = useState<VideoSyncData | undefined>(
     undefined,
   );
+  const [syncMode, setSyncMode] = useState<'auto' | 'manual'>('auto');
 
   const handleCurrentTime = (
     event: React.SyntheticEvent | Event,
@@ -244,6 +245,72 @@ export const useVideoPlayerApp = () => {
     }
   };
 
+  // 手動同期: 現在の各プレイヤーの時刻からオフセットを計算して適用
+  const manualSyncFromPlayers = async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const vjsNS: any = (window as any).videojs || (window as any).videoJS;
+      if (!vjsNS || typeof vjsNS !== 'function') {
+        console.warn('videojs namespace not found');
+      }
+      // 0番と1番のプレイヤーから現在時刻を取得
+      // 型安全のためoptionalでアクセス
+      const p0 = vjsNS?.getPlayer
+        ? vjsNS.getPlayer('video_0')
+        : vjsNS?.('video_0');
+      const p1 = vjsNS?.getPlayer
+        ? vjsNS.getPlayer('video_1')
+        : vjsNS?.('video_1');
+
+      let t0 = 0;
+      let t1 = 0;
+      try {
+        t0 = p0?.currentTime?.() ?? 0;
+      } catch {
+        t0 = 0;
+      }
+      try {
+        t1 = p1?.currentTime?.() ?? 0;
+      } catch {
+        t1 = 0;
+      }
+
+      if (typeof t0 !== 'number' || typeof t1 !== 'number') {
+        console.warn('manualSync: invalid current times', { t0, t1 });
+        return;
+      }
+
+      // 定義: currentTime から第2映像は (currentTime - offset) を再生
+      // よって、今同じ瞬間に合わせた状態なら offset = t0 - t1
+      const newOffset = t0 - t1;
+      const newSyncData: VideoSyncData = {
+        syncOffset: newOffset,
+        isAnalyzed: true,
+        confidenceScore: undefined,
+      };
+
+      setSyncData(newSyncData);
+      console.log('manualSync: オフセット更新', { t0, t1, newOffset });
+
+      // 永続化（config.json）
+      if (metaDataConfigFilePath && window.electronAPI?.saveSyncData) {
+        try {
+          await window.electronAPI.saveSyncData(
+            metaDataConfigFilePath,
+            newSyncData,
+          );
+        } catch (e) {
+          console.debug('manualSync saveSyncData error', e);
+        }
+      }
+
+      // プレイヤーへ即時反映
+      await forceUpdateVideoPlayers(newSyncData);
+    } catch (e) {
+      console.error('manualSyncFromPlayers error', e);
+    }
+  };
+
   // 映像プレイヤーを強制更新する関数
   const forceUpdateVideoPlayers = async (
     newSyncData: VideoSyncData,
@@ -364,6 +431,8 @@ export const useVideoPlayerApp = () => {
     setVideoPlayBackRate,
     syncData,
     setSyncData,
+    syncMode,
+    setSyncMode,
     handleCurrentTime,
     packagePath,
     setPackagePath,
@@ -377,5 +446,6 @@ export const useVideoPlayerApp = () => {
     resyncAudio,
     resetSync,
     adjustSyncOffset,
+    manualSyncFromPlayers,
   };
 };

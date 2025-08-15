@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
   syncData?: VideoSyncData;
+  syncMode?: 'auto' | 'manual';
 }
 
 export const VideoPlayer = ({
@@ -18,6 +19,7 @@ export const VideoPlayer = ({
   currentTime,
   setMaxSec,
   syncData,
+  syncMode = 'auto',
 }: VideoPlayerProps) => {
   return (
     <SyncedVideoPlayer
@@ -27,6 +29,7 @@ export const VideoPlayer = ({
       currentTime={currentTime}
       setMaxSec={setMaxSec}
       syncData={syncData}
+      syncMode={syncMode}
     />
   );
 };

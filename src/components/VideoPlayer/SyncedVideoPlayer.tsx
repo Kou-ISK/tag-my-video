@@ -13,6 +13,7 @@ interface SyncedVideoPlayerProps {
   currentTime: number;
   setMaxSec: Dispatch<SetStateAction<number>>;
   syncData?: VideoSyncData;
+  syncMode?: 'auto' | 'manual';
 }
 
 export const SyncedVideoPlayer = ({
@@ -22,11 +23,14 @@ export const SyncedVideoPlayer = ({
   currentTime,
   setMaxSec,
   syncData,
+  syncMode = 'auto',
 }: SyncedVideoPlayerProps) => {
   const [adjustedCurrentTimes, setAdjustedCurrentTimes] = useState<number[]>(
     [],
   );
   const [forceUpdateKey, setForceUpdateKey] = useState<number>(0);
+
+  const allowSeek = syncMode === 'manual';
 
   // スタートアップデバッグ - アプリ起動時の状態確認
   console.log('🚀 SyncedVideoPlayer: コンポーネント起動', {
@@ -358,9 +362,8 @@ export const SyncedVideoPlayer = ({
           }
 
           // 2本目以降に同期オフセットを適用し、開始前（currentTime < offset）は再生ブロック
-          const offset =
-            index > 0 && syncData?.isAnalyzed ? syncData?.syncOffset || 0 : 0;
-          const isBlocked = index > 0 && offset > 0 && currentTime < offset;
+          // const offset =
+          //   index > 0 && syncData?.isAnalyzed ? syncData?.syncOffset || 0 : 0;
 
           return (
             <Box
@@ -401,6 +404,7 @@ export const SyncedVideoPlayer = ({
                       ? currentTime < (syncData?.syncOffset || 0)
                       : false
                   }
+                  allowSeek={allowSeek}
                 />
               </Box>
             </Box>

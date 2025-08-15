@@ -38,6 +38,8 @@ export const VideoPlayerApp = () => {
     setVideoPlayBackRate,
     syncData,
     setSyncData,
+    syncMode,
+    setSyncMode,
     handleCurrentTime,
     setPackagePath,
     addTimelineData,
@@ -50,6 +52,7 @@ export const VideoPlayerApp = () => {
     resyncAudio,
     resetSync,
     adjustSyncOffset,
+    manualSyncFromPlayers,
   } = useVideoPlayerApp();
 
   // デバッグ: videoListの変更を監視
@@ -118,6 +121,7 @@ export const VideoPlayerApp = () => {
             currentTime={currentTime}
             setMaxSec={setMaxSec}
             syncData={syncData}
+            syncMode={syncMode}
           />
           <Box sx={{ maxHeight: '5vh', display: 'flex', flexDirection: 'row' }}>
             <VideoController
@@ -132,6 +136,9 @@ export const VideoPlayerApp = () => {
               resyncAudio={resyncAudio}
               resetSync={resetSync}
               adjustSyncOffset={adjustSyncOffset}
+              manualSyncFromPlayers={manualSyncFromPlayers}
+              syncMode={syncMode}
+              setSyncMode={setSyncMode}
             />
             <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>
               選択したデータを削除

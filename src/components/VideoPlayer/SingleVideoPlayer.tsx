@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, {
   Dispatch,
   SetStateAction,
@@ -18,6 +18,7 @@ interface SingleVideoPlayerProps {
   setMaxSec: Dispatch<SetStateAction<number>>;
   forceUpdate?: number;
   blockPlay?: boolean; // オフセットによる遅延再生ブロック
+  allowSeek?: boolean; // シーク操作許可（手動モードのみ有効）
 }
 
 export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
@@ -28,7 +29,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   currentTime,
   setMaxSec,
   forceUpdate,
-  blockPlay,
+  blockPlay = false,
+  allowSeek = true,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -42,6 +44,22 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   useEffect(() => {
     isPlayingRef.current = isVideoPlaying;
   }, [isVideoPlaying]);
+
+  // allowSeekに応じてProgressControlを操作不能にする
+  useEffect(() => {
+    try {
+      const p = playerRef.current;
+      if (!p || p.isDisposed?.()) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pcEl = (p as any)?.controlBar?.progressControl?.el?.();
+      if (pcEl && pcEl.style) {
+        pcEl.style.pointerEvents = allowSeek ? 'auto' : 'none';
+        pcEl.style.opacity = allowSeek ? '1' : '0.6';
+      }
+    } catch {
+      /* noop */
+    }
+  }, [allowSeek]);
 
   // Video.jsプレイヤーの初期化（一度だけ）
   useEffect(() => {
@@ -197,6 +215,20 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               });
 
               setIsPlayerReady(true);
+
+              // allowSeek反映（初期化直後にも適用）
+              try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const pcEl = (
+                  playerRef.current as any
+                )?.controlBar?.progressControl?.el?.();
+                if (pcEl && pcEl.style) {
+                  pcEl.style.pointerEvents = allowSeek ? 'auto' : 'none';
+                  pcEl.style.opacity = allowSeek ? '1' : '0.6';
+                }
+              } catch {
+                /* noop */
+              }
 
               // DOMに実際に要素が存在するかチェック
               const domElement = document.getElementById(id);
@@ -394,7 +426,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     }
   }, [videoSrc, id, isPlayerReady]);
 
-  // 再生状態の制御 - 修正版
+  // 再生状態の制御 - 修正版（エラーハンドリング強化）
   useEffect(() => {
     console.log(`${id}: 再生状態制御useEffect実行`, {
       hasPlayer: !!playerRef.current,
@@ -423,12 +455,15 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               return;
             }
 
-            // オフセットによりブロック中は必ず停止
+            // オフセットによるブロック: 再生中でも強制一時停止
             if (blockPlay) {
               try {
-                playerRef.current.pause?.();
+                if (!playerRef.current.paused?.()) {
+                  playerRef.current.pause?.();
+                  console.log(`${id}: オフセットブロックのため一時停止`);
+                }
               } catch (e) {
-                console.debug(`${id}: ブロック中pause例外`, e);
+                console.debug(`${id}: ブロックpauseエラー`, e);
               }
               return;
             }
@@ -437,6 +472,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               const paused = playerRef.current.paused();
               if (paused) {
                 try {
+                  // まずミュート解除で試行
                   playerRef.current.muted?.(false);
                   const p = playerRef.current.play?.();
                   if (
@@ -445,25 +481,34 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                   ) {
                     (p as Promise<unknown>)
                       .catch(async (e) => {
-                        console.warn(`${id}: playエラー (Video.js)`, e);
-                        // HTMLVideoElementにフォールバック
+                        console.warn(`${id}: playエラー (unmuted)`, e);
+                        // 失敗時のみ一時的にミュートして再試行
                         try {
-                          const ve = playerRef.current
-                            .el()
-                            ?.querySelector('video') as HTMLVideoElement | null;
-                          if (ve) {
-                            ve.muted = false;
-                            await ve.play();
+                          playerRef.current.muted?.(true);
+                          const p2 = playerRef.current.play?.();
+                          if (
+                            p2 &&
+                            typeof (p2 as Promise<unknown>).catch === 'function'
+                          ) {
+                            await (p2 as Promise<unknown>).catch(() => {
+                              /* no-op */
+                            });
+                          }
+                          // 再生開始後にミュート解除
+                          try {
+                            playerRef.current.muted?.(false);
+                          } catch (ee) {
+                            console.debug(`${id}: ミュート解除エラー`, ee);
                           }
                         } catch (ee) {
-                          console.warn(`${id}: フォールバックplayエラー`, ee);
+                          console.warn(`${id}: 再試行playエラー`, ee);
                         }
                       })
                       .then(() => {
                         try {
                           playerRef.current.muted?.(false);
-                        } catch {
-                          // ignore
+                        } catch (ee) {
+                          console.debug(`${id}: ミュート解除エラー`, ee);
                         }
                       });
                   }
@@ -484,6 +529,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             console.error(`${id}: 再生制御中エラー`, e);
           }
         };
+
         // プレイヤーの状態をより詳細にチェック
         const playerError = playerRef.current.error();
         if (playerError) {
@@ -713,10 +759,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         // 親の16:9ボックスにピッタリ合わせる
         '& .video-js': { height: '100%', width: '100%' },
         '& .vjs-tech': { objectFit: 'contain' },
-        // オフセット待機中はBig Playボタンを非表示
-        ...(blockPlay
-          ? { '& .vjs-big-play-button': { opacity: 0, pointerEvents: 'none' } }
-          : {}),
+        '& .vjs-progress-control': {
+          pointerEvents: allowSeek ? 'auto' : 'none',
+          opacity: allowSeek ? 1 : 0.6,
+        },
       }}
     >
       <video
@@ -734,8 +780,14 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             inset: 0,
             backgroundColor: '#000',
             zIndex: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ddd',
           }}
-        />
+        >
+          <Typography variant="caption">オフセット待機中…</Typography>
+        </Box>
       )}
     </Box>
   );
