@@ -17,7 +17,6 @@ interface VideoControllerProps {
   syncData?: VideoSyncData;
   resyncAudio?: () => void;
   resetSync?: () => void;
-  adjustSyncOffset?: () => void; // 追加
   manualSyncFromPlayers?: () => void;
   syncMode?: 'auto' | 'manual';
   setSyncMode?: Dispatch<SetStateAction<'auto' | 'manual'>>;
@@ -33,10 +32,10 @@ export const VideoController = ({
   videoList,
   resyncAudio,
   resetSync,
-  adjustSyncOffset, // 追加
   manualSyncFromPlayers,
   syncMode = 'auto',
   setSyncMode,
+  syncData,
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
 
@@ -253,36 +252,95 @@ export const VideoController = ({
     };
   }, [videoList, isVideoPlaying]); // videoTimeを依存関係から除去して無限ループを防止
 
-  // PLAY ALLを押した直後、全プレイヤーに対して再生を試行（既存のみ）
+  // PLAY ALLを押した直後、全プレイヤーに対して再生前に同期シーク→再生を試行（既存のみ）
   useEffect(() => {
     if (isVideoPlaying && videoList.length > 0) {
       const tryPlayAll = () => {
+        // 基準プレイヤーの現在時刻を取得（なければUI上のvideoTimeを使用）
+        const base = getExistingPlayer('video_0');
+        let baseTime = 0;
+        try {
+          baseTime = base?.currentTime ? base.currentTime() || 0 : videoTime;
+        } catch {
+          baseTime = videoTime;
+        }
+
+        // ローカルオフセット: syncData が未反映でも手動モードなら p0/p1 の時刻から算出
+        let localOffset = 0;
+        if (syncData?.isAnalyzed) {
+          localOffset = syncData.syncOffset || 0;
+        } else if (syncMode === 'manual' && videoList.length > 1) {
+          const p1 = getExistingPlayer('video_1');
+          let t1 = 0;
+          try {
+            t1 = p1?.currentTime ? p1.currentTime() || 0 : 0;
+          } catch {
+            t1 = 0;
+          }
+          localOffset = baseTime - t1; // manualSync と同じ定義
+        }
+
         videoList.forEach((_, index) => {
           try {
             const id = `video_${index}`;
             const player = getExistingPlayer(id);
             if (player && !player.isDisposed?.()) {
               const rs = player.readyState?.() ?? 0;
-              if (rs >= 1) {
+
+              // 2本目以降は再生前に同期位置へシーク
+              if (index > 0) {
+                const targetTime = Math.max(0, baseTime - localOffset);
+                try {
+                  (
+                    player as unknown as {
+                      currentTime?: (t?: number) => number;
+                    }
+                  ).currentTime?.(targetTime);
+                } catch {
+                  /* noop */
+                }
+              }
+
+              const playNow = () => {
                 const p = player.play?.();
                 if (p && typeof (p as Promise<unknown>).catch === 'function') {
                   (p as Promise<unknown>).catch(() => {
-                    // Autoplay policy等は無視
                     console.debug('play promise rejected (autoplay policy)');
                   });
                 }
+              };
+
+              // オフセットが正で、まだ到達していない場合は遅延開始
+              const delayMs =
+                index > 0 && localOffset > baseTime
+                  ? Math.max(0, (localOffset - baseTime) * 1000)
+                  : 0;
+
+              if (rs >= 1) {
+                if (delayMs > 0) {
+                  setTimeout(playNow, delayMs);
+                } else {
+                  playNow();
+                }
               } else {
-                // 準備完了イベントで再試行
+                // 準備完了イベントでシーク→（必要なら遅延して）再生
                 const onReady = () => {
-                  const pp = player.play?.();
-                  if (
-                    pp &&
-                    typeof (pp as Promise<unknown>).catch === 'function'
-                  ) {
-                    (pp as Promise<unknown>).catch(() => {
-                      // noop
-                      console.debug('delayed play promise rejected');
-                    });
+                  if (index > 0) {
+                    const targetTime = Math.max(0, baseTime - localOffset);
+                    try {
+                      (
+                        player as unknown as {
+                          currentTime?: (t?: number) => number;
+                        }
+                      ).currentTime?.(targetTime);
+                    } catch {
+                      /* noop */
+                    }
+                  }
+                  if (delayMs > 0) {
+                    setTimeout(playNow, delayMs);
+                  } else {
+                    playNow();
                   }
                   player.off?.('loadedmetadata', onReady);
                   player.off?.('canplay', onReady);
@@ -299,7 +357,14 @@ export const VideoController = ({
       const t = setTimeout(tryPlayAll, 150);
       return () => clearTimeout(t);
     }
-  }, [isVideoPlaying, videoList]);
+  }, [
+    isVideoPlaying,
+    videoList,
+    videoTime,
+    syncData?.syncOffset,
+    syncData?.isAnalyzed,
+    syncMode,
+  ]);
 
   const isManual = syncMode === 'manual';
 
@@ -382,9 +447,8 @@ export const VideoController = ({
           今の位置で同期
         </Button>
         {/* オフセットを直接入力 */}
-        <Button size="small" onClick={adjustSyncOffset}>
-          オフセット入力
-        </Button>
+        {/* ボタン削除: ユーザー入力UIは不要のため */}
+        {/* <Button size="small" onClick={adjustSyncOffset}>オフセット入力</Button> */}
         <Button size="small" onClick={resetSync}>
           同期リセット
         </Button>

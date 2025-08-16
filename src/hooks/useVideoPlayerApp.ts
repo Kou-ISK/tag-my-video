@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TimelineData } from '../types/TimelineData';
 import { VideoSyncData } from '../types/VideoSync';
 import { ulid } from 'ulid';
+import videojs from 'video.js';
 
 export const useVideoPlayerApp = () => {
   const [timeline, setTimeline] = useState<TimelineData[]>([]);
@@ -248,40 +249,51 @@ export const useVideoPlayerApp = () => {
   // 手動同期: 現在の各プレイヤーの時刻からオフセットを計算して適用
   const manualSyncFromPlayers = async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const vjsNS: any = (window as any).videojs || (window as any).videoJS;
-      if (!vjsNS || typeof vjsNS !== 'function') {
-        console.warn('videojs namespace not found');
-      }
-      // 0番と1番のプレイヤーから現在時刻を取得
-      // 型安全のためoptionalでアクセス
-      const p0 = vjsNS?.getPlayer
-        ? vjsNS.getPlayer('video_0')
-        : vjsNS?.('video_0');
-      const p1 = vjsNS?.getPlayer
-        ? vjsNS.getPlayer('video_1')
-        : vjsNS?.('video_1');
+      // Video.jsのプレイヤーまたは生のvideo要素から現在時刻を取得
+      const getCurrentTimeById = (vid: string): number | undefined => {
+        // 1) Video.jsのプレイヤーから
+        try {
+          type VjsNSLite = {
+            getPlayer?: (
+              id: string,
+            ) =>
+              | { isDisposed?: () => boolean; currentTime?: () => number }
+              | undefined;
+          };
+          const ns = videojs as unknown as VjsNSLite;
+          const p = ns.getPlayer?.(vid);
+          if (p && !p.isDisposed?.()) {
+            const t = p.currentTime?.();
+            if (typeof t === 'number' && !isNaN(t)) return t;
+          }
+        } catch {
+          /* noop */
+        }
+        // 2) HTMLVideoElementから（フォールバック）
+        try {
+          const el = document.getElementById(vid) as HTMLVideoElement | null;
+          if (
+            el &&
+            typeof el.currentTime === 'number' &&
+            !isNaN(el.currentTime)
+          ) {
+            return el.currentTime;
+          }
+        } catch {
+          /* noop */
+        }
+        return undefined;
+      };
 
-      let t0 = 0;
-      let t1 = 0;
-      try {
-        t0 = p0?.currentTime?.() ?? 0;
-      } catch {
-        t0 = 0;
-      }
-      try {
-        t1 = p1?.currentTime?.() ?? 0;
-      } catch {
-        t1 = 0;
-      }
+      const t0 = getCurrentTimeById('video_0');
+      const t1 = getCurrentTimeById('video_1');
 
       if (typeof t0 !== 'number' || typeof t1 !== 'number') {
-        console.warn('manualSync: invalid current times', { t0, t1 });
+        console.warn('manualSync: 現在時刻が取得できませんでした', { t0, t1 });
         return;
       }
 
-      // 定義: currentTime から第2映像は (currentTime - offset) を再生
-      // よって、今同じ瞬間に合わせた状態なら offset = t0 - t1
+      // 定義: 基準は video_0。video_1 は (currentTime - offset)
       const newOffset = t0 - t1;
       const newSyncData: VideoSyncData = {
         syncOffset: newOffset,

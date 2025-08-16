@@ -135,7 +135,6 @@ export const VideoPlayerApp = () => {
               syncData={syncData}
               resyncAudio={resyncAudio}
               resetSync={resetSync}
-              adjustSyncOffset={adjustSyncOffset}
               manualSyncFromPlayers={manualSyncFromPlayers}
               syncMode={syncMode}
               setSyncMode={setSyncMode}
