@@ -51,7 +51,6 @@ export const VideoPlayerApp = () => {
     sortTimelineDatas,
     resyncAudio,
     resetSync,
-    adjustSyncOffset,
     manualSyncFromPlayers,
   } = useVideoPlayerApp();
 
@@ -75,10 +74,7 @@ export const VideoPlayerApp = () => {
 
   // メニューからの同期イベントを処理（Electron環境でのみ実行）
   useEffect(() => {
-    if (
-      window.electronAPI &&
-      typeof window.electronAPI.onResyncAudio === 'function'
-    ) {
+    if (window.electronAPI) {
       const onResync = () => {
         console.log('メニューから音声同期再実行');
         resyncAudio();
@@ -87,28 +83,32 @@ export const VideoPlayerApp = () => {
         console.log('メニューから同期リセット');
         resetSync();
       };
-      const onAdjust = () => {
-        console.log('メニューから同期オフセット調整');
-        adjustSyncOffset();
+      const onManual = () => {
+        console.log('メニューから今の位置で同期');
+        manualSyncFromPlayers();
+      };
+      const onSetMode = (mode: 'auto' | 'manual') => {
+        console.log('メニューから同期モード切替:', mode);
+        setSyncMode(mode);
       };
 
       window.electronAPI.onResyncAudio(onResync);
       window.electronAPI.onResetSync(onReset);
-      window.electronAPI.onAdjustSyncOffset(onAdjust);
+      window.electronAPI.onManualSync(onManual);
+      window.electronAPI.onSetSyncMode(onSetMode);
 
       return () => {
         try {
           window.electronAPI?.offResyncAudio?.(onResync);
           window.electronAPI?.offResetSync?.(onReset);
-          window.electronAPI?.offAdjustSyncOffset?.(onAdjust);
+          window.electronAPI?.offManualSync?.(onManual);
+          window.electronAPI?.offSetSyncMode?.(onSetMode);
         } catch (e) {
           console.debug('メニューイベントの解除エラー', e);
         }
       };
-    } else {
-      console.log('ブラウザ環境: Electron APIは利用できません');
     }
-  }, [resyncAudio, resetSync, adjustSyncOffset]);
+  }, [resyncAudio, resetSync, manualSyncFromPlayers, setSyncMode]);
 
   return (
     <>
@@ -133,11 +133,6 @@ export const VideoPlayerApp = () => {
               maxSec={maxSec}
               videoList={videoList}
               syncData={syncData}
-              resyncAudio={resyncAudio}
-              resetSync={resetSync}
-              manualSyncFromPlayers={manualSyncFromPlayers}
-              syncMode={syncMode}
-              setSyncMode={setSyncMode}
             />
             <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>
               選択したデータを削除

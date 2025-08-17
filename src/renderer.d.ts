@@ -14,10 +14,12 @@ export interface IElectronAPI {
   // メニューからの音声同期イベント
   onResyncAudio: (callback: () => void) => void;
   onResetSync: (callback: () => void) => void;
-  onAdjustSyncOffset: (callback: () => void) => void;
+  onManualSync: (callback: () => void) => void; // 追加
   offResyncAudio: (callback: () => void) => void; // 追加
   offResetSync: (callback: () => void) => void; // 追加
-  offAdjustSyncOffset: (callback: () => void) => void; // 追加
+  offManualSync: (callback: () => void) => void; // 追加
+  onSetSyncMode: (callback: (mode: 'auto' | 'manual') => void) => void; // 追加
+  offSetSyncMode: (callback: (mode: 'auto' | 'manual') => void) => void; // 追加
   // ファイル存在確認
   checkFileExists: (filePath: string) => Promise<boolean>;
   saveSyncData: (
@@ -28,6 +30,7 @@ export interface IElectronAPI {
       confidenceScore?: number;
     },
   ) => Promise<boolean>;
+  setManualModeChecked: (checked: boolean) => Promise<boolean>;
 }
 
 export interface PackageDatas {

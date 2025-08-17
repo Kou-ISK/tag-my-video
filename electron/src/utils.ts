@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import * as fs from 'fs';
 import { PackageDatas } from '../../src/renderer';
 
@@ -168,4 +168,19 @@ export const Utils = () => {
       }
     },
   );
+
+  ipcMain.handle('set-manual-mode-checked', async (_, checked: boolean) => {
+    try {
+      const menu = Menu.getApplicationMenu();
+      const item = menu?.getMenuItemById('toggle-manual-mode');
+      if (item) {
+        item.checked = checked;
+      }
+      console.log(`手動モードが${checked ? 'オン' : 'オフ'}になりました`);
+      return true;
+    } catch (error) {
+      console.error('set-manual-mode-checked error:', error);
+      return false;
+    }
+  });
 };

@@ -249,51 +249,31 @@ export const useVideoPlayerApp = () => {
   // 手動同期: 現在の各プレイヤーの時刻からオフセットを計算して適用
   const manualSyncFromPlayers = async () => {
     try {
-      // Video.jsのプレイヤーまたは生のvideo要素から現在時刻を取得
-      const getCurrentTimeById = (vid: string): number | undefined => {
-        // 1) Video.jsのプレイヤーから
-        try {
-          type VjsNSLite = {
-            getPlayer?: (
-              id: string,
-            ) =>
-              | { isDisposed?: () => boolean; currentTime?: () => number }
-              | undefined;
-          };
-          const ns = videojs as unknown as VjsNSLite;
-          const p = ns.getPlayer?.(vid);
-          if (p && !p.isDisposed?.()) {
-            const t = p.currentTime?.();
-            if (typeof t === 'number' && !isNaN(t)) return t;
-          }
-        } catch {
-          /* noop */
-        }
-        // 2) HTMLVideoElementから（フォールバック）
-        try {
-          const el = document.getElementById(vid) as HTMLVideoElement | null;
-          if (
-            el &&
-            typeof el.currentTime === 'number' &&
-            !isNaN(el.currentTime)
-          ) {
-            return el.currentTime;
-          }
-        } catch {
-          /* noop */
-        }
-        return undefined;
+      type VjsLite = {
+        getPlayer?: (id: string) => { currentTime?: () => number } | undefined;
       };
+      const vjs = videojs as unknown as VjsLite;
+      const p0 = vjs.getPlayer?.('video_0');
+      const p1 = vjs.getPlayer?.('video_1');
 
-      const t0 = getCurrentTimeById('video_0');
-      const t1 = getCurrentTimeById('video_1');
+      let t0 = 0;
+      let t1 = 0;
+      try {
+        t0 = p0?.currentTime?.() ?? 0;
+      } catch {
+        t0 = 0;
+      }
+      try {
+        t1 = p1?.currentTime?.() ?? 0;
+      } catch {
+        t1 = 0;
+      }
 
       if (typeof t0 !== 'number' || typeof t1 !== 'number') {
-        console.warn('manualSync: 現在時刻が取得できませんでした', { t0, t1 });
+        console.warn('manualSync: invalid current times', { t0, t1 });
         return;
       }
 
-      // 定義: 基準は video_0。video_1 は (currentTime - offset)
       const newOffset = t0 - t1;
       const newSyncData: VideoSyncData = {
         syncOffset: newOffset,
@@ -304,7 +284,6 @@ export const useVideoPlayerApp = () => {
       setSyncData(newSyncData);
       console.log('manualSync: オフセット更新', { t0, t1, newOffset });
 
-      // 永続化（config.json）
       if (metaDataConfigFilePath && window.electronAPI?.saveSyncData) {
         try {
           await window.electronAPI.saveSyncData(
@@ -316,8 +295,14 @@ export const useVideoPlayerApp = () => {
         }
       }
 
-      // プレイヤーへ即時反映
       await forceUpdateVideoPlayers(newSyncData);
+
+      try {
+        setSyncMode('auto');
+        await window.electronAPI?.setManualModeChecked?.(false);
+      } catch (e) {
+        console.debug('setManualModeChecked error', e);
+      }
     } catch (e) {
       console.error('manualSyncFromPlayers error', e);
     }

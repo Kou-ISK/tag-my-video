@@ -126,20 +126,68 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onResyncAudio: (callback: () => void) => {
     try {
       ipcRenderer.removeAllListeners('menu-resync-audio');
-    } catch {}
-    ipcRenderer.on('menu-resync-audio', callback);
+    } catch (e) {
+      // ignore
+    }
+    ipcRenderer.on(
+      'menu-resync-audio',
+      callback as unknown as (event: IpcRendererEvent) => void,
+    );
   },
   onResetSync: (callback: () => void) => {
     try {
       ipcRenderer.removeAllListeners('menu-reset-sync');
-    } catch {}
-    ipcRenderer.on('menu-reset-sync', callback);
+    } catch (e) {
+      // ignore
+    }
+    ipcRenderer.on(
+      'menu-reset-sync',
+      callback as unknown as (event: IpcRendererEvent) => void,
+    );
   },
-  onAdjustSyncOffset: (callback: () => void) => {
+  onManualSync: (callback: () => void) => {
     try {
-      ipcRenderer.removeAllListeners('menu-adjust-sync-offset');
-    } catch {}
-    ipcRenderer.on('menu-adjust-sync-offset', callback);
+      ipcRenderer.removeAllListeners('menu-manual-sync');
+    } catch (e) {
+      // ignore
+    }
+    ipcRenderer.on(
+      'menu-manual-sync',
+      callback as unknown as (event: IpcRendererEvent) => void,
+    );
+  },
+  offManualSync: (callback: () => void) => {
+    try {
+      ipcRenderer.removeListener(
+        'menu-manual-sync',
+        callback as unknown as (event: IpcRendererEvent) => void,
+      );
+    } catch {
+      /* noop */
+    }
+  },
+  onSetSyncMode: (callback: (mode: 'auto' | 'manual') => void) => {
+    try {
+      ipcRenderer.removeAllListeners('menu-set-sync-mode');
+    } catch (e) {
+      // ignore
+    }
+    ipcRenderer.on('menu-set-sync-mode', (_event, mode: 'auto' | 'manual') =>
+      callback(mode),
+    );
+  },
+  offSetSyncMode: (callback: (mode: 'auto' | 'manual') => void) => {
+    try {
+      ipcRenderer.removeListener(
+        'menu-set-sync-mode',
+        callback as unknown as (
+          event: IpcRendererEvent,
+          mode: 'auto' | 'manual',
+        ) => void,
+      );
+    } catch {
+      /* noop */
+    }
   },
   // 追加: まとめてクリアするAPI（必要なら使用）
   clearMenuSyncListeners: () => {
@@ -147,7 +195,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.removeAllListeners('menu-resync-audio');
       ipcRenderer.removeAllListeners('menu-reset-sync');
       ipcRenderer.removeAllListeners('menu-adjust-sync-offset');
-    } catch {}
+    } catch (e) {
+      // ignore
+    }
   },
   // ファイル存在確認
   checkFileExists: async (filePath: string) => {
@@ -156,6 +206,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return exists;
     } catch (error) {
       console.error('Error checking file:', error);
+      return false;
+    }
+  },
+  setManualModeChecked: async (checked: boolean) => {
+    try {
+      return await ipcRenderer.invoke('set-manual-mode-checked', checked);
+    } catch (e) {
+      console.error('setManualModeChecked error:', e);
       return false;
     }
   },

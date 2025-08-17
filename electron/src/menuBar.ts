@@ -78,11 +78,24 @@ export const menuBar = Menu.buildFromTemplate([
       },
       { type: 'separator' },
       {
-        label: '同期オフセット調整',
-        accelerator: 'CmdOrCtrl+Shift+O',
+        label: '今の位置で同期',
+        accelerator: 'CmdOrCtrl+Shift+M',
         click: (menuItem, browserWindow) => {
           if (browserWindow) {
-            browserWindow.webContents.send('menu-adjust-sync-offset');
+            browserWindow.webContents.send('menu-manual-sync');
+          }
+        },
+      },
+      {
+        id: 'toggle-manual-mode',
+        type: 'checkbox',
+        label: '手動モード（個別シーク許可）',
+        checked: false,
+        accelerator: 'CmdOrCtrl+Shift+T',
+        click: (menuItem, browserWindow) => {
+          if (browserWindow) {
+            const mode = menuItem.checked ? 'manual' : 'auto';
+            browserWindow.webContents.send('menu-set-sync-mode', mode);
           }
         },
       },

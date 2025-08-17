@@ -15,11 +15,6 @@ interface VideoControllerProps {
   maxSec: number;
   videoList: string[];
   syncData?: VideoSyncData;
-  resyncAudio?: () => void;
-  resetSync?: () => void;
-  manualSyncFromPlayers?: () => void;
-  syncMode?: 'auto' | 'manual';
-  setSyncMode?: Dispatch<SetStateAction<'auto' | 'manual'>>;
 }
 
 export const VideoController = ({
@@ -30,11 +25,6 @@ export const VideoController = ({
   handleCurrentTime,
   maxSec,
   videoList,
-  resyncAudio,
-  resetSync,
-  manualSyncFromPlayers,
-  syncMode = 'auto',
-  setSyncMode,
   syncData,
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
@@ -265,11 +255,11 @@ export const VideoController = ({
           baseTime = videoTime;
         }
 
-        // ローカルオフセット: syncData が未反映でも手動モードなら p0/p1 の時刻から算出
+        // オフセット: syncData があれば使用、なければ p0/p1 の時刻から算出
         let localOffset = 0;
         if (syncData?.isAnalyzed) {
           localOffset = syncData.syncOffset || 0;
-        } else if (syncMode === 'manual' && videoList.length > 1) {
+        } else if (videoList.length > 1) {
           const p1 = getExistingPlayer('video_1');
           let t1 = 0;
           try {
@@ -363,23 +353,33 @@ export const VideoController = ({
     videoTime,
     syncData?.syncOffset,
     syncData?.isAnalyzed,
-    syncMode,
   ]);
 
-  const isManual = syncMode === 'manual';
-
-  // UI: コントロールバー（レイアウト調整）
+  // UI: コントロールバー（最小構成: 再生/一時停止・速度・共通シークバー）
   return (
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 1 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1.5,
+        alignItems: 'center',
+        p: 1,
+        width: '100%',
+      }}
+    >
       {/* 左: 再生/一時停止、速度 */}
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+      <Box
+        sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}
+      >
         <Button
           variant="contained"
           onClick={() => setIsVideoPlaying(!isVideoPlaying)}
+          sx={{ minWidth: 100 }}
         >
           {isVideoPlaying ? 'PAUSE' : 'PLAY ALL'}
         </Button>
-        <Typography variant="body2">Speed</Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+          Speed
+        </Typography>
         <Slider
           size="small"
           min={0.25}
@@ -391,67 +391,17 @@ export const VideoController = ({
         />
       </Box>
 
-      {/* 中央: 共通シークバー（手動以外は操作無効化） */}
-      <Box sx={{ flex: 1, px: 2 }}>
-        <Box
-          sx={{
-            pointerEvents: isManual ? 'auto' : 'none',
-            opacity: isManual ? 1 : 0.5,
-          }}
-        >
-          <Slider
-            size="small"
-            min={0}
-            max={Math.max(0, maxSec)}
-            step={0.01}
-            value={videoTime}
-            onChange={handleCurrentTime}
-            valueLabelDisplay="auto"
-          />
-        </Box>
-        {!isManual && (
-          <Typography variant="caption" color="text.secondary">
-            同期オフセット待機中…
-          </Typography>
-        )}
-      </Box>
-
-      {/* 右: 同期モードトグルと同期系操作 */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Typography variant="body2">同期モード:</Typography>
-        <Button
-          variant={isManual ? 'outlined' : 'contained'}
+      {/* 中央: 共通シークバー（常に操作可能） */}
+      <Box sx={{ flex: 1, px: 2, minWidth: 0 }}>
+        <Slider
           size="small"
-          onClick={() => setSyncMode?.('auto')}
-        >
-          自動
-        </Button>
-        <Button
-          variant={isManual ? 'contained' : 'outlined'}
-          size="small"
-          onClick={() => setSyncMode?.('manual')}
-        >
-          手動
-        </Button>
-
-        {/* 自動（音声）同期 */}
-        <Button size="small" onClick={resyncAudio} disabled={isManual}>
-          音声同期
-        </Button>
-        {/* 手動同期（各プレイヤー現在位置から） */}
-        <Button
-          size="small"
-          onClick={manualSyncFromPlayers}
-          disabled={!isManual}
-        >
-          今の位置で同期
-        </Button>
-        {/* オフセットを直接入力 */}
-        {/* ボタン削除: ユーザー入力UIは不要のため */}
-        {/* <Button size="small" onClick={adjustSyncOffset}>オフセット入力</Button> */}
-        <Button size="small" onClick={resetSync}>
-          同期リセット
-        </Button>
+          min={0}
+          max={Math.max(0, maxSec)}
+          step={0.01}
+          value={videoTime}
+          onChange={handleCurrentTime}
+          valueLabelDisplay="auto"
+        />
       </Box>
     </Box>
   );
