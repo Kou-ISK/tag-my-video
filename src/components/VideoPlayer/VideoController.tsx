@@ -1,5 +1,11 @@
 import { Box, Button, Slider, Typography } from '@mui/material';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
 
@@ -27,7 +33,8 @@ export const VideoController = ({
   videoList,
   syncData,
 }: VideoControllerProps) => {
-  const [videoTime, setVideoTime] = useState<number>(0); // Sliderで表示される映像の再生時間を管理
+  const [videoTime, setVideoTime] = useState<number>(0);
+  const rafLastTsRef = useRef<number | null>(null);
 
   useEffect(() => {
     // videoTimeがNaNになった場合の修正
@@ -180,15 +187,22 @@ export const VideoController = ({
               newVideoTime = 0;
             }
 
+            // 負のオフセット時、スライダーが負領域を指している間は上書きしない
+            const negOffset = !!(
+              syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
+            );
+            if (negOffset && videoTime < 0) {
+              // グローバル時間は別経路（RAF）で進める
+              return;
+            }
+
             if (
               typeof newVideoTime === 'number' &&
               !isNaN(newVideoTime) &&
               newVideoTime >= 0
             ) {
               if (Math.abs(newVideoTime - videoTime) > 0.05) {
-                // ローカル表示用
                 setVideoTime(newVideoTime);
-                // グローバルcurrentTimeも更新（再生中のみ）
                 if (isVideoPlaying) {
                   setCurrentTime(newVideoTime);
                 }
@@ -201,7 +215,34 @@ export const VideoController = ({
       }
     };
 
-    const animationUpdateHandler = () => {
+    const animationUpdateHandler = (ts?: number) => {
+      // 負のオフセット時、基準映像が0秒に留まっている間はRAFでグローバル時間を進める
+      const negOffset = !!(
+        syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
+      );
+      if (isVideoPlaying && negOffset) {
+        try {
+          const primary = getExistingPlayer('video_0');
+          const p0 = primary?.currentTime ? primary.currentTime() || 0 : 0;
+          if (videoTime < 0 && p0 <= 0.01) {
+            if (typeof ts === 'number') {
+              if (rafLastTsRef.current == null) rafLastTsRef.current = ts;
+              const dt = (ts - rafLastTsRef.current) / 1000;
+              rafLastTsRef.current = ts;
+              if (dt > 0 && dt < 1) {
+                const next = Math.min(0, videoTime + dt);
+                if (Math.abs(next - videoTime) > 1e-3) {
+                  setVideoTime(next);
+                  setCurrentTime(next);
+                }
+              }
+            }
+          }
+        } catch {
+          /* noop */
+        }
+      }
+
       updateTimeHandler();
       animationFrameId = requestAnimationFrame(animationUpdateHandler);
     };
@@ -216,6 +257,7 @@ export const VideoController = ({
 
           // アニメーションフレームベースでスムーズ更新（再生中のみ）
           if (isVideoPlaying) {
+            rafLastTsRef.current = null;
             animationFrameId = requestAnimationFrame(animationUpdateHandler);
           }
 
@@ -231,6 +273,7 @@ export const VideoController = ({
       clearTimeout(timer);
       if (intervalId) clearInterval(intervalId);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      rafLastTsRef.current = null;
       try {
         const primaryPlayer = getExistingPlayer('video_0');
         if (primaryPlayer) {
@@ -240,17 +283,32 @@ export const VideoController = ({
         console.debug('プレイヤークリーンアップエラー:', error);
       }
     };
-  }, [videoList, isVideoPlaying]); // videoTimeを依存関係から除去して無限ループを防止
+  }, [
+    videoList,
+    isVideoPlaying,
+    syncData?.syncOffset,
+    syncData?.isAnalyzed,
+    videoTime,
+  ]);
 
   // PLAY ALLを押した直後、全プレイヤーに対して再生前に同期シーク→再生を試行（既存のみ）
   useEffect(() => {
     if (isVideoPlaying && videoList.length > 0) {
       const tryPlayAll = () => {
-        // 基準プレイヤーの現在時刻を取得（なければUI上のvideoTimeを使用）
+        // 基準時間: 負のオフセットでスライダーが負のときは videoTime を優先
         const base = getExistingPlayer('video_0');
+        const useSlider = !!(
+          syncData?.isAnalyzed &&
+          (syncData?.syncOffset ?? 0) < 0 &&
+          videoTime < 0
+        );
         let baseTime = 0;
         try {
-          baseTime = base?.currentTime ? base.currentTime() || 0 : videoTime;
+          baseTime = useSlider
+            ? videoTime
+            : base?.currentTime
+            ? base.currentTime() || videoTime
+            : videoTime;
         } catch {
           baseTime = videoTime;
         }
@@ -267,7 +325,7 @@ export const VideoController = ({
           } catch {
             t1 = 0;
           }
-          localOffset = baseTime - t1; // manualSync と同じ定義
+          localOffset = (base?.currentTime ? base.currentTime() || 0 : 0) - t1;
         }
 
         videoList.forEach((_, index) => {
@@ -391,15 +449,22 @@ export const VideoController = ({
         />
       </Box>
 
-      {/* 中央: 共通シークバー（常に操作可能） */}
+      {/* 中央: 共通シークバー（負のオフセットに対応） */}
       <Box sx={{ flex: 1, px: 2, minWidth: 0 }}>
         <Slider
           size="small"
-          min={0}
+          min={
+            syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
+              ? (syncData?.syncOffset as number)
+              : 0
+          }
           max={Math.max(0, maxSec)}
           step={0.01}
           value={videoTime}
-          onChange={handleCurrentTime}
+          onChange={(e, v) => {
+            setVideoTime(v as number);
+            handleCurrentTime(e as unknown as Event, v);
+          }}
           valueLabelDisplay="auto"
         />
       </Box>

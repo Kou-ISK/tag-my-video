@@ -33,8 +33,19 @@ export const useVideoPlayerApp = () => {
     newValue: number | number[],
   ) => {
     const time = newValue as number;
-    if (!isNaN(time) && time >= 0) {
-      setCurrentTime(time);
+
+    // 负のオフセット時はグローバル時間の下限を拡張
+    const minAllowed =
+      syncData &&
+      syncData.isAnalyzed &&
+      typeof syncData.syncOffset === 'number' &&
+      syncData.syncOffset < 0
+        ? syncData.syncOffset
+        : 0;
+
+    if (!isNaN(time) && time >= minAllowed) {
+      const timeClamped = Math.max(time, minAllowed);
+      setCurrentTime(timeClamped);
 
       // シーク操作時に全ての動画を即座に同期
       setTimeout(() => {
@@ -57,16 +68,23 @@ export const useVideoPlayerApp = () => {
                 !isNaN(duration) &&
                 duration > 0
               ) {
-                let targetTime = time;
+                let targetTime = timeClamped;
+
+                // 0番プレイヤーは負の時間にシークしない
+                if (index === 0) {
+                  targetTime = Math.max(0, timeClamped);
+                }
 
                 // 2番目以降の動画には同期オフセットを適用
                 if (index > 0 && syncData?.isAnalyzed) {
                   const offset = syncData.syncOffset || 0;
-                  targetTime = Math.max(0, time - offset);
+                  targetTime = Math.max(0, timeClamped - offset);
                 }
 
                 console.log(
-                  `シーク: Video ${index}の時刻を${targetTime}秒に設定`,
+                  `シーク: Video ${index}の時刻を${targetTime}秒に設定 (global=${timeClamped}, offset=${
+                    syncData?.syncOffset ?? 0
+                  })`,
                 );
 
                 // より安全なシーク処理
@@ -87,7 +105,7 @@ export const useVideoPlayerApp = () => {
       }, 50); // 短いディレイで即座に反映
     } else {
       console.warn('無効な時間値が設定されようとしました:', time);
-      setCurrentTime(0);
+      setCurrentTime(minAllowed);
     }
   };
   const [packagePath, setPackagePath] = useState<string>('');
@@ -295,13 +313,17 @@ export const useVideoPlayerApp = () => {
         }
       }
 
+      // プレイヤーへ即時反映
       await forceUpdateVideoPlayers(newSyncData);
 
+      // 手動同期が完了したら個別シークを無効化（自動モードへ戻す）
       try {
         setSyncMode('auto');
-        await window.electronAPI?.setManualModeChecked?.(false);
-      } catch (e) {
-        console.debug('setManualModeChecked error', e);
+        if (window.electronAPI?.setManualModeChecked) {
+          await window.electronAPI.setManualModeChecked(false);
+        }
+      } catch {
+        /* ignore */
       }
     } catch (e) {
       console.error('manualSyncFromPlayers error', e);

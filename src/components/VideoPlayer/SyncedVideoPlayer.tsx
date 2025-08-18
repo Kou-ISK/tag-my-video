@@ -120,11 +120,15 @@ export const SyncedVideoPlayer = ({
   // 同期オフセットを考慮した再生時間の計算（堅牢化）
   useEffect(() => {
     if (videoList.length > 0) {
+      const offset = syncData?.syncOffset || 0;
       const times = videoList.map((_, index) => {
-        if (index === 0) return currentTime; // 基準映像はそのまま
-        const offset = syncData?.syncOffset || 0;
+        if (index === 0) {
+          // 基準映像は負の時間にしない
+          return Math.max(0, currentTime);
+        }
+        // 2本目以降: offset を適用。負のoffsetなら先行させるためにクランプしない
         const t = currentTime - offset;
-        return t < 0 ? 0 : t; // マイナスは0に固定して先頭を黒背景で埋める
+        return offset < 0 ? Math.max(0, t) : t < 0 ? 0 : t;
       });
       setAdjustedCurrentTimes(times);
     }
@@ -328,6 +332,49 @@ export const SyncedVideoPlayer = ({
     }
   }, [syncData?.syncOffset, syncData?.isAnalyzed, videoList.length]); // currentTimeを依存関係から削除して過度な更新を防止
 
+  // 基準プレイヤー(動画0)の再生開始を検知（負のオフセット用のブロック解除に利用）
+  // useEffect(() => {
+  //   // 再生停止時はリセット
+  //   if (!isVideoPlaying) {
+  //     setPrimaryStarted(false);
+  //   }
+  //   // Video.js 簡易型
+  //   type VjsPlayerLite = {
+  //     isDisposed?: () => boolean;
+  //     paused?: () => boolean;
+  //     on?: (ev: string, cb: () => void) => void;
+  //     off?: (ev: string, cb: () => void) => void;
+  //     currentTime?: () => number;
+  //   };
+  //   type VjsNSLite = { getPlayer?: (id: string) => VjsPlayerLite | undefined };
+  //   try {
+  //     const vjsNS = videojs as unknown as VjsNSLite;
+  //     const p0 = vjsNS.getPlayer?.('video_0');
+  //     if (!p0 || p0.isDisposed?.()) return;
+  //     // 既に再生状態なら即反映
+  //     try {
+  //       if (p0.paused && p0.paused() === false) {
+  //         setPrimaryStarted(true);
+  //       }
+  //     } catch {}
+  //     const onPlaying = () => setPrimaryStarted(true);
+  //     const onTimeUpdate = () => {
+  //       try {
+  //         const t = p0.currentTime ? p0.currentTime() || 0 : 0;
+  //         if (typeof t === 'number' && t > 0.01) setPrimaryStarted(true);
+  //       } catch {}
+  //     };
+  //     p0.on?.('playing', onPlaying);
+  //     p0.on?.('timeupdate', onTimeUpdate);
+  //     return () => {
+  //       try {
+  //         p0.off?.('playing', onPlaying);
+  //         p0.off?.('timeupdate', onTimeUpdate);
+  //       } catch {}
+  //     };
+  //   } catch {}
+  // }, [isVideoPlaying, videoList.length]);
+
   // デバッグ情報をログ出力
   console.log('SyncedVideoPlayer render:', {
     videoListLength: videoList.length,
@@ -400,7 +447,11 @@ export const SyncedVideoPlayer = ({
                   setMaxSec={index === 0 ? setMaxSec : () => void 0}
                   forceUpdate={forceUpdateKey}
                   blockPlay={
-                    index > 0 && (syncData?.syncOffset || 0) > 0
+                    index === 0
+                      ? // 基準映像は負のグローバル時間帯では黒背景を表示
+                        (syncData?.syncOffset || 0) < 0 && currentTime < 0
+                      : // 2本目以降は正のオフセットの間だけブロック
+                      (syncData?.syncOffset || 0) > 0
                       ? currentTime < (syncData?.syncOffset || 0)
                       : false
                   }
