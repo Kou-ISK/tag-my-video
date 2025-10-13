@@ -54,6 +54,43 @@ export const VideoPlayerApp = () => {
     manualSyncFromPlayers,
   } = useVideoPlayerApp();
 
+  // デバッグ: 再生状態の変化を監視（依存配列を最適化）
+  useEffect(() => {
+    console.log('=== VideoPlayerApp: isVideoPlaying changed ===', {
+      isVideoPlaying,
+      currentTime,
+      videoListLength: videoList.length,
+      syncData: syncData
+        ? {
+            isAnalyzed: syncData.isAnalyzed,
+            syncOffset: syncData.syncOffset,
+          }
+        : null,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Video.jsプレイヤーの実際の状態も確認
+    setTimeout(() => {
+      videoList.forEach((_, index) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const player = (window as any).videojs?.getPlayer?.(`video_${index}`);
+          if (player && !player.isDisposed?.()) {
+            console.log(`Player ${index} actual state:`, {
+              paused: player.paused?.(),
+              currentTime: player.currentTime?.(),
+              duration: player.duration?.(),
+              readyState: player.readyState?.(),
+              error: player.error?.(),
+            });
+          }
+        } catch (e) {
+          console.debug(`Player ${index} state check error:`, e);
+        }
+      });
+    }, 100);
+  }, [isVideoPlaying]); // currentTime, videoList, syncDataを依存配列から削除
+
   // デバッグ: videoListの変更を監視
   useEffect(() => {
     console.log('=== VideoPlayerApp: videoList changed ===', {
@@ -115,6 +152,7 @@ export const VideoPlayerApp = () => {
       {isFileSelected && (
         <>
           <VideoPlayer
+            key={videoList.join('|')} // videoListが変わった時のみ再マウント
             videoList={videoList}
             isVideoPlaying={isVideoPlaying}
             videoPlayBackRate={videoPlayBackRate}

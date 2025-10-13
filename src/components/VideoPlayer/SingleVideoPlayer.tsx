@@ -39,11 +39,30 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   // PLAY ALL中に遅延初期化でも再生できるよう、最新の再生フラグを保持
   const isPlayingRef = useRef<boolean>(isVideoPlaying);
   const [isPlayerReady, setIsPlayerReady] = useState<boolean>(false);
+  // 各プレイヤーの実durationを保持（終端マスク判定用）
+  const [durationSec, setDurationSec] = useState<number>(0);
+  const [showEndMask, setShowEndMask] = useState<boolean>(false);
 
   // isVideoPlayingの最新値をrefに反映
   useEffect(() => {
     isPlayingRef.current = isVideoPlaying;
   }, [isVideoPlaying]);
+
+  // 異常なcurrentTimeの検出と警告(durationベース)
+  useEffect(() => {
+    // durationが判明している場合のみチェック
+    if (durationSec > 0 && currentTime > durationSec + 10) {
+      // 動画の長さ+10秒を超える場合は明らかに異常
+      console.error(
+        `[${id}] currentTime (${currentTime}秒) が動画の長さ (${durationSec}秒) を大幅に超えています。`,
+      );
+    } else if (durationSec === 0 && currentTime > 7200) {
+      // durationが不明で2時間を超える場合は警告
+      console.warn(
+        `[${id}] currentTime (${currentTime}秒) が2時間を超えていますが、動画の長さが未確定です。`,
+      );
+    }
+  }, [currentTime, durationSec, id]);
 
   // allowSeekに応じてProgressControlを操作不能にする
   useEffect(() => {
@@ -141,63 +160,34 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               console.log(`${id}: loadstart イベント`);
             });
 
-            // 再生可能になったタイミングでも自動再生を試行
+            // Video.jsの再生・停止イベントを監視
+            playerRef.current.on('play', () => {
+              console.log(`${id}: Video.js play イベント - 実際に再生開始`);
+            });
+
+            playerRef.current.on('pause', () => {
+              console.log(`${id}: Video.js pause イベント - 実際に一時停止`);
+            });
+
+            playerRef.current.on('ended', () => {
+              console.log(`${id}: Video.js ended イベント - 再生終了`);
+            });
+
+            playerRef.current.on('waiting', () => {
+              console.log(
+                `${id}: Video.js waiting イベント - バッファリング中`,
+              );
+            });
+
+            playerRef.current.on('playing', () => {
+              console.log(
+                `${id}: Video.js playing イベント - バッファリング後再開`,
+              );
+            });
+
+            // canplayイベント - 再生準備完了の通知のみ(再生制御はuseEffectに一任)
             playerRef.current.on('canplay', () => {
-              console.log(`${id}: canplay イベント`);
-              if (isPlayingRef.current && !blockPlay) {
-                try {
-                  // デフォルトはミュートしない
-                  playerRef.current.muted?.(false);
-                  const p = playerRef.current.play?.();
-                  if (
-                    p &&
-                    typeof (p as Promise<unknown>).catch === 'function'
-                  ) {
-                    (p as Promise<unknown>)
-                      .catch(async (e) => {
-                        console.warn(`${id}: playエラー (unmuted)`, e);
-                        // 失敗時のみ一時的にミュートして再試行
-                        try {
-                          playerRef.current.muted?.(true);
-                          const p2 = playerRef.current.play?.();
-                          if (
-                            p2 &&
-                            typeof (p2 as Promise<unknown>).catch === 'function'
-                          ) {
-                            await (p2 as Promise<unknown>).catch(() => {
-                              // ignore
-                            });
-                          }
-                          // 再生開始後にミュート解除
-                          try {
-                            playerRef.current.muted?.(false);
-                          } catch {
-                            // ignore
-                          }
-                        } catch (ee) {
-                          console.warn(`${id}: 再試行playエラー`, ee);
-                        }
-                      })
-                      .then(() => {
-                        // 再生成功時はミュート解除を確実に
-                        try {
-                          playerRef.current.muted?.(false);
-                        } catch {
-                          // ignore
-                        }
-                      });
-                  }
-                } catch (e) {
-                  console.warn(`${id}: play例外`, e);
-                }
-              } else if (blockPlay) {
-                // ブロック中は確実に停止
-                try {
-                  playerRef.current.pause?.();
-                } catch (e) {
-                  console.debug(`${id}: ブロック中pause例外`, e);
-                }
-              }
+              console.log(`${id}: ビデオ再生準備完了`);
             });
 
             playerRef.current.on('canplaythrough', () => {
@@ -250,6 +240,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                   duration > 0
                 ) {
                   setMaxSec(duration);
+                  setDurationSec(duration); // 自分自身のdurationも保持
                   console.log(`${id}: duration設定: ${duration}秒`);
                 } else {
                   console.debug(`${id}: duration取得失敗, 再試行します`);
@@ -267,6 +258,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                       console.log(
                         `${id}: duration再試行で設定: ${retryDuration}秒`,
                       );
+                      // 自身のdurationも保持
+                      setDurationSec(retryDuration);
                     } else {
                       console.warn(`${id}: duration取得に失敗しました`);
                       setMaxSec(100); // フォールバック値
@@ -300,6 +293,22 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                   }
                 }
               });
+
+              // durationの変化にも追従
+              try {
+                playerRef.current.on('durationchange', () => {
+                  try {
+                    const d = playerRef.current?.duration?.();
+                    if (typeof d === 'number' && isFinite(d) && d > 0) {
+                      setDurationSec(d);
+                    }
+                  } catch {
+                    /* noop */
+                  }
+                });
+              } catch {
+                /* noop */
+              }
 
               // すでにメタデータが読み込まれている場合は即座に実行
               setTimeout(setDuration, 200);
@@ -426,6 +435,25 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     }
   }, [videoSrc, id, isPlayerReady]);
 
+  // 現在時刻/動画長さに応じて終端マスクを制御
+  useEffect(() => {
+    try {
+      if (
+        typeof currentTime === 'number' &&
+        typeof durationSec === 'number' &&
+        durationSec > 0
+      ) {
+        // 少し余裕を見て終端判定
+        const nearEnd = currentTime >= durationSec - 0.01;
+        setShowEndMask(!!nearEnd);
+      } else {
+        setShowEndMask(false);
+      }
+    } catch {
+      setShowEndMask(false);
+    }
+  }, [currentTime, durationSec]);
+
   // 再生状態の制御 - 修正版（エラーハンドリング強化）
   useEffect(() => {
     console.log(`${id}: 再生状態制御useEffect実行`, {
@@ -460,13 +488,31 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               try {
                 if (!playerRef.current.paused?.()) {
                   playerRef.current.pause?.();
-                  console.log(`${id}: オフセットブロックのため一時停止`);
+                  console.log(
+                    `${id}: オフセットブロックのため一時停止 - blockPlay=${blockPlay}`,
+                  );
                 }
               } catch (e) {
                 console.debug(`${id}: ブロックpauseエラー`, e);
               }
               return;
             }
+
+            // 再生・停止制御の詳細ログ
+            const currentPlayerPaused = playerRef.current.paused?.();
+            console.log(`${id}: 再生制御詳細`, {
+              isVideoPlaying,
+              currentPlayerPaused,
+              blockPlay,
+              shouldPlay: isVideoPlaying && !blockPlay,
+              action: isVideoPlaying
+                ? currentPlayerPaused
+                  ? 'play'
+                  : 'already-playing'
+                : currentPlayerPaused
+                ? 'already-paused'
+                : 'pause',
+            });
 
             if (isVideoPlaying) {
               const paused = playerRef.current.paused();
@@ -518,6 +564,9 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               }
             } else {
               if (!playerRef.current.paused?.()) {
+                console.log(
+                  `${id}: 一時停止実行 - isVideoPlaying=${isVideoPlaying}`,
+                );
                 try {
                   playerRef.current.pause?.();
                 } catch (e) {
@@ -612,6 +661,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         }
 
         const currentPlayerTime = playerRef.current.currentTime();
+        console.log(
+          `[DEBUG] ${id}: Time setting check - currentTime prop=${currentTime}, playerCurrentTime=${currentPlayerTime}, duration=${durationSec}, blockPlay=${blockPlay}`,
+        );
+
         // フリッカリング防止：より大きな閾値を使用し、シーク処理を最適化
         if (
           typeof currentPlayerTime === 'number' &&
@@ -633,7 +686,30 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
                 !playerRef.current.error()
               ) {
                 try {
-                  playerRef.current.currentTime(currentTime);
+                  // 動画の長さを超える場合は調整
+                  let seekTime = currentTime;
+
+                  // 異常値判定: durationが分かっている場合はduration+5秒を基準に
+                  // durationが不明な場合は7200秒(2時間)を上限とする
+                  const maxAllowedTime =
+                    durationSec > 0 ? durationSec + 5 : 7200;
+
+                  if (currentTime > maxAllowedTime) {
+                    // 明らかに異常な値の場合は警告のみ(リセットしない)
+                    console.warn(
+                      `[WARNING] ${id}: 異常に高いシーク時間 (${currentTime}秒、上限=${maxAllowedTime}秒) です。`,
+                    );
+                    seekTime = currentTime; // そのまま使用
+                  } else if (durationSec > 0 && currentTime > durationSec) {
+                    // 動画の長さを少し超える程度なら末尾に調整
+                    seekTime = Math.max(0, durationSec - 0.5);
+                    console.warn(
+                      `[WARN] ${id}: シーク時間 (${currentTime}秒) を動画の長さ内 (${seekTime}秒) に調整しました。`,
+                    );
+                  }
+
+                  console.log(`[DEBUG] ${id}: Executing seek to ${seekTime}`);
+                  playerRef.current.currentTime(seekTime);
                 } catch (seekError) {
                   console.debug(`${id}: シーク実行エラー:`, seekError);
                 }
@@ -786,9 +862,50 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
             color: '#ddd',
           }}
         >
-          <Typography variant="caption">オフセット待機中…</Typography>
+          <Typography variant="caption">音声同期待機中…</Typography>
         </Box>
+      )}
+      {showEndMask && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: '#000',
+            zIndex: 2,
+          }}
+        />
       )}
     </Box>
   );
 };
+
+// React.memoでコンポーネントをメモ化し、不要な再レンダリングを防ぐ
+export const MemoizedSingleVideoPlayer = React.memo(
+  SingleVideoPlayer,
+  (prevProps, nextProps) => {
+    // 意味のある変更の場合のみ再レンダリング（閾値を0.1秒に統一）
+    const significantTimeChange =
+      Math.abs(prevProps.currentTime - nextProps.currentTime) > 0.1;
+    const otherPropsChanged =
+      prevProps.videoSrc !== nextProps.videoSrc ||
+      prevProps.id !== nextProps.id ||
+      prevProps.isVideoPlaying !== nextProps.isVideoPlaying ||
+      prevProps.videoPlayBackRate !== nextProps.videoPlayBackRate ||
+      prevProps.forceUpdate !== nextProps.forceUpdate ||
+      prevProps.blockPlay !== nextProps.blockPlay ||
+      prevProps.allowSeek !== nextProps.allowSeek;
+
+    // currentTimeが0.1秒以下の変化の場合は再レンダリングを防ぐ
+    const shouldUpdate = significantTimeChange || otherPropsChanged;
+
+    if (!shouldUpdate) {
+      console.log(
+        `${nextProps.id}: 再レンダリングをスキップ (時間変化: ${Math.abs(
+          prevProps.currentTime - nextProps.currentTime,
+        ).toFixed(6)}秒)`,
+      );
+    }
+
+    return !shouldUpdate;
+  },
+);

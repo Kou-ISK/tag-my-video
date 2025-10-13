@@ -1,8 +1,14 @@
 // 同期機能付きビデオプレイヤー
 
 import { Box } from '@mui/material';
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { SingleVideoPlayer } from './SingleVideoPlayer';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+  useMemo,
+} from 'react';
+import { MemoizedSingleVideoPlayer } from './SingleVideoPlayer';
 import { VideoSyncData } from '../../types/VideoSync';
 import videojs from 'video.js';
 
@@ -31,6 +37,26 @@ export const SyncedVideoPlayer = ({
   const [forceUpdateKey, setForceUpdateKey] = useState<number>(0);
 
   const allowSeek = syncMode === 'manual';
+
+  // blockPlay配列を計算(useMemoで安定化し、不要な再レンダリングを防止)
+  const blockPlayStates = useMemo(() => {
+    const offset = syncData?.syncOffset || 0;
+    return videoList.map((_, index) => {
+      if (index === 0) {
+        // Video_0 (基準映像) のブロック条件
+        if (offset < 0) {
+          return currentTime < Math.abs(offset);
+        }
+        return false;
+      } else {
+        // Video_1以降のブロック条件
+        if (offset > 0) {
+          return currentTime < offset;
+        }
+        return false;
+      }
+    });
+  }, [currentTime, syncData?.syncOffset, videoList.length]);
 
   // スタートアップデバッグ - アプリ起動時の状態確認
   console.log('🚀 SyncedVideoPlayer: コンポーネント起動', {
@@ -438,7 +464,7 @@ export const SyncedVideoPlayer = ({
                   display: 'flex',
                 }}
               >
-                <SingleVideoPlayer
+                <MemoizedSingleVideoPlayer
                   videoSrc={filePath}
                   id={`video_${index}`}
                   isVideoPlaying={isVideoPlaying}
@@ -446,15 +472,7 @@ export const SyncedVideoPlayer = ({
                   currentTime={adjustedCurrentTimes[index] || currentTime}
                   setMaxSec={index === 0 ? setMaxSec : () => void 0}
                   forceUpdate={forceUpdateKey}
-                  blockPlay={
-                    index === 0
-                      ? // 基準映像は負のグローバル時間帯では黒背景を表示
-                        (syncData?.syncOffset || 0) < 0 && currentTime < 0
-                      : // 2本目以降は正のオフセットの間だけブロック
-                      (syncData?.syncOffset || 0) > 0
-                      ? currentTime < (syncData?.syncOffset || 0)
-                      : false
-                  }
+                  blockPlay={blockPlayStates[index] || false}
                   allowSeek={allowSeek}
                 />
               </Box>

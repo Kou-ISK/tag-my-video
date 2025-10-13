@@ -35,14 +35,71 @@ export const VideoController = ({
 }: VideoControllerProps) => {
   const [videoTime, setVideoTime] = useState<number>(0);
   const rafLastTsRef = useRef<number | null>(null);
+  const lastSetCurrentTimeValueRef = useRef<number>(0); // 最後にsetCurrentTimeで設定した時間値
+  const lastSetCurrentTimeTimestampRef = useRef<number>(0); // 最後にsetCurrentTimeを呼んだタイムスタンプ
+
+  // 安全なsetCurrentTime関数（頻度制限付き）
+  // maxSecを基準に異常値を検出(2時間を上限とする)
+  const safeSetCurrentTime = (time: number, source = 'unknown') => {
+    const maxAllowedTime = maxSec > 0 ? maxSec + 10 : 7200;
+    if (time > maxAllowedTime) {
+      console.error(
+        `[ERROR] safeSetCurrentTime from ${source}: 異常に高い値 (${time}秒、上限=${maxAllowedTime}秒) の設定を阻止しました。`,
+      );
+      return;
+    }
+    if (isNaN(time) || time < 0) {
+      console.error(
+        `[ERROR] safeSetCurrentTime from ${source}: 無効な値 (${time}) の設定を阻止しました。`,
+      );
+      return;
+    }
+
+    // 頻度制限: 0.2秒以上の変化がある場合のみ実行（シーク操作以外）
+    const now = Date.now();
+    const timeDiff = Math.abs(time - lastSetCurrentTimeValueRef.current);
+    const timeSinceLastCall = now - lastSetCurrentTimeTimestampRef.current;
+    const hasSignificantChange = timeDiff > 0.2;
+
+    if (hasSignificantChange || source === 'updateTimeHandler') {
+      console.log(`[INFO] safeSetCurrentTime from ${source}: ${time}秒を設定`);
+      lastSetCurrentTimeValueRef.current = time;
+      lastSetCurrentTimeTimestampRef.current = now;
+      setCurrentTime(time);
+    } else {
+      console.debug(
+        `[DEBUG] safeSetCurrentTime from ${source}: 更新をスキップ (変化=${timeDiff.toFixed(
+          3,
+        )}秒, 経過時間=${timeSinceLastCall}ms)`,
+      );
+    }
+  };
 
   useEffect(() => {
-    // videoTimeがNaNになった場合の修正
+    // videoTimeがNaNになった場合のみ修正
     if (isNaN(videoTime)) {
       console.warn('videoTimeがNaNになっています。0にリセットします。');
       setVideoTime(0);
     }
-  }, [videoTime]);
+    // 異常値の警告のみ(リセットしない)
+    const maxAllowedTime = maxSec > 0 ? maxSec + 10 : 7200;
+    if (videoTime > maxAllowedTime) {
+      console.warn(
+        `[WARNING] videoTimeが異常に高い値 (${videoTime}秒、上限=${maxAllowedTime}秒) です。`,
+      );
+      // リセット処理は削除 - ユーザーの操作を尊重
+    }
+  }, [videoTime, maxSec]);
+
+  // propsとして渡される値の異常チェック
+  useEffect(() => {
+    if (maxSec > 7200) {
+      // 2時間を超える場合
+      console.error(
+        `[ERROR] VideoController: 異常に高いmaxSec (${maxSec}秒) が設定されています。`,
+      );
+    }
+  }, [maxSec]);
 
   // 既存のVideo.jsプレイヤー取得（新規作成はしない）
   type VjsPlayer = {
@@ -180,9 +237,34 @@ export const VideoController = ({
           ) {
             let newVideoTime = 0;
             try {
-              newVideoTime = primaryPlayer.currentTime
+              const rawTime = primaryPlayer.currentTime
                 ? primaryPlayer.currentTime() || 0
                 : 0;
+
+              // Video.jsから取得した時間値を検証
+              if (
+                typeof rawTime === 'number' &&
+                !isNaN(rawTime) &&
+                rawTime >= 0
+              ) {
+                if (rawTime > duration + 5) {
+                  // duration + 5秒を超える場合は警告のみ
+                  console.warn(
+                    `[WARNING] Video.js currentTime (${rawTime}秒) が duration (${duration}秒) を大幅に超えています。`,
+                  );
+                  newVideoTime = rawTime; // そのまま使用(リセットしない)
+                } else if (rawTime > 7200) {
+                  // 2時間を超える場合は警告のみ
+                  console.warn(
+                    `[WARNING] Video.js currentTime (${rawTime}秒) が異常に高い値です。`,
+                  );
+                  newVideoTime = rawTime; // そのまま使用(リセットしない)
+                } else {
+                  newVideoTime = rawTime;
+                }
+              } else {
+                newVideoTime = 0;
+              }
             } catch {
               newVideoTime = 0;
             }
@@ -192,7 +274,6 @@ export const VideoController = ({
               syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
             );
             if (negOffset && videoTime < 0) {
-              // グローバル時間は別経路（RAF）で進める
               return;
             }
 
@@ -201,11 +282,9 @@ export const VideoController = ({
               !isNaN(newVideoTime) &&
               newVideoTime >= 0
             ) {
-              if (Math.abs(newVideoTime - videoTime) > 0.05) {
+              // 閾値を0.1秒に変更して更新頻度を下げる
+              if (Math.abs(newVideoTime - videoTime) > 0.1) {
                 setVideoTime(newVideoTime);
-                if (isVideoPlaying) {
-                  setCurrentTime(newVideoTime);
-                }
               }
             }
           }
@@ -216,34 +295,111 @@ export const VideoController = ({
     };
 
     const animationUpdateHandler = (ts?: number) => {
-      // 負のオフセット時、基準映像が0秒に留まっている間はRAFでグローバル時間を進める
-      const negOffset = !!(
-        syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
-      );
-      if (isVideoPlaying && negOffset) {
-        try {
-          const primary = getExistingPlayer('video_0');
-          const p0 = primary?.currentTime ? primary.currentTime() || 0 : 0;
-          if (videoTime < 0 && p0 <= 0.01) {
-            if (typeof ts === 'number') {
-              if (rafLastTsRef.current == null) rafLastTsRef.current = ts;
-              const dt = (ts - rafLastTsRef.current) / 1000;
-              rafLastTsRef.current = ts;
-              if (dt > 0 && dt < 1) {
-                const next = Math.min(0, videoTime + dt);
-                if (Math.abs(next - videoTime) > 1e-3) {
+      const offset = Number(syncData?.syncOffset || 0);
+      const negOffset = !!(syncData?.isAnalyzed && offset < 0);
+      const posOffset = !!(syncData?.isAnalyzed && offset > 0);
+
+      // 過剰なログを削減 - 10秒に1回だけログ出力
+      const shouldLog =
+        !ts ||
+        Math.floor(ts / 10000) !==
+          Math.floor((rafLastTsRef.current || 0) / 10000);
+      if (shouldLog) {
+        console.log(
+          `[DEBUG] RAF update: offset=${offset}, negOffset=${negOffset}, posOffset=${posOffset}, videoTime=${videoTime}, isVideoPlaying=${isVideoPlaying}`,
+        );
+      } // RAF時間差分
+      if (typeof ts === 'number') {
+        if (rafLastTsRef.current == null) rafLastTsRef.current = ts;
+        const dt = Math.max(0, (ts - rafLastTsRef.current) / 1000);
+        rafLastTsRef.current = ts;
+
+        if (isVideoPlaying && dt > 0 && dt < 1.0) {
+          try {
+            const p0 = getExistingPlayer('video_0');
+            const p1 = getExistingPlayer('video_1');
+            const p0t = p0?.currentTime ? p0.currentTime() || 0 : 0;
+            const p1t = p1?.currentTime ? p1.currentTime() || 0 : 0;
+            let d0 = 0,
+              d1 = 0;
+            try {
+              d0 = p0?.duration ? p0.duration() || 0 : 0;
+              d1 = p1?.duration ? p1.duration() || 0 : 0;
+            } catch {
+              d0 = 0;
+              d1 = 0;
+            }
+
+            if (shouldLog) {
+              console.log(
+                `[SYNC] RAF state: p0t=${p0t}, p1t=${p1t}, d0=${d0}, d1=${d1}, dt=${dt}`,
+              );
+            }
+
+            // 音声同期に基づく時間進行制御
+            if (negOffset) {
+              // 負のオフセット: video_1が先行する場合
+              // video_1が再生中で、まだvideo_0の開始時間に達していない場合
+              if (videoTime < Math.abs(offset) && p1t > 0) {
+                const next = Math.min(Math.abs(offset), videoTime + dt);
+                if (next !== videoTime && next > -600) {
                   setVideoTime(next);
-                  setCurrentTime(next);
+                  safeSetCurrentTime(next, 'RAF-negativeOffset-preStart');
+                }
+              }
+              // 両方の動画が再生可能になった後は通常の時間進行
+              else if (videoTime >= Math.abs(offset) && (p0t > 0 || p1t > 0)) {
+                const next = videoTime + dt;
+                if (next < maxSec && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-negativeOffset-both');
+                }
+              }
+            } else if (posOffset) {
+              // 正のオフセット: video_0が先行する場合
+              // video_0が再生中で、まだvideo_1の開始時間に達していない場合
+              if (videoTime < offset && p0t > 0) {
+                const next = Math.min(offset, videoTime + dt);
+                if (next !== videoTime) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-preStart');
+                }
+              }
+              // 両方の動画が再生可能になった後は通常の時間進行
+              else if (videoTime >= offset && (p0t > 0 || p1t > 0)) {
+                const next = videoTime + dt;
+                if (next < maxSec && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-both');
+                }
+              }
+              // video_0が終了してもvideo_1が継続する場合
+              else if (d0 > 0 && p0t >= d0 - 0.01 && p1t > 0) {
+                const maxAllowed = Math.max(0, maxSec);
+                const next = Math.min(maxAllowed, videoTime + dt);
+                if (next !== videoTime && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-continue');
+                }
+              }
+            } else {
+              // オフセットなしの場合：通常の同期再生
+              if (p0t > 0 || p1t > 0) {
+                const next = videoTime + dt;
+                if (next < maxSec && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-noOffset');
                 }
               }
             }
+          } catch {
+            /* noop */
           }
-        } catch {
-          /* noop */
         }
       }
 
       updateTimeHandler();
+      // RAF処理を再有効化（頻度制限付き）
       animationFrameId = requestAnimationFrame(animationUpdateHandler);
     };
 
@@ -252,16 +408,14 @@ export const VideoController = ({
       try {
         const primaryPlayer = getExistingPlayer('video_0');
         if (primaryPlayer) {
-          // timeupdate イベントでリアルタイム更新
           primaryPlayer.on?.('timeupdate', updateTimeHandler);
 
-          // アニメーションフレームベースでスムーズ更新（再生中のみ）
           if (isVideoPlaying) {
             rafLastTsRef.current = null;
+            // RAF処理を再有効化（頻度制限付き）
             animationFrameId = requestAnimationFrame(animationUpdateHandler);
           }
 
-          // ポーリングによるバックアップ
           intervalId = setInterval(updateTimeHandler, 200);
         }
       } catch (error) {
@@ -289,6 +443,7 @@ export const VideoController = ({
     syncData?.syncOffset,
     syncData?.isAnalyzed,
     videoTime,
+    maxSec,
   ]);
 
   // PLAY ALLを押した直後、全プレイヤーに対して再生前に同期シーク→再生を試行（既存のみ）

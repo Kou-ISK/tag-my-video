@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TimelineData } from '../types/TimelineData';
 import { VideoSyncData } from '../types/VideoSync';
 import { ulid } from 'ulid';
@@ -21,12 +21,38 @@ export const useVideoPlayerApp = () => {
 
   const [maxSec, setMaxSec] = useState(0);
 
-  const [isVideoPlaying, setisVideoPlaying] = useState<boolean>(false);
+  const [isVideoPlaying, setisVideoPlayingInternal] = useState<boolean>(false);
+
+  // デバッグ用: setisVideoPlayingの呼び出しを追跡
+  const setisVideoPlaying = (value: boolean | ((prev: boolean) => boolean)) => {
+    const newValue =
+      typeof value === 'function' ? value(isVideoPlaying) : value;
+    console.log(`[DEBUG] setisVideoPlaying called:`, {
+      from: isVideoPlaying,
+      to: newValue,
+      stack: new Error().stack?.split('\n').slice(1, 5),
+      timestamp: new Date().toISOString(),
+    });
+    setisVideoPlayingInternal(newValue);
+  };
   const [videoPlayBackRate, setVideoPlayBackRate] = useState(1);
   const [syncData, setSyncData] = useState<VideoSyncData | undefined>(
     undefined,
   );
   const [syncMode, setSyncMode] = useState<'auto' | 'manual'>('auto');
+
+  // 異常なcurrentTime値の監視(警告のみ、リセットしない)
+  const prevCurrentTimeRef = useRef<number>(0);
+  useEffect(() => {
+    if (currentTime > 7200 && prevCurrentTimeRef.current !== currentTime) {
+      // 2時間を超える場合は警告のみ
+      console.warn(
+        `[WARNING] currentTimeが異常に高い値 (${currentTime}秒、上限=7200秒) です。`,
+      );
+      // リセット処理は削除 - ユーザーの操作を尊重
+    }
+    prevCurrentTimeRef.current = currentTime; // 値を記憶
+  }, [currentTime]);
 
   const handleCurrentTime = (
     event: React.SyntheticEvent | Event,
