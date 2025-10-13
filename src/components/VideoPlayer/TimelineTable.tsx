@@ -20,7 +20,10 @@ import React from 'react';
 
 interface TimelineTableProps {
   timelineFilePath: string;
-  setCurrentTime: Dispatch<SetStateAction<number>>;
+  handleCurrentTime: (
+    event: React.SyntheticEvent | Event,
+    newValue: number | number[],
+  ) => void;
   timeline: TimelineData[];
   setTimeline: Dispatch<SetStateAction<TimelineData[]>>;
   getSelectedTimelineId: any;
@@ -32,7 +35,7 @@ interface TimelineTableProps {
 
 export const TimelineTable = ({
   timelineFilePath,
-  setCurrentTime,
+  handleCurrentTime,
   timeline,
   setTimeline,
   getSelectedTimelineId,
@@ -123,12 +126,20 @@ export const TimelineTable = ({
                 {item.actionName}
               </TableCell>
               <TableCell padding="none" align="left">
-                <Button onClick={() => setCurrentTime(item.startTime)}>
+                <Button
+                  onClick={(e) =>
+                    handleCurrentTime(e as React.SyntheticEvent, item.startTime)
+                  }
+                >
                   {item.startTime}
                 </Button>
               </TableCell>
               <TableCell padding="none" align="left">
-                <Button onClick={() => setCurrentTime(item.endTime)}>
+                <Button
+                  onClick={(e) =>
+                    handleCurrentTime(e as React.SyntheticEvent, item.endTime)
+                  }
+                >
                   {item.endTime}
                 </Button>
               </TableCell>

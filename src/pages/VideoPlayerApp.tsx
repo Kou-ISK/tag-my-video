@@ -167,6 +167,7 @@ export const VideoPlayerApp = () => {
               isVideoPlaying={isVideoPlaying}
               setVideoPlayBackRate={setVideoPlayBackRate}
               setCurrentTime={setCurrentTime}
+              currentTime={currentTime}
               handleCurrentTime={handleCurrentTime}
               maxSec={maxSec}
               videoList={videoList}
@@ -199,7 +200,7 @@ export const VideoPlayerApp = () => {
           >
             <TimelineTable
               timelineFilePath={timelineFilePath}
-              setCurrentTime={setCurrentTime}
+              handleCurrentTime={handleCurrentTime}
               timeline={timeline}
               setTimeline={setTimeline}
               getSelectedTimelineId={getSelectedTimelineId}

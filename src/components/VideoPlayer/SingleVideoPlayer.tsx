@@ -148,6 +148,22 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
               isReady: playerRef.current?.isReady_,
             });
 
+            // グローバル登録確認
+            try {
+              type VjsNS = {
+                getPlayer?: (id: string) => typeof playerRef.current;
+              };
+              const vjsGlobal = videojs as unknown as VjsNS;
+              const retrieved = vjsGlobal.getPlayer?.(id);
+              console.log(`${id}: グローバル登録確認`, {
+                canGetPlayer: !!retrieved,
+                isSameInstance: retrieved === playerRef.current,
+                retrievedPlayerId: retrieved?.id_,
+              });
+            } catch (e) {
+              console.warn(`${id}: グローバル登録確認エラー`, e);
+            }
+
             // エラーイベントの処理
             playerRef.current.on('error', (error: unknown) => {
               console.error(`${id}: プレイヤーエラー:`, error);

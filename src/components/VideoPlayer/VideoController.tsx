@@ -14,6 +14,7 @@ interface VideoControllerProps {
   isVideoPlaying: boolean;
   setVideoPlayBackRate: Dispatch<SetStateAction<number>>;
   setCurrentTime: Dispatch<SetStateAction<number>>;
+  currentTime: number; // タイムライン等からの外部シーク検知用
   handleCurrentTime: (
     event: React.SyntheticEvent | Event,
     newValue: number | number[],
@@ -28,6 +29,7 @@ export const VideoController = ({
   isVideoPlaying,
   setVideoPlayBackRate,
   setCurrentTime,
+  currentTime,
   handleCurrentTime,
   maxSec,
   videoList,
@@ -37,6 +39,14 @@ export const VideoController = ({
   const rafLastTsRef = useRef<number | null>(null);
   const lastSetCurrentTimeValueRef = useRef<number>(0); // 最後にsetCurrentTimeで設定した時間値
   const lastSetCurrentTimeTimestampRef = useRef<number>(0); // 最後にsetCurrentTimeを呼んだタイムスタンプ
+  const isVideoPlayingRef = useRef<boolean>(isVideoPlaying); // 最新のisVideoPlaying値を保持
+  // 初期値を-Infinityにして、起動直後の操作を阻害しない
+  const lastManualSeekTimestamp = useRef<number>(-Infinity);
+
+  // isVideoPlayingが変更されたらrefを更新
+  useEffect(() => {
+    isVideoPlayingRef.current = isVideoPlaying;
+  }, [isVideoPlaying]);
 
   // 安全なsetCurrentTime関数（頻度制限付き）
   // maxSecを基準に異常値を検出(2時間を上限とする)
@@ -101,6 +111,19 @@ export const VideoController = ({
     }
   }, [maxSec]);
 
+  // タイムラインクリック等の外部シーク操作を検知
+  const prevCurrentTimeRef = useRef<number>(currentTime);
+  useEffect(() => {
+    // currentTimeが外部から変更された場合(タイムラインクリック等)
+    if (currentTime !== prevCurrentTimeRef.current) {
+      console.log(
+        `[INFO] 外部シーク検知: ${prevCurrentTimeRef.current}秒 → ${currentTime}秒`,
+      );
+      lastManualSeekTimestamp.current = Date.now();
+      prevCurrentTimeRef.current = currentTime;
+    }
+  }, [currentTime]);
+
   // 既存のVideo.jsプレイヤー取得（新規作成はしない）
   type VjsPlayer = {
     isDisposed?: () => boolean;
@@ -139,9 +162,12 @@ export const VideoController = ({
     if (window.electronAPI && typeof window.electronAPI.on === 'function') {
       const channel = 'video-shortcut-event';
       const handler = (_event: unknown, args: number) => {
+        console.log(`[HOTKEY] ショートカットキー受信: args=${args}`);
         if (args > 0) {
+          console.log(`[HOTKEY] 再生速度変更: ${args}倍速`);
           setVideoPlayBackRate(args);
           if (args === 1) {
+            console.log(`[HOTKEY] 再生/一時停止トグル実行`);
             try {
               // 全プレイヤーのミュート解除を先に試行
               ['video_0', 'video_1'].forEach((id) => {
@@ -172,10 +198,55 @@ export const VideoController = ({
             } catch (e) {
               console.debug('unmute-all try block error', e);
             }
-            setIsVideoPlaying((prev) => !prev);
+            // refから最新の値を取得してトグル
+            const currentState = isVideoPlayingRef.current;
+            const newState = !currentState;
+            console.log(`[HOTKEY] 再生状態変更: ${currentState} → ${newState}`);
+            setIsVideoPlaying(newState);
           }
         } else {
-          setCurrentTime((prev) => prev + args);
+          console.log(`[HOTKEY] シーク操作: ${args}秒`);
+          // 手動シーク操作のタイムスタンプを記録
+          lastManualSeekTimestamp.current = Date.now();
+
+          setCurrentTime((prev) => {
+            const newTime = Math.max(0, prev + args); // 負の値を防止
+            console.log(`[HOTKEY] 時間変更: ${prev}秒 → ${newTime}秒`);
+
+            // 即座にVideo.jsプレイヤーにもシークを適用
+            videoList.forEach((_, index) => {
+              try {
+                const player = getExistingPlayer(`video_${index}`);
+                if (player && !player.isDisposed?.()) {
+                  const offset =
+                    index > 0 && syncData?.isAnalyzed
+                      ? syncData.syncOffset || 0
+                      : 0;
+                  const targetTime = Math.max(
+                    0,
+                    newTime - (index > 0 ? offset : 0),
+                  );
+
+                  try {
+                    (
+                      player as unknown as {
+                        currentTime?: (t?: number) => number;
+                      }
+                    ).currentTime?.(targetTime);
+                    console.log(
+                      `[HOTKEY] Video ${index}をシーク: ${targetTime}秒`,
+                    );
+                  } catch (e) {
+                    console.debug(`[HOTKEY] Video ${index}シークエラー:`, e);
+                  }
+                }
+              } catch (e) {
+                console.debug(`[HOTKEY] Video ${index}アクセスエラー:`, e);
+              }
+            });
+
+            return newTime;
+          });
         }
       };
 
@@ -267,6 +338,16 @@ export const VideoController = ({
               }
             } catch {
               newVideoTime = 0;
+            }
+
+            // 手動シーク直後(500ms以内)は上書きしない
+            const timeSinceManualSeek =
+              Date.now() - lastManualSeekTimestamp.current;
+            if (timeSinceManualSeek < 500) {
+              console.log(
+                `[DEBUG] 手動シーク直後のため updateTimeHandler をスキップ (${timeSinceManualSeek}ms経過)`,
+              );
+              return;
             }
 
             // 負のオフセット時、スライダーが負領域を指している間は上書きしない
@@ -617,6 +698,8 @@ export const VideoController = ({
           step={0.01}
           value={videoTime}
           onChange={(e, v) => {
+            // 手動シーク操作のタイムスタンプを記録
+            lastManualSeekTimestamp.current = Date.now();
             setVideoTime(v as number);
             handleCurrentTime(e as unknown as Event, v);
           }}
