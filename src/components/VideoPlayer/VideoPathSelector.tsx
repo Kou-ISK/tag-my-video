@@ -1,10 +1,21 @@
 import {
   Box,
   Button,
-  Input,
-  CircularProgress,
   Typography,
+  TextField,
+  Stepper,
+  Step,
+  StepLabel,
+  Paper,
+  Alert,
+  AlertTitle,
+  Stack,
+  Chip,
+  LinearProgress,
 } from '@mui/material';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import VideoFileIcon from '@mui/icons-material/VideoFile';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
 import { AudioSyncAnalyzer } from '../../utils/AudioSyncAnalyzer';
@@ -35,9 +46,111 @@ export const VideoPathSelector = ({
   const [team1Name, setTeam1Name] = useState<string>('');
   const [team2Name, setTeam2Name] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [syncProgress, setSyncProgress] = useState<number>(0);
+  const [syncStage, setSyncStage] = useState<string>('');
+
+  // 新規パッケージ作成のステップ管理
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const [selectedDirectory, setSelectedDirectory] = useState<string>('');
+  const [selectedTightVideo, setSelectedTightVideo] = useState<string>('');
+  const [selectedWideVideo, setSelectedWideVideo] = useState<string>('');
+
+  // バリデーションエラー
+  const [errors, setErrors] = useState<{
+    packageName?: string;
+    team1Name?: string;
+    team2Name?: string;
+  }>({});
+
+  const steps = ['基本情報', '保存先選択', '映像ファイル選択', '確認'];
 
   const handleHasOpenModal = () => {
     setHasOpenModal(true);
+    // モーダルを開く際にステートをリセット
+    setActiveStep(0);
+    setPackageName('');
+    setTeam1Name('');
+    setTeam2Name('');
+    setSelectedDirectory('');
+    setSelectedTightVideo('');
+    setSelectedWideVideo('');
+    setErrors({});
+  };
+
+  const handleCloseModal = () => {
+    setHasOpenModal(false);
+    setActiveStep(0);
+  };
+
+  // バリデーション関数
+  const validateStep = (step: number): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (step === 0) {
+      if (!packageName.trim()) {
+        newErrors.packageName = 'パッケージ名を入力してください';
+      }
+      if (!team1Name.trim()) {
+        newErrors.team1Name = 'チーム名(1)を入力してください';
+      }
+      if (!team2Name.trim()) {
+        newErrors.team2Name = 'チーム名(2)を入力してください';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = async () => {
+    if (!validateStep(activeStep)) {
+      return;
+    }
+
+    if (activeStep === 1) {
+      // 保存先選択
+      if (!window.electronAPI) {
+        alert('この機能はElectronアプリケーション内でのみ利用できます。');
+        return;
+      }
+      const directory = await window.electronAPI.openDirectory();
+      if (directory) {
+        setSelectedDirectory(directory);
+        setActiveStep(activeStep + 1);
+      }
+    } else if (activeStep === 2) {
+      // 映像ファイル選択
+      if (!selectedTightVideo) {
+        alert('寄り映像を選択してください');
+        return;
+      }
+      setActiveStep(activeStep + 1);
+    } else if (activeStep === 3) {
+      // 最終確認→作成実行
+      await executeCreatePackage();
+    } else {
+      setActiveStep(activeStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setActiveStep(activeStep - 1);
+  };
+
+  const handleSelectTightVideo = async () => {
+    if (!window.electronAPI) return;
+    const path = await window.electronAPI.openFile();
+    if (path) {
+      setSelectedTightVideo(path);
+    }
+  };
+
+  const handleSelectWideVideo = async () => {
+    if (!window.electronAPI) return;
+    const path = await window.electronAPI.openFile();
+    if (path) {
+      setSelectedWideVideo(path);
+    }
   };
 
   // パッケージを選択した場合
@@ -130,12 +243,21 @@ export const VideoPathSelector = ({
   // 音声同期分析を実行する関数
   const performAudioSync = async (tightPath: string, widePath: string) => {
     setIsAnalyzing(true);
+    setSyncProgress(0);
     try {
       const audioAnalyzer = new AudioSyncAnalyzer();
+
+      // 進捗を段階的に更新
+      setSyncStage('音声抽出中...');
+      setSyncProgress(20);
+
       const syncResult = await audioAnalyzer.quickSyncAnalysis(
         tightPath,
         widePath,
       );
+
+      setSyncStage('同期計算中...');
+      setSyncProgress(80);
 
       const syncData: VideoSyncData = {
         syncOffset: syncResult.offsetSeconds,
@@ -144,6 +266,7 @@ export const VideoPathSelector = ({
       };
 
       setSyncData(syncData);
+      setSyncProgress(100);
       console.log('音声同期完了:', syncResult);
     } catch (error) {
       console.error('音声同期分析エラー:', error);
@@ -155,29 +278,21 @@ export const VideoPathSelector = ({
       });
     } finally {
       setIsAnalyzing(false);
+      setSyncProgress(0);
+      setSyncStage('');
     }
   };
 
-  // ファイル選択後にチーム名を選択し、.metadata/config.jsonに書き込む
-  const createPackage = async (packageName: string) => {
+  // パッケージ作成の実行関数
+  const executeCreatePackage = async () => {
     if (!window.electronAPI) {
       alert('この機能はElectronアプリケーション内でのみ利用できます。');
       return;
     }
 
-    const directoryName = await window.electronAPI.openDirectory();
-    const tightViewPath: string = await window.electronAPI.openFile();
-    let wideViewPath = null; // 初期値をnullに設定
-
-    // ワイドビューパスを選択するダイアログを表示
-    const shouldSelectWideView =
-      window.confirm('ワイドビューパスを選択しますか？');
-    if (shouldSelectWideView) {
-      wideViewPath = await window.electronAPI.openFile();
-    }
     const metaDataConfig: MetaData = {
-      tightViewPath: tightViewPath,
-      wideViewPath: wideViewPath,
+      tightViewPath: selectedTightVideo,
+      wideViewPath: selectedWideVideo || null,
       team1Name: team1Name,
       team2Name: team2Name,
       actionList: [
@@ -194,13 +309,15 @@ export const VideoPathSelector = ({
         'ショット',
       ],
     };
+
     const packageDatas: PackageDatas = await window.electronAPI.createPackage(
-      directoryName,
+      selectedDirectory,
       packageName,
-      tightViewPath,
-      wideViewPath,
+      selectedTightVideo,
+      selectedWideVideo || null,
       metaDataConfig,
     );
+
     if (packageDatas.wideViewPath) {
       setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
       // 2つの映像がある場合は音声同期分析を実行
@@ -213,79 +330,306 @@ export const VideoPathSelector = ({
       // 1つの映像の場合は同期データをリセット
       setSyncData(undefined);
     }
-    setTimelineFilePath(packageDatas.timelinePath);
-    setHasOpenModal(!hasOpenModal);
-    setIsFileSelected(!isFileSelected);
-    setMetaDataConfigFilePath(packageDatas.metaDataConfigFilePath);
-  };
 
+    setTimelineFilePath(packageDatas.timelinePath);
+    setMetaDataConfigFilePath(packageDatas.metaDataConfigFilePath);
+    setIsFileSelected(!isFileSelected);
+    setHasOpenModal(false);
+  };
   return (
-    <div style={{ marginLeft: '20vw', marginRight: '20vw' }}>
-      <Box display={'flex'} flexDirection={'column'}>
+    <Box sx={{ maxWidth: '800px', mx: 'auto', mt: 4, px: 3 }}>
+      <Stack spacing={3}>
         <Button
-          sx={{ height: '200px', fontsize: '200px', margin: '20px' }}
+          sx={{ height: '120px', fontSize: '18px' }}
           onClick={setVideoPathByPackagePath}
           variant="contained"
+          size="large"
+          startIcon={<FolderOpenIcon />}
         >
-          ビデオパッケージを選択
+          既存パッケージを開く
         </Button>
+
         <Button
-          sx={{ height: '200px', fontsize: '200px', margin: '20px' }}
+          sx={{ height: '120px', fontSize: '18px' }}
           onClick={handleHasOpenModal}
           variant="outlined"
+          size="large"
+          startIcon={<VideoFileIcon />}
         >
-          新規パッケージ
+          新規パッケージを作成
         </Button>
-      </Box>
-      {hasOpenModal && (
-        <Box>
-          <div>
-            <label htmlFor="packageName">パッケージ名</label>
-            <Input
-              id="packageName"
-              value={packageName}
-              onChange={(e) => setPackageName(e.currentTarget.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="team1Name">チーム名(1)</label>
-            <Input
-              id="team1Name"
-              value={team1Name}
-              onChange={(e) => setTeam1Name(e.currentTarget.value)}
-            ></Input>
-          </div>
-          <div>
-            <label htmlFor="team2Name">チーム名(2)</label>
-            <Input
-              id="team2Name"
-              value={team2Name}
-              onChange={(e) => setTeam2Name(e.currentTarget.value)}
-            ></Input>
-          </div>
-          <Button
-            variant="contained"
-            onClick={() => createPackage(packageName)}
-            disabled={isAnalyzing}
-          >
-            作成
-          </Button>
-        </Box>
-      )}
+      </Stack>
 
-      {isAnalyzing && (
-        <Box
+      {/* 新規パッケージ作成モーダル */}
+      {hasOpenModal && (
+        <Paper
+          elevation={3}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mt: 2,
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '90%',
+            maxWidth: '700px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            p: 4,
+            zIndex: 1300,
           }}
         >
-          <CircularProgress size={24} sx={{ mr: 2 }} />
-          <Typography>音声同期を分析中...</Typography>
-        </Box>
+          <Typography variant="h5" gutterBottom>
+            新規パッケージ作成
+          </Typography>
+
+          <Stepper activeStep={activeStep} sx={{ mt: 3, mb: 4 }}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          {/* ステップ0: 基本情報 */}
+          {activeStep === 0 && (
+            <Stack spacing={3}>
+              <Alert severity="info">
+                <AlertTitle>パッケージの基本情報を入力してください</AlertTitle>
+                パッケージ名と対戦する2チームの名前を入力します
+              </Alert>
+
+              <TextField
+                fullWidth
+                label="パッケージ名"
+                value={packageName}
+                onChange={(e) => setPackageName(e.target.value)}
+                error={!!errors.packageName}
+                helperText={errors.packageName || '例: 2024_春季大会_決勝'}
+                required
+              />
+
+              <TextField
+                fullWidth
+                label="チーム名 (1)"
+                value={team1Name}
+                onChange={(e) => setTeam1Name(e.target.value)}
+                error={!!errors.team1Name}
+                helperText={errors.team1Name || '赤色で表示されます'}
+                required
+              />
+
+              <TextField
+                fullWidth
+                label="チーム名 (2)"
+                value={team2Name}
+                onChange={(e) => setTeam2Name(e.target.value)}
+                error={!!errors.team2Name}
+                helperText={errors.team2Name || '青色で表示されます'}
+                required
+              />
+            </Stack>
+          )}
+
+          {/* ステップ1: 保存先選択 */}
+          {activeStep === 1 && (
+            <Stack spacing={3}>
+              <Alert severity="info">
+                <AlertTitle>パッケージの保存先を選択してください</AlertTitle>
+                選択したフォルダ内に「{packageName}」フォルダが作成されます
+              </Alert>
+
+              {selectedDirectory ? (
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 2, bgcolor: 'success.light' }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <CheckCircleIcon color="success" />
+                    <Typography variant="body2" noWrap>
+                      {selectedDirectory}
+                    </Typography>
+                  </Stack>
+                </Paper>
+              ) : (
+                <Typography color="text.secondary">
+                  「次へ」をクリックして保存先を選択してください
+                </Typography>
+              )}
+            </Stack>
+          )}
+
+          {/* ステップ2: 映像ファイル選択 */}
+          {activeStep === 2 && (
+            <Stack spacing={3}>
+              <Alert severity="info">
+                <AlertTitle>映像ファイルを選択してください</AlertTitle>
+                寄り映像は必須、引き映像は任意です
+              </Alert>
+
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  寄り映像 (必須)
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={handleSelectTightVideo}
+                  fullWidth
+                  sx={{ mb: 1 }}
+                >
+                  {selectedTightVideo ? '再選択' : '選択'}
+                </Button>
+                {selectedTightVideo && (
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 1, bgcolor: 'success.light' }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CheckCircleIcon color="success" fontSize="small" />
+                      <Typography variant="caption" noWrap>
+                        {selectedTightVideo.split('/').pop()}
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                )}
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  引き映像 (任意)
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={handleSelectWideVideo}
+                  fullWidth
+                  sx={{ mb: 1 }}
+                >
+                  {selectedWideVideo ? '再選択' : '選択'}
+                </Button>
+                {selectedWideVideo && (
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 1, bgcolor: 'success.light' }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CheckCircleIcon color="success" fontSize="small" />
+                      <Typography variant="caption" noWrap>
+                        {selectedWideVideo.split('/').pop()}
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                )}
+              </Box>
+            </Stack>
+          )}
+
+          {/* ステップ3: 確認 */}
+          {activeStep === 3 && (
+            <Stack spacing={2}>
+              <Alert severity="success">
+                <AlertTitle>作成内容の確認</AlertTitle>
+                以下の内容でパッケージを作成します
+              </Alert>
+
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack spacing={1.5}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      パッケージ名
+                    </Typography>
+                    <Typography variant="body1">{packageName}</Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      チーム
+                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                      <Chip label={team1Name} color="error" size="small" />
+                      <Typography variant="body2">vs</Typography>
+                      <Chip label={team2Name} color="primary" size="small" />
+                    </Stack>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      保存先
+                    </Typography>
+                    <Typography variant="body2" noWrap>
+                      {selectedDirectory}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      映像ファイル
+                    </Typography>
+                    <Typography variant="body2" noWrap>
+                      寄り: {selectedTightVideo.split('/').pop()}
+                    </Typography>
+                    {selectedWideVideo && (
+                      <Typography variant="body2" noWrap>
+                        引き: {selectedWideVideo.split('/').pop()}
+                      </Typography>
+                    )}
+                  </Box>
+                </Stack>
+              </Paper>
+            </Stack>
+          )}
+
+          {/* 進捗表示 */}
+          {isAnalyzing && (
+            <Box sx={{ mt: 3 }}>
+              <LinearProgress variant="determinate" value={syncProgress} />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 1 }}
+              >
+                {syncStage} ({Math.round(syncProgress)}%)
+              </Typography>
+            </Box>
+          )}
+
+          {/* ボタン */}
+          <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+            <Button onClick={handleCloseModal} disabled={isAnalyzing}>
+              キャンセル
+            </Button>
+
+            <Box sx={{ flex: 1 }} />
+
+            {activeStep > 0 && (
+              <Button onClick={handleBack} disabled={isAnalyzing}>
+                戻る
+              </Button>
+            )}
+
+            <Button
+              variant="contained"
+              onClick={handleNext}
+              disabled={isAnalyzing}
+            >
+              {activeStep === steps.length - 1 ? '作成' : '次へ'}
+            </Button>
+          </Stack>
+        </Paper>
       )}
-    </div>
+
+      {/* 背景オーバーレイ */}
+      {hasOpenModal && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1299,
+          }}
+          onClick={handleCloseModal}
+        />
+      )}
+    </Box>
   );
 };

@@ -1,4 +1,14 @@
-import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+  Snackbar,
+  Alert,
+  AlertTitle,
+} from '@mui/material';
 import { VideoController } from '../components/VideoPlayer/VideoController';
 import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
 import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
@@ -48,7 +58,25 @@ export const VideoPlayerApp = () => {
     resetSync,
     manualSyncFromPlayers,
     playerForceUpdateKey,
+    error,
+    setError,
   } = useVideoPlayerApp();
+
+  // エラーメッセージの生成
+  const getErrorTitle = (type: string) => {
+    switch (type) {
+      case 'file':
+        return 'ファイルエラー';
+      case 'network':
+        return 'ネットワークエラー';
+      case 'sync':
+        return '音声同期エラー';
+      case 'playback':
+        return '再生エラー';
+      default:
+        return 'エラー';
+    }
+  };
 
   // メニューからの同期イベントを処理（Electron環境でのみ実行）
   useEffect(() => {
@@ -108,7 +136,9 @@ export const VideoPlayerApp = () => {
               flexDirection: 'column',
               gap: 2,
               p: { xs: 1.5, md: 2 },
-              minHeight: '55vh',
+              height: { xs: '40vh', sm: '50vh', md: '55vh', lg: '60vh' },
+              minHeight: '300px',
+              maxHeight: '800px',
             }}
           >
             <VideoPlayer
@@ -175,7 +205,7 @@ export const VideoPlayerApp = () => {
             </Stack>
           </Paper>
           <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
-            <Grid item xs={12} md={7} sx={{ display: 'flex', minHeight: 0 }}>
+            <Grid item xs={12} lg={7} sx={{ display: 'flex', minHeight: 0 }}>
               <Paper
                 variant="outlined"
                 sx={{
@@ -183,7 +213,7 @@ export const VideoPlayerApp = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   overflow: 'hidden',
-                  minHeight: { xs: '45vh', md: '100%' },
+                  minHeight: { xs: '300px', md: '400px' },
                 }}
               >
                 <TimelineTable
@@ -201,7 +231,7 @@ export const VideoPlayerApp = () => {
                 />
               </Paper>
             </Grid>
-            <Grid item xs={12} md={5} sx={{ display: 'flex', minHeight: 0 }}>
+            <Grid item xs={12} lg={5} sx={{ display: 'flex', minHeight: 0 }}>
               <Paper
                 variant="outlined"
                 sx={{
@@ -252,6 +282,24 @@ export const VideoPlayerApp = () => {
         </Paper>
       )}
       <StatsModal timeline={timeline} teamNames={teamNames} />
+
+      {/* エラー通知 */}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          <AlertTitle>{error && getErrorTitle(error.type)}</AlertTitle>
+          {error?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -24,6 +24,12 @@ export const useVideoPlayerApp = () => {
 
   const [isVideoPlaying, setisVideoPlayingInternal] = useState<boolean>(false);
 
+  // エラーハンドリング用ステート
+  const [error, setError] = useState<{
+    type: 'file' | 'network' | 'sync' | 'playback' | 'general';
+    message: string;
+  } | null>(null);
+
   // デバッグ用: setisVideoPlayingの呼び出しを追跡
   const setisVideoPlaying = (value: boolean | ((prev: boolean) => boolean)) => {
     const newValue =
@@ -524,5 +530,7 @@ export const useVideoPlayerApp = () => {
     adjustSyncOffset,
     manualSyncFromPlayers,
     playerForceUpdateKey,
+    error,
+    setError,
   };
 };

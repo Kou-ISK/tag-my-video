@@ -13,6 +13,10 @@ import {
   TextField,
   Typography,
   InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
@@ -71,6 +75,26 @@ export const TimelineTable = ({
   const [sortColumn, setSortColumn] = useState<SortColumn>('startTime');
   const [isDesc, setIsDesc] = useState<boolean>(true);
   const [filterText, setFilterText] = useState<string>('');
+  const [teamFilter, setTeamFilter] = useState<string>('all');
+  const [actionTypeFilter, setActionTypeFilter] = useState<string>('all');
+
+  // チーム名と種別の抽出
+  const teamNames = useMemo(() => {
+    const teams = new Set<string>();
+    timeline.forEach((item) => {
+      const teamName = item.actionName.split(' ')[0];
+      if (teamName) teams.add(teamName);
+    });
+    return Array.from(teams);
+  }, [timeline]);
+
+  const actionTypes = useMemo(() => {
+    const types = new Set<string>();
+    timeline.forEach((item) => {
+      if (item.actionType) types.add(item.actionType);
+    });
+    return Array.from(types);
+  }, [timeline]);
 
   useEffect(() => {
     if (!timelineFilePath) {
@@ -93,17 +117,37 @@ export const TimelineTable = ({
   }, [timelineFilePath, setTimeline]);
 
   const filteredTimeline = useMemo(() => {
-    if (!filterText.trim()) return timeline;
-    const keyword = filterText.toLowerCase();
-    return timeline.filter((item) => {
-      return (
-        item.actionName.toLowerCase().includes(keyword) ||
-        item.qualifier.toLowerCase().includes(keyword) ||
-        item.actionResult.toLowerCase().includes(keyword) ||
-        item.actionType.toLowerCase().includes(keyword)
+    let filtered = timeline;
+
+    // テキスト検索
+    if (filterText.trim()) {
+      const keyword = filterText.toLowerCase();
+      filtered = filtered.filter((item) => {
+        return (
+          item.actionName.toLowerCase().includes(keyword) ||
+          item.qualifier.toLowerCase().includes(keyword) ||
+          item.actionResult.toLowerCase().includes(keyword) ||
+          item.actionType.toLowerCase().includes(keyword)
+        );
+      });
+    }
+
+    // チームフィルタ
+    if (teamFilter !== 'all') {
+      filtered = filtered.filter((item) =>
+        item.actionName.startsWith(teamFilter),
       );
-    });
-  }, [timeline, filterText]);
+    }
+
+    // アクション種別フィルタ
+    if (actionTypeFilter !== 'all') {
+      filtered = filtered.filter(
+        (item) => item.actionType === actionTypeFilter,
+      );
+    }
+
+    return filtered;
+  }, [timeline, filterText, teamFilter, actionTypeFilter]);
 
   const handleSort = (column: SortColumn) => {
     const nextDesc = sortColumn === column ? !isDesc : true;
@@ -113,7 +157,9 @@ export const TimelineTable = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+    >
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         spacing={2}
@@ -131,11 +177,13 @@ export const TimelineTable = ({
             {filteredTimeline.length}件 / 全{timeline.length}件
           </Typography>
         </Typography>
+
         <TextField
           value={filterText}
           onChange={(event) => setFilterText(event.target.value)}
           placeholder="アクション・タグで絞り込み"
           size="small"
+          sx={{ minWidth: 200 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -144,7 +192,40 @@ export const TimelineTable = ({
             ),
           }}
         />
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>チーム</InputLabel>
+          <Select
+            value={teamFilter}
+            label="チーム"
+            onChange={(e) => setTeamFilter(e.target.value)}
+          >
+            <MenuItem value="all">全チーム</MenuItem>
+            {teamNames.map((team) => (
+              <MenuItem key={team} value={team}>
+                {team}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>種別</InputLabel>
+          <Select
+            value={actionTypeFilter}
+            label="種別"
+            onChange={(e) => setActionTypeFilter(e.target.value)}
+          >
+            <MenuItem value="all">全種別</MenuItem>
+            {actionTypes.map((type) => (
+              <MenuItem key={type} value={type}>
+                {type || '未分類'}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Stack>
+
       <TableContainer sx={{ flex: 1, minHeight: 0 }}>
         <Table stickyHeader size="small">
           <TableHead>
@@ -152,12 +233,18 @@ export const TimelineTable = ({
               <TableCell padding="checkbox" />
               <TableCell
                 sortDirection={
-                  sortColumn === 'actionName' ? (isDesc ? 'desc' : 'asc') : false
+                  sortColumn === 'actionName'
+                    ? isDesc
+                      ? 'desc'
+                      : 'asc'
+                    : false
                 }
               >
                 <TableSortLabel
                   active={sortColumn === 'actionName'}
-                  direction={sortColumn === 'actionName' && !isDesc ? 'asc' : 'desc'}
+                  direction={
+                    sortColumn === 'actionName' && !isDesc ? 'asc' : 'desc'
+                  }
                   onClick={() => handleSort('actionName')}
                 >
                   アクション
@@ -170,7 +257,9 @@ export const TimelineTable = ({
               >
                 <TableSortLabel
                   active={sortColumn === 'startTime'}
-                  direction={sortColumn === 'startTime' && !isDesc ? 'asc' : 'desc'}
+                  direction={
+                    sortColumn === 'startTime' && !isDesc ? 'asc' : 'desc'
+                  }
                   onClick={() => handleSort('startTime')}
                 >
                   開始
@@ -183,7 +272,9 @@ export const TimelineTable = ({
               >
                 <TableSortLabel
                   active={sortColumn === 'endTime'}
-                  direction={sortColumn === 'endTime' && !isDesc ? 'asc' : 'desc'}
+                  direction={
+                    sortColumn === 'endTime' && !isDesc ? 'asc' : 'desc'
+                  }
                   onClick={() => handleSort('endTime')}
                 >
                   終了
@@ -224,7 +315,9 @@ export const TimelineTable = ({
                   <TableCell padding="checkbox">
                     <Checkbox
                       checked={isSelected}
-                      onChange={(event) => getSelectedTimelineId(event, item.id)}
+                      onChange={(event) =>
+                        getSelectedTimelineId(event, item.id)
+                      }
                     />
                   </TableCell>
                   <TableCell>
@@ -236,7 +329,10 @@ export const TimelineTable = ({
                     <Button
                       size="small"
                       onClick={(e) =>
-                        handleCurrentTime(e as React.SyntheticEvent, item.startTime)
+                        handleCurrentTime(
+                          e as React.SyntheticEvent,
+                          item.startTime,
+                        )
                       }
                     >
                       {formatTime(item.startTime)}
@@ -246,7 +342,10 @@ export const TimelineTable = ({
                     <Button
                       size="small"
                       onClick={(e) =>
-                        handleCurrentTime(e as React.SyntheticEvent, item.endTime)
+                        handleCurrentTime(
+                          e as React.SyntheticEvent,
+                          item.endTime,
+                        )
                       }
                     >
                       {formatTime(item.endTime)}

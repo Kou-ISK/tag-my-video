@@ -1,4 +1,4 @@
-import { Box, Button, Slider, Typography } from '@mui/material';
+import { Box, Button, Slider, Typography, Stack } from '@mui/material';
 import React, {
   Dispatch,
   SetStateAction,
@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
+import { ShortcutGuide } from '../ShortcutGuide';
 
 interface VideoControllerProps {
   setIsVideoPlaying: Dispatch<SetStateAction<boolean>>;
@@ -684,6 +685,7 @@ export const VideoController = ({
           onChange={(_, v) => setVideoPlayBackRate(v as number)}
           sx={{ width: 120 }}
         />
+        <ShortcutGuide />
       </Box>
 
       {/* 中央: 共通シークバー（負のオフセットに対応） */}

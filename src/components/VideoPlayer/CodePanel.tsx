@@ -51,15 +51,18 @@ export const CodePanel = ({
   }, [metaDataConfigFilePath, setTeamNames]);
 
   const groupedActions = useMemo(() => {
-    return actionList.reduce<Record<string, ActionListEntry[]>>((groups, item) => {
-      const leading = item.split(' ')[0];
-      const key = leading ?? 'その他';
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(item);
-      return groups;
-    }, {});
+    return actionList.reduce<Record<string, ActionListEntry[]>>(
+      (groups, item) => {
+        const leading = item.split(' ')[0];
+        const key = leading ?? 'その他';
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(item);
+        return groups;
+      },
+      {},
+    );
   }, [actionList]);
 
   const renderButtons = (label: string, actions: ActionListEntry[]) => (
@@ -81,7 +84,7 @@ export const CodePanel = ({
                 key={`${teamName}-${action}`}
                 actionName={`${teamName} ${action}`}
                 addTimelineData={addTimelineData}
-                color={index === 0 ? 'error' : 'primary'}
+                color={index === 0 ? 'team1' : 'team2'}
               />
             ))}
           </Stack>

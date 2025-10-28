@@ -11,14 +11,7 @@ interface CodeButtonProps {
     endTime: number,
     qualifier: string,
   ) => void;
-  color:
-    | 'inherit'
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'error'
-    | 'info'
-    | 'warning';
+  color: 'team1' | 'team2';
 }
 
 export const CodeButton = ({
@@ -32,9 +25,11 @@ export const CodeButton = ({
 
   const addTimeline = (qualifier: string) => {
     type VjsNamespace = {
-      getPlayer?: (id: string) => {
-        currentTime?: () => number | undefined;
-      } | undefined;
+      getPlayer?: (id: string) =>
+        | {
+            currentTime?: () => number | undefined;
+          }
+        | undefined;
     };
     const ns = videojs as unknown as VjsNamespace;
     const player = ns.getPlayer?.('video_0');

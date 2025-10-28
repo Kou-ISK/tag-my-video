@@ -8,21 +8,24 @@ import {
 } from 'recharts';
 import React from 'react';
 import { Box } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 interface MomentumChartProps {
   createMomentumData: any;
   teamNames: string[];
 }
 
-// 凡例用のデータ
-const legendData = [
-  { color: 'orangered', label: 'Try' },
-  { color: 'green', label: 'Positive' },
-  { color: 'mediumpurple', label: 'Negative' },
+// 凡例用のデータ（テーマ色を使用するため関数化）
+const getLegendData = (theme: any) => [
+  { color: theme.palette.momentum.try, label: 'Try' },
+  { color: theme.palette.momentum.positive, label: 'Positive' },
+  { color: theme.palette.momentum.negative, label: 'Negative' },
 ];
 
 // 凡例コンポーネント
-const LegendComponent = () => {
+const LegendComponent = ({ theme }: { theme: any }) => {
+  const legendData = getLegendData(theme);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {legendData.map((item, index) => (
@@ -46,6 +49,7 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
   createMomentumData,
   teamNames,
 }: MomentumChartProps) => {
+  const theme = useTheme();
   const data = createMomentumData(teamNames[0], teamNames[1]);
   const minYValue =
     Math.round(Math.min(...data.map((item: any) => item.value))) - 5;
@@ -53,16 +57,18 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
     Math.round(Math.max(...data.map((item: any) => item.value))) + 5;
 
   const getBarColor = (entry: any) => {
-    const defaultColor = 'lightslategrey'; // 該当する色がない場合はデフォルトの色
+    // テーマ色を使用
+    const { momentum } = theme.palette;
+
     // ポゼッションの終わり方によって異なる色を割り当て
     if (entry.outcome === 'Try') {
-      return 'orangered';
+      return momentum.try;
     } else if (entry.outcome === 'Positive') {
-      return 'green';
+      return momentum.positive;
     } else if (entry.outcome === 'Negative') {
-      return 'mediumpurple';
+      return momentum.negative;
     } else {
-      return defaultColor;
+      return momentum.neutral;
     }
   };
 
@@ -79,7 +85,7 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
         {teamNames &&
           teamNames.map((value, index) => <h3 key={index}>{value}</h3>)}
       </Box>
-      <LegendComponent />
+      <LegendComponent theme={theme} />
       <ResponsiveContainer height={500} width="90%">
         <BarChart
           data={data}
