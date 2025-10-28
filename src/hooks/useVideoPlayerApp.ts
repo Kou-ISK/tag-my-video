@@ -5,6 +5,7 @@ import { ulid } from 'ulid';
 import videojs from 'video.js';
 
 export const useVideoPlayerApp = () => {
+  const isDev = process.env.NODE_ENV === 'development';
   const [timeline, setTimeline] = useState<TimelineData[]>([]);
   const [selectedTimelineIdList, setSelectedTimelineIdList] = useState<
     string[]
@@ -27,12 +28,13 @@ export const useVideoPlayerApp = () => {
   const setisVideoPlaying = (value: boolean | ((prev: boolean) => boolean)) => {
     const newValue =
       typeof value === 'function' ? value(isVideoPlaying) : value;
-    console.log(`[DEBUG] setisVideoPlaying called:`, {
-      from: isVideoPlaying,
-      to: newValue,
-      stack: new Error().stack?.split('\n').slice(1, 5),
-      timestamp: new Date().toISOString(),
-    });
+    if (isDev) {
+      console.log(`[DEBUG] setisVideoPlaying called:`, {
+        from: isVideoPlaying,
+        to: newValue,
+        timestamp: new Date().toISOString(),
+      });
+    }
     setisVideoPlayingInternal(newValue);
   };
   const [videoPlayBackRate, setVideoPlayBackRate] = useState(1);
@@ -40,6 +42,7 @@ export const useVideoPlayerApp = () => {
     undefined,
   );
   const [syncMode, setSyncMode] = useState<'auto' | 'manual'>('auto');
+  const [playerForceUpdateKey, setPlayerForceUpdateKey] = useState(0);
 
   // 異常なcurrentTime値の監視(警告のみ、リセットしない)
   const prevCurrentTimeRef = useRef<number>(0);
@@ -77,13 +80,29 @@ export const useVideoPlayerApp = () => {
       setTimeout(() => {
         videoList.forEach((_, index) => {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const player = (window as any).videojs(`video_${index}`);
-            if (player && player.el() && !player.error() && !player.disposed) {
+            type VjsNamespace = {
+              getPlayer?: (id: string) =>
+                | {
+                    el?: () => Element | null;
+                    isDisposed?: () => boolean;
+                    error?: () => unknown;
+                    duration?: () => number | undefined;
+                    currentTime?: (time?: number) => number | undefined;
+                  }
+                | undefined;
+            };
+            const ns = videojs as unknown as VjsNamespace;
+            const player = ns.getPlayer?.(`video_${index}`);
+            if (
+              player &&
+              player.el?.() &&
+              player.isDisposed?.() !== true &&
+              !player.error?.()
+            ) {
               // プレイヤーの状態をチェック
               let duration = 0;
               try {
-                const dur = player.duration ? player.duration() : undefined;
+                const dur = player.duration?.();
                 duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
               } catch (durationError) {
                 duration = 0;
@@ -107,15 +126,17 @@ export const useVideoPlayerApp = () => {
                   targetTime = Math.max(0, timeClamped - offset);
                 }
 
-                console.log(
-                  `シーク: Video ${index}の時刻を${targetTime}秒に設定 (global=${timeClamped}, offset=${
-                    syncData?.syncOffset ?? 0
-                  })`,
-                );
+                if (isDev) {
+                  console.log(
+                    `シーク: Video ${index}の時刻を${targetTime}秒に設定 (global=${timeClamped}, offset=${
+                      syncData?.syncOffset ?? 0
+                    })`,
+                  );
+                }
 
                 // より安全なシーク処理
                 try {
-                  player.currentTime(targetTime);
+                  player.currentTime?.(targetTime);
                 } catch (seekError) {
                   console.debug(
                     `プレイヤー${index}のシークでエラー:`,
@@ -195,32 +216,33 @@ export const useVideoPlayerApp = () => {
   };
 
   const sortTimelineDatas = (column: string, sortDesc: boolean) => {
-    if (sortDesc) {
+    const direction = sortDesc ? -1 : 1;
+    const sorted = [...timeline].sort((a, b) => {
       if (column === 'startTime') {
-        setTimeline(
-          timeline.sort((a, b) => (a.startTime > b.startTime ? -1 : 1)),
-        );
-      } else if (column === 'endTime') {
-        setTimeline(timeline.sort((a, b) => (a.endTime > b.endTime ? -1 : 1)));
-      } else if (column === 'actionName') {
-        setTimeline(
-          timeline.sort((a, b) => (a.actionName > b.actionName ? -1 : 1)),
+        return a.startTime === b.startTime
+          ? 0
+          : a.startTime > b.startTime
+          ? direction
+          : -direction;
+      }
+      if (column === 'endTime') {
+        return a.endTime === b.endTime
+          ? 0
+          : a.endTime > b.endTime
+          ? direction
+          : -direction;
+      }
+      if (column === 'actionName') {
+        return (
+          a.actionName.localeCompare(b.actionName, undefined, {
+            sensitivity: 'base',
+          }) * direction
         );
       }
-    } else if (sortDesc === false) {
-      console.log('asc');
-      if (column === 'startTime') {
-        setTimeline(
-          timeline.sort((a, b) => (a.startTime < b.startTime ? -1 : 1)),
-        );
-      } else if (column === 'endTime') {
-        setTimeline(timeline.sort((a, b) => (a.endTime < b.endTime ? -1 : 1)));
-      } else if (column === 'actionName') {
-        setTimeline(
-          timeline.sort((a, b) => (a.actionName < b.actionName ? -1 : 1)),
-        );
-      }
-    }
+      return 0;
+    });
+
+    setTimeline(sorted);
   };
 
   // 音声同期機能
@@ -246,11 +268,14 @@ export const useVideoPlayerApp = () => {
         confidenceScore: result.confidence,
       };
 
+      console.log('[resyncAudio] Setting new syncData:', newSyncData);
       setSyncData(newSyncData);
       console.log('音声同期完了:', result);
 
       // 同期後に映像プレイヤーを強制更新
+      console.log('[resyncAudio] Calling forceUpdateVideoPlayers...');
       await forceUpdateVideoPlayers(newSyncData);
+      console.log('[resyncAudio] forceUpdateVideoPlayers completed');
     } catch (error) {
       console.error('音声同期エラー:', error);
     }
@@ -361,76 +386,77 @@ export const useVideoPlayerApp = () => {
     newSyncData: VideoSyncData,
   ): Promise<void> => {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        videoList.forEach((_, index) => {
-          if (index === 0) return; // 基準動画はスキップ
+      // プレイヤーを一時停止（RAFを停止）
+      setisVideoPlaying(false);
 
-          try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const player = (window as any).videojs(`video_${index}`);
-            if (
-              player &&
-              player.el() &&
-              !player.error() &&
-              !player.disposed &&
-              newSyncData.isAnalyzed
-            ) {
-              // プレイヤーの状態を厳密にチェック
-              let duration = 0;
-              try {
-                const dur = player.duration ? player.duration() : undefined;
-                duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
-              } catch (durationError) {
-                duration = 0;
+      // RAF停止後に処理を実行
+      requestAnimationFrame(() => {
+        // Video.jsプレイヤーをリセット
+        try {
+          const vjsGlobal = videojs as unknown as {
+            getPlayer?: (id: string) => {
+              currentTime?: (time?: number) => number | void;
+              pause?: () => void;
+            };
+          };
+
+          // video_0から現在の再生位置を取得
+          const primaryPlayer = vjsGlobal.getPlayer?.('video_0');
+          const currentGlobalTime =
+            (primaryPlayer?.currentTime?.() as number) || 0;
+
+          console.log(
+            `[forceUpdate] 現在のグローバル時刻: ${currentGlobalTime}秒`,
+          );
+
+          videoList.forEach((_, index) => {
+            try {
+              const player = vjsGlobal.getPlayer?.(`video_${index}`);
+              if (player) {
+                const offset =
+                  index > 0 && newSyncData?.isAnalyzed
+                    ? newSyncData.syncOffset || 0
+                    : 0;
+                const targetTime = Math.max(
+                  0,
+                  currentGlobalTime - (index > 0 ? offset : 0),
+                );
+
+                player.pause?.();
+                player.currentTime?.(targetTime);
+                console.log(
+                  `[forceUpdate] video_${index} synced to ${targetTime}秒 (global=${currentGlobalTime}, offset=${offset})`,
+                );
               }
-
-              if (
-                typeof duration === 'number' &&
-                !isNaN(duration) &&
-                duration > 0
-              ) {
-                const offset = newSyncData.syncOffset || 0;
-                const adjustedTime = Math.max(0, currentTime - offset);
-
-                // 現在時刻との差が大きい場合のみシーク実行
-                let currentPlayerTime = 0;
-                try {
-                  currentPlayerTime = player.currentTime() || 0;
-                } catch (timeError) {
-                  currentPlayerTime = 0;
-                }
-
-                if (
-                  typeof currentPlayerTime === 'number' &&
-                  !isNaN(currentPlayerTime) &&
-                  Math.abs(currentPlayerTime - adjustedTime) > 0.5
-                ) {
-                  console.log(
-                    `強制更新: Video ${index}の時刻を${adjustedTime}秒に設定`,
-                  );
-
-                  // より安全なシーク処理
-                  try {
-                    player.currentTime(adjustedTime);
-                  } catch (seekError) {
-                    console.debug(
-                      `プレイヤー${index}の強制更新シークでエラー:`,
-                      seekError,
-                    );
-                  }
-                }
-              }
+            } catch (e) {
+              console.debug(`プレイヤー${index}の更新エラー:`, e);
             }
-          } catch (error) {
-            console.debug(`プレイヤー${index}の強制更新でエラー:`, error);
-          }
+          });
+        } catch (e) {
+          console.debug('forceUpdateVideoPlayers エラー:', e);
+        }
+
+        // forceUpdateKeyを更新して、SyncedVideoPlayerのprimaryClockをリセット
+        setPlayerForceUpdateKey((prev) => {
+          const newKey = prev + 1;
+          console.log(
+            `[forceUpdate] playerForceUpdateKey updated to ${newKey}`,
+          );
+          return newKey;
         });
-        resolve();
-      }, 400); // プレイヤーの更新を待つ時間を調整
+
+        // Video.jsのcurrentTime()更新が完了するまで待機してから再生を再開
+        // Video.jsは内部的に非同期でシーク処理を行うため、十分な時間を確保
+        setTimeout(() => {
+          console.log('[forceUpdate] resuming playback');
+          setisVideoPlaying(true);
+          resolve();
+        }, 300);
+      });
     });
   };
 
-  // syncDataが更新されたら永続化（config.json に保存）
+  // syncDataが更新されたら永続化(config.json に保存)
   useEffect(() => {
     (async () => {
       try {
@@ -440,13 +466,18 @@ export const useVideoPlayerApp = () => {
           typeof window.electronAPI.saveSyncData === 'function' &&
           syncData
         ) {
+          console.log('[useVideoPlayerApp] Saving syncData to metadata.json:', {
+            path: metaDataConfigFilePath,
+            syncData,
+          });
           await window.electronAPI.saveSyncData(
             metaDataConfigFilePath,
             syncData,
           );
+          console.log('[useVideoPlayerApp] syncData saved successfully');
         }
       } catch (e) {
-        console.debug('saveSyncData failed', e);
+        console.error('[useVideoPlayerApp] saveSyncData failed', e);
       }
     })();
   }, [syncData, metaDataConfigFilePath]);
@@ -492,5 +523,6 @@ export const useVideoPlayerApp = () => {
     resetSync,
     adjustSyncOffset,
     manualSyncFromPlayers,
+    playerForceUpdateKey,
   };
 };

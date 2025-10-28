@@ -10,6 +10,7 @@ interface VideoPlayerProps {
   setMaxSec: Dispatch<SetStateAction<number>>;
   syncData?: VideoSyncData;
   syncMode?: 'auto' | 'manual';
+  forceUpdateKey?: number;
 }
 
 export const VideoPlayer = ({
@@ -20,16 +21,20 @@ export const VideoPlayer = ({
   setMaxSec,
   syncData,
   syncMode = 'auto',
+  forceUpdateKey = 0,
 }: VideoPlayerProps) => {
+  // currentTimeはシークバー表示用にのみ使用（Video.js自身が時刻管理）
+  void currentTime;
+
   return (
     <SyncedVideoPlayer
       videoList={videoList}
       isVideoPlaying={isVideoPlaying}
       videoPlayBackRate={videoPlayBackRate}
-      currentTime={currentTime}
       setMaxSec={setMaxSec}
       syncData={syncData}
       syncMode={syncMode}
+      forceUpdateKey={forceUpdateKey}
     />
   );
 };

@@ -94,7 +94,6 @@ const TestVideoPage: React.FC = () => {
           videoList={videoList}
           isVideoPlaying={isVideoPlaying}
           videoPlayBackRate={videoPlayBackRate}
-          currentTime={currentTime}
           setMaxSec={setMaxSec}
         />
       )}

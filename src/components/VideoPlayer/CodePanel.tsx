@@ -1,6 +1,6 @@
-import { Box } from '@mui/material';
+import { Box, Divider, Stack, Typography } from '@mui/material';
 import { CodeButton } from './CodeButton';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import React from 'react';
 
 interface CodePanelProps {
@@ -15,54 +15,123 @@ interface CodePanelProps {
   setTeamNames: Dispatch<SetStateAction<string[]>>;
 }
 
+type ActionListEntry = string;
+
 export const CodePanel = ({
   metaDataConfigFilePath,
   addTimelineData,
   teamNames,
   setTeamNames,
 }: CodePanelProps) => {
-  // .metadata/config.jsonの内容を読み込み、チーム名をボタンにつける
-  const [actionList, setActionList] = useState([]);
+  const [actionList, setActionList] = useState<ActionListEntry[]>([]);
 
   useEffect(() => {
-    if (metaDataConfigFilePath !== undefined && metaDataConfigFilePath !== '') {
-      console.log(`metadata config: ${metaDataConfigFilePath}`);
-      fetch(metaDataConfigFilePath)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data) {
-            setTeamNames([data.team1Name, data.team2Name]);
-            setActionList(data.actionList);
-          }
-        })
-        .catch((error) => console.error('Error loading JSON:', error));
-    }
-  }, [metaDataConfigFilePath]);
+    if (!metaDataConfigFilePath) return;
+
+    let isActive = true;
+
+    fetch(metaDataConfigFilePath)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!isActive || !data) return;
+
+        if (data.team1Name && data.team2Name) {
+          setTeamNames([data.team1Name, data.team2Name]);
+        }
+
+        if (Array.isArray(data.actionList)) {
+          setActionList(data.actionList as ActionListEntry[]);
+        }
+      })
+      .catch((error) => console.error('Error loading JSON:', error));
+
+    return () => {
+      isActive = false;
+    };
+  }, [metaDataConfigFilePath, setTeamNames]);
+
+  const groupedActions = useMemo(() => {
+    return actionList.reduce<Record<string, ActionListEntry[]>>((groups, item) => {
+      const leading = item.split(' ')[0];
+      const key = leading ?? 'その他';
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(item);
+      return groups;
+    }, {});
+  }, [actionList]);
+
+  const renderButtons = (label: string, actions: ActionListEntry[]) => (
+    <Box key={label}>
+      <Typography variant="overline" color="text.secondary">
+        {label}
+      </Typography>
+      <Stack direction="column" spacing={1} sx={{ mt: 0.5 }}>
+        {actions.map((action) => (
+          <Stack
+            key={action}
+            direction="row"
+            spacing={1}
+            useFlexGap
+            flexWrap="wrap"
+          >
+            {teamNames.map((teamName, index) => (
+              <CodeButton
+                key={`${teamName}-${action}`}
+                actionName={`${teamName} ${action}`}
+                addTimelineData={addTimelineData}
+                color={index === 0 ? 'error' : 'primary'}
+              />
+            ))}
+          </Stack>
+        ))}
+      </Stack>
+    </Box>
+  );
+
+  const actionGroupEntries = useMemo(
+    () => Object.entries(groupedActions),
+    [groupedActions],
+  );
 
   return (
     <Box
       sx={{
-        border: '2px primary.main',
-        padding: '2px',
-        overflowY: 'scroll',
-        width: '25vw',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minHeight: 0,
+        overflow: 'hidden',
       }}
     >
-      {actionList &&
-        actionList.map((value) => (
-          <>
-            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-              {teamNames.map((teamName, index) => (
-                <CodeButton
-                  key={index}
-                  actionName={teamName + ' ' + value}
-                  addTimelineData={addTimelineData}
-                  color={index === 0 ? 'error' : 'primary'}
-                />
-              ))}
-            </Box>
-          </>
-        ))}
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        タグのショートカット
+      </Typography>
+      <Divider sx={{ mb: 1.5 }} />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          pr: 1,
+        }}
+      >
+        <Stack spacing={2}>
+          {actionGroupEntries.length > 0 ? (
+            actionGroupEntries.map(([label, actions], index) => (
+              <React.Fragment key={label}>
+                {renderButtons(label, actions)}
+                {index < actionGroupEntries.length - 1 && <Divider />}
+              </React.Fragment>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              メタデータを読み込むとタグのショートカットが表示されます。
+            </Typography>
+          )}
+        </Stack>
+      </Box>
     </Box>
   );
 };

@@ -70,8 +70,9 @@ export const VideoController = ({
     const timeDiff = Math.abs(time - lastSetCurrentTimeValueRef.current);
     const timeSinceLastCall = now - lastSetCurrentTimeTimestampRef.current;
     const hasSignificantChange = timeDiff > 0.2;
+    const isSyncTick = source.startsWith('RAF');
 
-    if (hasSignificantChange || source === 'updateTimeHandler') {
+    if (hasSignificantChange || source === 'updateTimeHandler' || isSyncTick) {
       console.log(`[INFO] safeSetCurrentTime from ${source}: ${time}秒を設定`);
       lastSetCurrentTimeValueRef.current = time;
       lastSetCurrentTimeTimestampRef.current = now;

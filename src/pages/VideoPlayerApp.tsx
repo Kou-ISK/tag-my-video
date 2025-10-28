@@ -1,4 +1,4 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
 import { VideoController } from '../components/VideoPlayer/VideoController';
 import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
 import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
@@ -9,11 +9,6 @@ import React, { useEffect } from 'react';
 import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
 
 export const VideoPlayerApp = () => {
-  console.log(
-    '🚀 VideoPlayerApp: アプリケーション起動',
-    new Date().toISOString(),
-  );
-
   const {
     timeline,
     setTimeline,
@@ -52,62 +47,8 @@ export const VideoPlayerApp = () => {
     resyncAudio,
     resetSync,
     manualSyncFromPlayers,
+    playerForceUpdateKey,
   } = useVideoPlayerApp();
-
-  // デバッグ: 再生状態の変化を監視（依存配列を最適化）
-  useEffect(() => {
-    console.log('=== VideoPlayerApp: isVideoPlaying changed ===', {
-      isVideoPlaying,
-      currentTime,
-      videoListLength: videoList.length,
-      syncData: syncData
-        ? {
-            isAnalyzed: syncData.isAnalyzed,
-            syncOffset: syncData.syncOffset,
-          }
-        : null,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Video.jsプレイヤーの実際の状態も確認
-    setTimeout(() => {
-      videoList.forEach((_, index) => {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const player = (window as any).videojs?.getPlayer?.(`video_${index}`);
-          if (player && !player.isDisposed?.()) {
-            console.log(`Player ${index} actual state:`, {
-              paused: player.paused?.(),
-              currentTime: player.currentTime?.(),
-              duration: player.duration?.(),
-              readyState: player.readyState?.(),
-              error: player.error?.(),
-            });
-          }
-        } catch (e) {
-          console.debug(`Player ${index} state check error:`, e);
-        }
-      });
-    }, 100);
-  }, [isVideoPlaying]); // currentTime, videoList, syncDataを依存配列から削除
-
-  // デバッグ: videoListの変更を監視
-  useEffect(() => {
-    console.log('=== VideoPlayerApp: videoList changed ===', {
-      length: videoList.length,
-      list: videoList,
-      isFileSelected,
-      hasSecondVideo: videoList.length > 1,
-      secondVideoDetails:
-        videoList.length > 1
-          ? {
-              path: videoList[1],
-              valid: !!videoList[1] && videoList[1].trim() !== '',
-              type: typeof videoList[1],
-            }
-          : null,
-    });
-  }, [videoList, isFileSelected]);
 
   // メニューからの同期イベントを処理（Electron環境でのみ実行）
   useEffect(() => {
@@ -148,89 +89,169 @@ export const VideoPlayerApp = () => {
   }, [resyncAudio, resetSync, manualSyncFromPlayers, setSyncMode]);
 
   return (
-    <>
-      {isFileSelected && (
-        <>
-          <VideoPlayer
-            key={videoList.join('|')} // videoListが変わった時のみ再マウント
-            videoList={videoList}
-            isVideoPlaying={isVideoPlaying}
-            videoPlayBackRate={videoPlayBackRate}
-            currentTime={currentTime}
-            setMaxSec={setMaxSec}
-            syncData={syncData}
-            syncMode={syncMode}
-          />
-          <Box sx={{ maxHeight: '5vh', display: 'flex', flexDirection: 'row' }}>
-            <VideoController
-              setIsVideoPlaying={setisVideoPlaying}
-              isVideoPlaying={isVideoPlaying}
-              setVideoPlayBackRate={setVideoPlayBackRate}
-              setCurrentTime={setCurrentTime}
-              currentTime={currentTime}
-              handleCurrentTime={handleCurrentTime}
-              maxSec={maxSec}
-              videoList={videoList}
-              syncData={syncData}
-            />
-            <Button onClick={() => deleteTimelineDatas(selectedTimelineIdList)}>
-              選択したデータを削除
-            </Button>
-            <Button
-              onClick={() => {
-                if (window.electronAPI) {
-                  window.electronAPI.exportTimeline(timelineFilePath, timeline);
-                } else {
-                  alert(
-                    'この機能はElectronアプリケーション内でのみ利用できます。',
-                  );
-                }
-              }}
-            >
-              タイムラインを保存
-            </Button>
-          </Box>
-          <Box
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        p: { xs: 1.5, md: 3 },
+        bgcolor: 'background.default',
+      }}
+    >
+      {isFileSelected ? (
+        <Stack sx={{ flex: 1, minHeight: 0 }} spacing={2}>
+          <Paper
+            variant="outlined"
             sx={{
-              maxHeight: '50vh',
               display: 'flex',
-              flexDirection: 'row',
-              alignContent: 'space-between',
+              flexDirection: 'column',
+              gap: 2,
+              p: { xs: 1.5, md: 2 },
+              minHeight: '55vh',
             }}
           >
-            <TimelineTable
-              timelineFilePath={timelineFilePath}
-              handleCurrentTime={handleCurrentTime}
-              timeline={timeline}
-              setTimeline={setTimeline}
-              getSelectedTimelineId={getSelectedTimelineId}
-              updateQualifier={updateQualifier}
-              updateActionResult={updateActionResult}
-              updateActionType={updateActionType}
-              sortTimelineDatas={sortTimelineDatas}
+            <VideoPlayer
+              key={videoList.join('|')} // videoListが変わった時のみ再マウント
+              videoList={videoList}
+              isVideoPlaying={isVideoPlaying}
+              videoPlayBackRate={videoPlayBackRate}
+              currentTime={currentTime}
+              setMaxSec={setMaxSec}
+              syncData={syncData}
+              syncMode={syncMode}
+              forceUpdateKey={playerForceUpdateKey}
             />
-            <CodePanel
-              metaDataConfigFilePath={metaDataConfigFilePath}
-              addTimelineData={addTimelineData}
-              teamNames={teamNames}
-              setTeamNames={setTeamNames}
-            />
-          </Box>
-          <StatsModal timeline={timeline} teamNames={teamNames} />
-        </>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'stretch', md: 'center' }}
+              justifyContent="space-between"
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <VideoController
+                  setIsVideoPlaying={setisVideoPlaying}
+                  isVideoPlaying={isVideoPlaying}
+                  setVideoPlayBackRate={setVideoPlayBackRate}
+                  setCurrentTime={setCurrentTime}
+                  currentTime={currentTime}
+                  handleCurrentTime={handleCurrentTime}
+                  maxSec={maxSec}
+                  videoList={videoList}
+                  syncData={syncData}
+                />
+              </Box>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="flex-end"
+                sx={{ flexShrink: 0 }}
+              >
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => deleteTimelineDatas(selectedTimelineIdList)}
+                >
+                  選択を削除
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    if (window.electronAPI) {
+                      window.electronAPI.exportTimeline(
+                        timelineFilePath,
+                        timeline,
+                      );
+                    } else {
+                      alert(
+                        'この機能はElectronアプリケーション内でのみ利用できます。',
+                      );
+                    }
+                  }}
+                >
+                  タイムラインを保存
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+          <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+            <Grid item xs={12} md={7} sx={{ display: 'flex', minHeight: 0 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  minHeight: { xs: '45vh', md: '100%' },
+                }}
+              >
+                <TimelineTable
+                  timelineFilePath={timelineFilePath}
+                  handleCurrentTime={handleCurrentTime}
+                  timeline={timeline}
+                  setTimeline={setTimeline}
+                  getSelectedTimelineId={getSelectedTimelineId}
+                  updateQualifier={updateQualifier}
+                  updateActionResult={updateActionResult}
+                  updateActionType={updateActionType}
+                  sortTimelineDatas={sortTimelineDatas}
+                  currentTime={currentTime}
+                  selectedTimelineIds={selectedTimelineIdList}
+                />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={5} sx={{ display: 'flex', minHeight: 0 }}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  p: { xs: 1.5, md: 2 },
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  sx={{ mb: 1 }}
+                >
+                  アクション入力
+                </Typography>
+                <CodePanel
+                  metaDataConfigFilePath={metaDataConfigFilePath}
+                  addTimelineData={addTimelineData}
+                  teamNames={teamNames}
+                  setTeamNames={setTeamNames}
+                />
+              </Paper>
+            </Grid>
+          </Grid>
+        </Stack>
+      ) : (
+        <Paper
+          variant="outlined"
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: { xs: 2, md: 4 },
+          }}
+        >
+          <VideoPathSelector
+            setVideoList={setVideoList}
+            setIsFileSelected={setIsFileSelected}
+            isFileSelected={isFileSelected}
+            setTimelineFilePath={setTimelineFilePath}
+            setPackagePath={setPackagePath}
+            setMetaDataConfigFilePath={setMetaDataConfigFilePath}
+            setSyncData={setSyncData}
+          />
+        </Paper>
       )}
-
-      {!isFileSelected && (
-        <VideoPathSelector
-          setVideoList={setVideoList}
-          setIsFileSelected={setIsFileSelected}
-          isFileSelected={isFileSelected}
-          setTimelineFilePath={setTimelineFilePath}
-          setPackagePath={setPackagePath}
-          setMetaDataConfigFilePath={setMetaDataConfigFilePath}
-          setSyncData={setSyncData}
-        />
-      )}
-    </>
+      <StatsModal timeline={timeline} teamNames={teamNames} />
+    </Box>
   );
 };
