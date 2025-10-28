@@ -50,6 +50,11 @@ export const useVideoPlayerApp = () => {
   const [syncMode, setSyncMode] = useState<'auto' | 'manual'>('auto');
   const [playerForceUpdateKey, setPlayerForceUpdateKey] = useState(0);
 
+  // 音声同期分析中の状態管理
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncStage, setSyncStage] = useState('');
+
   // 異常なcurrentTime値の監視(警告のみ、リセットしない)
   const prevCurrentTimeRef = useRef<number>(0);
   useEffect(() => {
@@ -258,6 +263,10 @@ export const useVideoPlayerApp = () => {
       return;
     }
 
+    setIsAnalyzing(true);
+    setSyncProgress(0);
+    setSyncStage('');
+
     try {
       const { AudioSyncAnalyzer } = await import('../utils/AudioSyncAnalyzer');
       const analyzer = new AudioSyncAnalyzer();
@@ -266,6 +275,10 @@ export const useVideoPlayerApp = () => {
       const result = await analyzer.quickSyncAnalysis(
         videoList[0],
         videoList[1],
+        (stage: string, progress: number) => {
+          setSyncStage(stage);
+          setSyncProgress(progress);
+        },
       );
 
       const newSyncData: VideoSyncData = {
@@ -276,6 +289,7 @@ export const useVideoPlayerApp = () => {
 
       console.log('[resyncAudio] Setting new syncData:', newSyncData);
       setSyncData(newSyncData);
+      setSyncProgress(100);
       console.log('音声同期完了:', result);
 
       // 同期後に映像プレイヤーを強制更新
@@ -284,6 +298,15 @@ export const useVideoPlayerApp = () => {
       console.log('[resyncAudio] forceUpdateVideoPlayers completed');
     } catch (error) {
       console.error('音声同期エラー:', error);
+      setError({
+        type: 'sync',
+        message:
+          '音声同期に失敗しました。映像ファイルに音声が含まれているか確認してください。',
+      });
+    } finally {
+      setIsAnalyzing(false);
+      setSyncProgress(0);
+      setSyncStage('');
     }
   };
 
@@ -532,5 +555,8 @@ export const useVideoPlayerApp = () => {
     playerForceUpdateKey,
     error,
     setError,
+    isAnalyzing,
+    syncProgress,
+    syncStage,
   };
 };

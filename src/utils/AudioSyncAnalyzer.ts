@@ -168,57 +168,53 @@ export class AudioSyncAnalyzer {
   }
 
   /**
-   * 実用的な音声特徴量による同期（改善版）
+   * 実際の音声波形による高精度同期分析
    */
   async quickSyncAnalysis(
     videoPath1: string,
     videoPath2: string,
+    onProgress?: (stage: string, progress: number) => void,
   ): Promise<AudioAnalysisResult> {
     console.log('音声同期分析を開始:', { videoPath1, videoPath2 });
 
     try {
-      // ユーザーに分析中であることを示すため少し待機
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // ステップ1: 音声抽出 (0-40%)
+      onProgress?.('音声抽出中 (映像1)...', 10);
+      const waveform1 = await this.extractAudioFromVideo(videoPath1);
 
-      // より現実的な同期分析のシミュレーション
-      // 実際の実装では、両方の映像の音声波形を抽出して比較する
+      onProgress?.('音声抽出中 (映像2)...', 30);
+      const waveform2 = await this.extractAudioFromVideo(videoPath2);
 
-      // ファイル名から同期のヒントを得る（デモ用）
-      const file1Name = videoPath1.split('/').pop() || '';
-      const file2Name = videoPath2.split('/').pop() || '';
-
-      let offsetSeconds = 0;
-      let confidence = 0.8;
-
-      // ファイル名に「寄り」「引き」などが含まれる場合の処理
-      if (file1Name.includes('寄り') && file2Name.includes('引き')) {
-        // 寄りカメラと引きカメラの典型的なオフセット
-        offsetSeconds = 0.2; // 引きカメラが0.2秒遅れている想定
-        confidence = 0.9;
-      } else if (file1Name.includes('引き') && file2Name.includes('寄り')) {
-        offsetSeconds = -0.2; // 寄りカメラが0.2秒遅れている想定
-        confidence = 0.9;
-      } else {
-        // その他の場合は小さなランダムオフセット
-        offsetSeconds = (Math.random() - 0.5) * 1.0; // -0.5秒から+0.5秒
-        confidence = 0.75 + Math.random() * 0.15; // 0.75-0.9の範囲
-      }
-
-      const correlationPeak = confidence * 0.8; // 相関ピークは信頼度に比例
-
-      console.log('音声同期分析完了:', {
-        offsetSeconds,
-        confidence,
-        correlationPeak,
-        file1Name,
-        file2Name,
+      console.log('音声抽出完了:', {
+        video1: {
+          duration: waveform1.duration,
+          sampleRate: waveform1.sampleRate,
+          samples: waveform1.audioBuffer.length,
+        },
+        video2: {
+          duration: waveform2.duration,
+          sampleRate: waveform2.sampleRate,
+          samples: waveform2.audioBuffer.length,
+        },
       });
 
-      return {
-        offsetSeconds,
-        confidence,
-        correlationPeak,
-      };
+      // ステップ2: 相関分析 (40-100%)
+      onProgress?.('同期点を計算中...', 50);
+
+      // より精密な同期分析（複数の時間窓で分析）
+      const result = await this.analyzeSyncOffsetMultiWindow(
+        waveform1,
+        waveform2,
+        (progress) => {
+          onProgress?.('同期点を計算中...', 50 + progress * 0.5);
+        },
+      );
+
+      onProgress?.('分析完了', 100);
+
+      console.log('音声同期分析完了:', result);
+
+      return result;
     } catch (error) {
       console.error('音声同期分析エラー:', error);
       // エラーの場合はデフォルト値を返す
@@ -228,6 +224,278 @@ export class AudioSyncAnalyzer {
         correlationPeak: 0.3,
       };
     }
+  }
+
+  /**
+   * マルチウィンドウ方式での同期分析（精度向上版）
+   */
+  private async analyzeSyncOffsetMultiWindow(
+    waveform1: WaveformData,
+    waveform2: WaveformData,
+    onProgress?: (progress: number) => void,
+  ): Promise<AudioAnalysisResult> {
+    const data1 = waveform1.audioBuffer.getChannelData(0);
+    const data2 = waveform2.audioBuffer.getChannelData(0);
+    const sampleRate = waveform1.sampleRate;
+
+    // 分析パラメータの最適化
+    const maxOffsetSeconds = 30; // 最大30秒のズレを検出
+    const maxOffsetSamples = Math.floor(maxOffsetSeconds * sampleRate);
+
+    // より細かいサンプリング間隔で精度向上（100→50サンプル）
+    const stepSize = 50;
+
+    // エネルギーが高い部分を選択的に分析（音のある部分）
+    const windowSize = Math.floor(sampleRate * 10); // 10秒のウィンドウ
+    const analysisWindows = this.selectHighEnergyWindows(
+      data1,
+      data2,
+      windowSize,
+      3, // 3つの時間窓を使用
+    );
+
+    let bestOffset = 0;
+    let bestCorrelation = -1;
+
+    // 粗探索: 大きなステップで候補を絞る
+    onProgress?.(0.1);
+    for (
+      let offset = -maxOffsetSamples;
+      offset <= maxOffsetSamples;
+      offset += stepSize * 10
+    ) {
+      const correlation = this.calculateCorrelationForWindows(
+        data1,
+        data2,
+        offset,
+        analysisWindows,
+      );
+
+      if (correlation > bestCorrelation) {
+        bestCorrelation = correlation;
+        bestOffset = offset;
+      }
+    }
+
+    onProgress?.(0.5);
+
+    // 精密探索: 最良候補の周辺を細かく探索
+    const searchRange = stepSize * 20; // 粗探索ステップの2倍の範囲
+    let refinedBestOffset = bestOffset;
+    let refinedBestCorrelation = bestCorrelation;
+
+    for (
+      let offset = bestOffset - searchRange;
+      offset <= bestOffset + searchRange;
+      offset += stepSize
+    ) {
+      const correlation = this.calculateCorrelationForWindows(
+        data1,
+        data2,
+        offset,
+        analysisWindows,
+      );
+
+      if (correlation > refinedBestCorrelation) {
+        refinedBestCorrelation = correlation;
+        refinedBestOffset = offset;
+      }
+    }
+
+    onProgress?.(0.9);
+
+    // サブサンプル精度での最終調整
+    const finalBestOffset = this.refineOffsetSubsample(
+      data1,
+      data2,
+      refinedBestOffset,
+      analysisWindows,
+      stepSize,
+    );
+
+    const offsetSeconds = finalBestOffset / sampleRate;
+    const confidence = Math.min(refinedBestCorrelation * 2, 1);
+
+    onProgress?.(1.0);
+
+    return {
+      offsetSeconds,
+      confidence,
+      correlationPeak: refinedBestCorrelation,
+    };
+  }
+
+  /**
+   * エネルギーが高い（音がある）時間窓を選択
+   */
+  private selectHighEnergyWindows(
+    data1: Float32Array,
+    data2: Float32Array,
+    windowSize: number,
+    numWindows: number,
+  ): Array<{ start: number; end: number }> {
+    const minLength = Math.min(data1.length, data2.length);
+    const energies: Array<{ start: number; energy: number }> = [];
+
+    // 各ウィンドウのエネルギーを計算
+    for (
+      let start = 0;
+      start < minLength - windowSize;
+      start += windowSize / 2
+    ) {
+      let energy = 0;
+      for (let i = start; i < start + windowSize && i < minLength; i++) {
+        energy += Math.abs(data1[i]) + Math.abs(data2[i]);
+      }
+      energies.push({ start, energy });
+    }
+
+    // エネルギーが高い順にソート
+    energies.sort((a, b) => b.energy - a.energy);
+
+    // 上位のウィンドウを選択（重複を避けるため時間順にソート）
+    const selectedWindows = energies
+      .slice(0, numWindows)
+      .map((e) => ({
+        start: e.start,
+        end: Math.min(e.start + windowSize, minLength),
+      }))
+      .sort((a, b) => a.start - b.start);
+
+    console.log('選択された分析ウィンドウ:', selectedWindows);
+    return selectedWindows;
+  }
+
+  /**
+   * 複数の時間窓での相関を平均計算
+   */
+  private calculateCorrelationForWindows(
+    data1: Float32Array,
+    data2: Float32Array,
+    offset: number,
+    windows: Array<{ start: number; end: number }>,
+  ): number {
+    let totalCorrelation = 0;
+    let validWindowCount = 0;
+
+    for (const window of windows) {
+      const correlation = this.calculateCorrelationInWindow(
+        data1,
+        data2,
+        offset,
+        window.start,
+        window.end,
+      );
+
+      if (!Number.isNaN(correlation) && Number.isFinite(correlation)) {
+        totalCorrelation += correlation;
+        validWindowCount++;
+      }
+    }
+
+    return validWindowCount > 0 ? totalCorrelation / validWindowCount : 0;
+  }
+
+  /**
+   * 特定の時間窓内での相関計算
+   */
+  private calculateCorrelationInWindow(
+    data1: Float32Array,
+    data2: Float32Array,
+    offset: number,
+    windowStart: number,
+    windowEnd: number,
+  ): number {
+    const length = windowEnd - windowStart;
+    let sum1 = 0,
+      sum2 = 0,
+      sum1Sq = 0,
+      sum2Sq = 0,
+      pSum = 0;
+    let validSamples = 0;
+
+    for (let i = 0; i < length; i++) {
+      const idx1 = windowStart + i;
+      const idx2 = idx1 + offset;
+
+      if (
+        idx1 < 0 ||
+        idx1 >= data1.length ||
+        idx2 < 0 ||
+        idx2 >= data2.length
+      ) {
+        continue;
+      }
+
+      const val1 = data1[idx1];
+      const val2 = data2[idx2];
+
+      sum1 += val1;
+      sum2 += val2;
+      sum1Sq += val1 * val1;
+      sum2Sq += val2 * val2;
+      pSum += val1 * val2;
+      validSamples++;
+    }
+
+    if (validSamples === 0) return 0;
+
+    const num = pSum - (sum1 * sum2) / validSamples;
+    const den = Math.sqrt(
+      (sum1Sq - (sum1 * sum1) / validSamples) *
+        (sum2Sq - (sum2 * sum2) / validSamples),
+    );
+
+    return den === 0 ? 0 : num / den;
+  }
+
+  /**
+   * サブサンプル精度での最終調整（補間を使用）
+   */
+  private refineOffsetSubsample(
+    data1: Float32Array,
+    data2: Float32Array,
+    coarseOffset: number,
+    windows: Array<{ start: number; end: number }>,
+    stepSize: number,
+  ): number {
+    const subSteps = 10; // サブサンプルステップ数
+    let bestOffset = coarseOffset;
+    let bestCorrelation = this.calculateCorrelationForWindows(
+      data1,
+      data2,
+      coarseOffset,
+      windows,
+    );
+
+    // 前後のstepSizeの範囲をサブサンプル精度で探索
+    for (let i = -subSteps; i <= subSteps; i++) {
+      const offset = coarseOffset + (i * stepSize) / subSteps;
+      const intOffset = Math.floor(offset);
+      const frac = offset - intOffset;
+
+      // 線形補間を使った相関計算（近似）
+      const corr1 = this.calculateCorrelationForWindows(
+        data1,
+        data2,
+        intOffset,
+        windows,
+      );
+      const corr2 = this.calculateCorrelationForWindows(
+        data1,
+        data2,
+        intOffset + 1,
+        windows,
+      );
+      const interpolatedCorr = corr1 * (1 - frac) + corr2 * frac;
+
+      if (interpolatedCorr > bestCorrelation) {
+        bestCorrelation = interpolatedCorr;
+        bestOffset = offset;
+      }
+    }
+
+    return bestOffset;
   }
 
   /**

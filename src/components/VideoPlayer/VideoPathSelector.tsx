@@ -12,10 +12,15 @@ import {
   Stack,
   Chip,
   LinearProgress,
+  Backdrop,
+  CircularProgress,
+  Card,
+  CardContent,
 } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import VideoFileIcon from '@mui/icons-material/VideoFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import { PackageDatas } from '../../renderer';
 import { MetaData } from '../../types/MetaData';
 import { AudioSyncAnalyzer } from '../../utils/AudioSyncAnalyzer';
@@ -247,17 +252,15 @@ export const VideoPathSelector = ({
     try {
       const audioAnalyzer = new AudioSyncAnalyzer();
 
-      // 進捗を段階的に更新
-      setSyncStage('音声抽出中...');
-      setSyncProgress(20);
-
+      // 進捗コールバックを使った詳細な進捗更新
       const syncResult = await audioAnalyzer.quickSyncAnalysis(
         tightPath,
         widePath,
+        (stage: string, progress: number) => {
+          setSyncStage(stage);
+          setSyncProgress(progress);
+        },
       );
-
-      setSyncStage('同期計算中...');
-      setSyncProgress(80);
 
       const syncData: VideoSyncData = {
         syncOffset: syncResult.offsetSeconds,
@@ -576,18 +579,26 @@ export const VideoPathSelector = ({
             </Stack>
           )}
 
-          {/* 進捗表示 */}
+          {/* 進捗表示 - 控えめなインライン表示 */}
           {isAnalyzing && (
-            <Box sx={{ mt: 3 }}>
-              <LinearProgress variant="determinate" value={syncProgress} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <CircularProgress size={20} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" fontWeight="medium">
+                    音声同期分析中...
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {syncStage} ({Math.round(syncProgress)}%)
+                  </Typography>
+                </Box>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={syncProgress}
                 sx={{ mt: 1 }}
-              >
-                {syncStage} ({Math.round(syncProgress)}%)
-              </Typography>
-            </Box>
+              />
+            </Alert>
           )}
 
           {/* ボタン */}
@@ -630,6 +641,93 @@ export const VideoPathSelector = ({
           onClick={handleCloseModal}
         />
       )}
+
+      {/* 音声同期中の全画面オーバーレイ */}
+      <Backdrop
+        open={isAnalyzing}
+        sx={{
+          zIndex: 1400,
+          color: '#fff',
+          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        }}
+      >
+        <Card
+          sx={{
+            minWidth: 400,
+            maxWidth: 500,
+            backgroundColor: 'background.paper',
+          }}
+        >
+          <CardContent>
+            <Stack spacing={3} alignItems="center">
+              {/* アニメーションアイコン */}
+              <Box
+                sx={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <CircularProgress
+                  size={80}
+                  thickness={4}
+                  sx={{ color: 'primary.main' }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <GraphicEqIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                </Box>
+              </Box>
+
+              {/* タイトル */}
+              <Typography variant="h6" component="div" fontWeight="medium">
+                音声同期分析中
+              </Typography>
+
+              {/* ステージ説明 */}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                textAlign="center"
+              >
+                {syncStage || '音声データを解析しています...'}
+              </Typography>
+
+              {/* プログレスバー */}
+              <Box sx={{ width: '100%' }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={syncProgress}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: 'block', textAlign: 'center' }}
+                >
+                  {Math.round(syncProgress)}%
+                </Typography>
+              </Box>
+
+              {/* 注意書き */}
+              <Alert severity="warning" sx={{ width: '100%' }}>
+                <Typography variant="caption">
+                  音声同期の精度向上のため、処理には時間がかかる場合があります。
+                  この間、他の操作はできません。
+                </Typography>
+              </Alert>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Backdrop>
     </Box>
   );
 };

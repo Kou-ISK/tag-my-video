@@ -8,7 +8,13 @@ import {
   Snackbar,
   Alert,
   AlertTitle,
+  Backdrop,
+  CircularProgress,
+  Card,
+  CardContent,
+  LinearProgress,
 } from '@mui/material';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import { VideoController } from '../components/VideoPlayer/VideoController';
 import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
 import { TimelineTable } from '../components/VideoPlayer/TimelineTable';
@@ -60,6 +66,9 @@ export const VideoPlayerApp = () => {
     playerForceUpdateKey,
     error,
     setError,
+    isAnalyzing,
+    syncProgress,
+    syncStage,
   } = useVideoPlayerApp();
 
   // エラーメッセージの生成
@@ -300,6 +309,93 @@ export const VideoPlayerApp = () => {
           {error?.message}
         </Alert>
       </Snackbar>
+
+      {/* 音声同期中の全画面オーバーレイ */}
+      <Backdrop
+        open={isAnalyzing}
+        sx={{
+          zIndex: (theme) => theme.zIndex.modal + 1,
+          color: '#fff',
+          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        }}
+      >
+        <Card
+          sx={{
+            minWidth: 400,
+            maxWidth: 500,
+            backgroundColor: 'background.paper',
+          }}
+        >
+          <CardContent>
+            <Stack spacing={3} alignItems="center">
+              {/* アニメーションアイコン */}
+              <Box
+                sx={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <CircularProgress
+                  size={80}
+                  thickness={4}
+                  sx={{ color: 'primary.main' }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <GraphicEqIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                </Box>
+              </Box>
+
+              {/* タイトル */}
+              <Typography variant="h6" component="div" fontWeight="medium">
+                音声同期分析中
+              </Typography>
+
+              {/* ステージ説明 */}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                textAlign="center"
+              >
+                {syncStage || '音声データを解析しています...'}
+              </Typography>
+
+              {/* プログレスバー */}
+              <Box sx={{ width: '100%' }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={syncProgress}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: 'block', textAlign: 'center' }}
+                >
+                  {Math.round(syncProgress)}%
+                </Typography>
+              </Box>
+
+              {/* 注意書き */}
+              <Alert severity="warning" sx={{ width: '100%' }}>
+                <Typography variant="caption">
+                  音声同期の精度向上のため、処理には時間がかかる場合があります。
+                  この間、他の操作はできません。
+                </Typography>
+              </Alert>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Backdrop>
     </Box>
   );
 };
