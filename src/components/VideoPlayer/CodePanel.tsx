@@ -1,12 +1,12 @@
-import {
-  Box,
-  Stack,
-  Typography,
-  Divider,
-  Grid,
-} from '@mui/material';
+import { Box, Stack, Typography, Divider, Grid } from '@mui/material';
 import { CodeButton } from './CodeButton';
-import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 interface CodePanelProps {
   metaDataConfigFilePath: string;
