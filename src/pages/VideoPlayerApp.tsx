@@ -251,13 +251,6 @@ export const VideoPlayerApp = () => {
                   p: { xs: 1.5, md: 2 },
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  sx={{ mb: 1 }}
-                >
-                  アクション入力
-                </Typography>
                 <CodePanel
                   metaDataConfigFilePath={metaDataConfigFilePath}
                   addTimelineData={addTimelineData}

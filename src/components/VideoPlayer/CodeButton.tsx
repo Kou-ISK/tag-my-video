@@ -5,6 +5,7 @@ import React from 'react';
 
 interface CodeButtonProps {
   actionName: string;
+  displayName?: string; // ボタンに表示するテキスト（省略時はactionName）
   addTimelineData: (
     actionName: string,
     startTime: number,
@@ -16,6 +17,7 @@ interface CodeButtonProps {
 
 export const CodeButton = ({
   actionName,
+  displayName,
   addTimelineData,
   color,
 }: CodeButtonProps) => {
@@ -50,14 +52,22 @@ export const CodeButton = ({
     }
   };
 
+  const getButtonLabel = () => {
+    if (pendingLabel) return '記録中...';
+    return displayName ?? `${actionName} 開始`;
+  };
+
   return (
     <Button
-      sx={{ minWidth: 160 }}
+      sx={{
+        minWidth: { xs: '100%', sm: 140, md: 160 },
+        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+      }}
       color={color}
       variant={isActionButonPushed ? 'contained' : 'outlined'}
       onClick={() => addTimeline('')}
     >
-      {pendingLabel ? `${pendingLabel}` : `${actionName} 開始`}
+      {getButtonLabel()}
     </Button>
   );
 };

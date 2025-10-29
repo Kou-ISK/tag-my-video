@@ -17,8 +17,12 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { ActionTypeSelector } from './ActionTypeSelector';
@@ -77,8 +81,10 @@ export const TimelineTable = ({
   const [filterText, setFilterText] = useState<string>('');
   const [teamFilter, setTeamFilter] = useState<string>('all');
   const [actionTypeFilter, setActionTypeFilter] = useState<string>('all');
+  const [actionNameFilter, setActionNameFilter] = useState<string>('all');
+  const [resultFilter, setResultFilter] = useState<string>('all');
 
-  // チーム名と種別の抽出
+  // チーム名、種別、アクション名、結果の抽出
   const teamNames = useMemo(() => {
     const teams = new Set<string>();
     timeline.forEach((item) => {
@@ -94,6 +100,27 @@ export const TimelineTable = ({
       if (item.actionType) types.add(item.actionType);
     });
     return Array.from(types);
+  }, [timeline]);
+
+  const actionNames = useMemo(() => {
+    const names = new Set<string>();
+    timeline.forEach((item) => {
+      // チーム名を除いたアクション名を抽出
+      const parts = item.actionName.split(' ');
+      if (parts.length > 1) {
+        const actionName = parts.slice(1).join(' ');
+        if (actionName) names.add(actionName);
+      }
+    });
+    return Array.from(names).sort();
+  }, [timeline]);
+
+  const actionResults = useMemo(() => {
+    const results = new Set<string>();
+    timeline.forEach((item) => {
+      if (item.actionResult) results.add(item.actionResult);
+    });
+    return Array.from(results);
   }, [timeline]);
 
   useEffect(() => {
@@ -146,8 +173,44 @@ export const TimelineTable = ({
       );
     }
 
+    // アクション名フィルタ
+    if (actionNameFilter !== 'all') {
+      filtered = filtered.filter((item) => {
+        const parts = item.actionName.split(' ');
+        const actionName = parts.slice(1).join(' ');
+        return actionName === actionNameFilter;
+      });
+    }
+
+    // 結果フィルタ
+    if (resultFilter !== 'all') {
+      filtered = filtered.filter((item) => item.actionResult === resultFilter);
+    }
+
     return filtered;
-  }, [timeline, filterText, teamFilter, actionTypeFilter]);
+  }, [
+    timeline,
+    filterText,
+    teamFilter,
+    actionTypeFilter,
+    actionNameFilter,
+    resultFilter,
+  ]);
+
+  const hasActiveFilters =
+    filterText.trim() !== '' ||
+    teamFilter !== 'all' ||
+    actionTypeFilter !== 'all' ||
+    actionNameFilter !== 'all' ||
+    resultFilter !== 'all';
+
+  const resetFilters = () => {
+    setFilterText('');
+    setTeamFilter('all');
+    setActionTypeFilter('all');
+    setActionNameFilter('all');
+    setResultFilter('all');
+  };
 
   const handleSort = (column: SortColumn) => {
     const nextDesc = sortColumn === column ? !isDesc : true;
@@ -160,70 +223,163 @@ export const TimelineTable = ({
     <Box
       sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
     >
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={2}
-        alignItems={{ xs: 'stretch', md: 'center' }}
-        sx={{ p: { xs: 1, md: 1.5 } }}
-      >
-        <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
-          タイムライン
-          <Typography
-            component="span"
-            variant="caption"
-            color="text.secondary"
-            sx={{ ml: 1 }}
-          >
-            {filteredTimeline.length}件 / 全{timeline.length}件
+      {/* フィルタバー */}
+      <Stack spacing={1.5} sx={{ p: { xs: 1, md: 1.5 } }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Typography variant="subtitle1">
+            タイムライン
+            <Typography
+              component="span"
+              variant="caption"
+              color="text.secondary"
+              sx={{ ml: 1 }}
+            >
+              {filteredTimeline.length}件 / 全{timeline.length}件
+            </Typography>
           </Typography>
-        </Typography>
 
-        <TextField
-          value={filterText}
-          onChange={(event) => setFilterText(event.target.value)}
-          placeholder="アクション・タグで絞り込み"
-          size="small"
-          sx={{ minWidth: 200 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+          {hasActiveFilters && (
+            <Tooltip title="フィルタをリセット">
+              <IconButton size="small" onClick={resetFilters}>
+                <FilterListOffIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>チーム</InputLabel>
-          <Select
-            value={teamFilter}
-            label="チーム"
-            onChange={(e) => setTeamFilter(e.target.value)}
-          >
-            <MenuItem value="all">全チーム</MenuItem>
-            {teamNames.map((team) => (
-              <MenuItem key={team} value={team}>
-                {team}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {/* フィルタ行 */}
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          flexWrap="wrap"
+          alignItems="center"
+        >
+          <TextField
+            value={filterText}
+            onChange={(event) => setFilterText(event.target.value)}
+            placeholder="検索..."
+            size="small"
+            sx={{ minWidth: { xs: '100%', sm: 160 } }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>種別</InputLabel>
-          <Select
-            value={actionTypeFilter}
-            label="種別"
-            onChange={(e) => setActionTypeFilter(e.target.value)}
-          >
-            <MenuItem value="all">全種別</MenuItem>
-            {actionTypes.map((type) => (
-              <MenuItem key={type} value={type}>
-                {type || '未分類'}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <InputLabel>チーム</InputLabel>
+            <Select
+              value={teamFilter}
+              label="チーム"
+              onChange={(e) => setTeamFilter(e.target.value)}
+            >
+              <MenuItem value="all">全て</MenuItem>
+              {teamNames.map((team) => (
+                <MenuItem key={team} value={team}>
+                  {team}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>アクション</InputLabel>
+            <Select
+              value={actionNameFilter}
+              label="アクション"
+              onChange={(e) => setActionNameFilter(e.target.value)}
+            >
+              <MenuItem value="all">全て</MenuItem>
+              {actionNames.map((name) => (
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <InputLabel>種別</InputLabel>
+            <Select
+              value={actionTypeFilter}
+              label="種別"
+              onChange={(e) => setActionTypeFilter(e.target.value)}
+            >
+              <MenuItem value="all">全て</MenuItem>
+              {actionTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type || '未分類'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <InputLabel>結果</InputLabel>
+            <Select
+              value={resultFilter}
+              label="結果"
+              onChange={(e) => setResultFilter(e.target.value)}
+            >
+              <MenuItem value="all">全て</MenuItem>
+              {actionResults.map((result) => (
+                <MenuItem key={result} value={result}>
+                  {result || '未設定'}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {/* アクティブフィルタのChip表示 */}
+        {hasActiveFilters && (
+          <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+            {filterText && (
+              <Chip
+                label={`検索: "${filterText}"`}
+                size="small"
+                onDelete={() => setFilterText('')}
+              />
+            )}
+            {teamFilter !== 'all' && (
+              <Chip
+                label={`チーム: ${teamFilter}`}
+                size="small"
+                onDelete={() => setTeamFilter('all')}
+              />
+            )}
+            {actionNameFilter !== 'all' && (
+              <Chip
+                label={`アクション: ${actionNameFilter}`}
+                size="small"
+                onDelete={() => setActionNameFilter('all')}
+              />
+            )}
+            {actionTypeFilter !== 'all' && (
+              <Chip
+                label={`種別: ${actionTypeFilter}`}
+                size="small"
+                onDelete={() => setActionTypeFilter('all')}
+              />
+            )}
+            {resultFilter !== 'all' && (
+              <Chip
+                label={`結果: ${resultFilter}`}
+                size="small"
+                onDelete={() => setResultFilter('all')}
+              />
+            )}
+          </Stack>
+        )}
       </Stack>
 
       <TableContainer sx={{ flex: 1, minHeight: 0 }}>
