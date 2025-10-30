@@ -180,8 +180,17 @@ export const VideoPathSelector = ({
           console.log('Config.json loaded:', data);
 
           const hasWide = !!data.wideViewPath;
-          const tight = data.tightViewPath as string;
-          const wide = (data.wideViewPath || undefined) as string | undefined;
+          // 相対パスを絶対パスに変換
+          const tightRelativePath = data.tightViewPath as string;
+          const wideRelativePath = (data.wideViewPath || undefined) as
+            | string
+            | undefined;
+
+          // パッケージディレクトリをベースに絶対パスを構築
+          const tight = packagePath + '/' + tightRelativePath;
+          const wide = wideRelativePath
+            ? packagePath + '/' + wideRelativePath
+            : undefined;
 
           if (hasWide && tight && wide) {
             const newVideoList = [tight, wide];
@@ -216,7 +225,17 @@ export const VideoPathSelector = ({
               setSyncData(restored);
               console.log('既存の同期データを復元しました:', restored);
             } else {
-              await performAudioSync(tight, wide);
+              const syncResult = await performAudioSync(tight, wide);
+              // config.jsonに同期データを保存
+              if (syncResult && window.electronAPI?.saveSyncData) {
+                try {
+                  const configPath = packagePath + '/.metadata/config.json';
+                  await window.electronAPI.saveSyncData(configPath, syncResult);
+                  console.log('同期データを保存しました');
+                } catch (e) {
+                  console.error('同期データの保存に失敗:', e);
+                }
+              }
             }
           } else {
             const newVideoList = [tight];
@@ -271,14 +290,19 @@ export const VideoPathSelector = ({
       setSyncData(syncData);
       setSyncProgress(100);
       console.log('音声同期完了:', syncResult);
+
+      // 返り値として同期データを返す（呼び出し元で保存）
+      return syncData;
     } catch (error) {
       console.error('音声同期分析エラー:', error);
       // エラーの場合は同期なしでセット
-      setSyncData({
+      const errorSyncData: VideoSyncData = {
         syncOffset: 0,
         isAnalyzed: false,
         confidenceScore: 0,
-      });
+      };
+      setSyncData(errorSyncData);
+      return errorSyncData;
     } finally {
       setIsAnalyzing(false);
       setSyncProgress(0);
@@ -324,10 +348,22 @@ export const VideoPathSelector = ({
     if (packageDatas.wideViewPath) {
       setVideoList([packageDatas.tightViewPath, packageDatas.wideViewPath]);
       // 2つの映像がある場合は音声同期分析を実行
-      await performAudioSync(
+      const syncResult = await performAudioSync(
         packageDatas.tightViewPath,
         packageDatas.wideViewPath,
       );
+      // config.jsonに同期データを保存
+      if (syncResult && window.electronAPI?.saveSyncData) {
+        try {
+          await window.electronAPI.saveSyncData(
+            packageDatas.metaDataConfigFilePath,
+            syncResult,
+          );
+          console.log('同期データを保存しました');
+        } catch (e) {
+          console.error('同期データの保存に失敗:', e);
+        }
+      }
     } else {
       setVideoList([packageDatas.tightViewPath]);
       // 1つの映像の場合は同期データをリセット

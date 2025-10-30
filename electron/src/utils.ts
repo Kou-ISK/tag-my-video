@@ -90,8 +90,11 @@ export const Utils = () => {
       });
       // .metadataファイルを作成
       fs.mkdirSync(newPackagePath + '/.metadata');
-      metaDataConfig.tightViewPath = newTightViewPath;
-      metaDataConfig.wideViewPath = newWideViewPath;
+      // パッケージ内の相対パスとして保存（移動しても動作するように）
+      metaDataConfig.tightViewPath = 'videos/' + newFilePath + ' 寄り.mp4';
+      metaDataConfig.wideViewPath = newWideViewPath
+        ? 'videos/' + newFilePath + ' 引き.mp4'
+        : null;
       const metaDataText = JSON.stringify(metaDataConfig);
       console.log(metaDataConfig);
       fs.writeFile(
