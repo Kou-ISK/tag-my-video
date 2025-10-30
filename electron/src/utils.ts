@@ -186,4 +186,53 @@ export const Utils = () => {
       return false;
     }
   });
+
+  // 既存のconfig.jsonを相対パスに変換
+  ipcMain.handle(
+    'convert-config-to-relative-path',
+    async (_, packagePath: string) => {
+      try {
+        const configPath = packagePath + '/.metadata/config.json';
+
+        // config.jsonを読み込み
+        const raw = await fs.promises.readFile(configPath, 'utf-8');
+        const config = JSON.parse(raw);
+
+        // tightViewPathが絶対パスかチェック
+        if (
+          config.tightViewPath &&
+          config.tightViewPath.includes(packagePath)
+        ) {
+          // 絶対パスから相対パスに変換
+          config.tightViewPath = config.tightViewPath.replace(
+            packagePath + '/',
+            '',
+          );
+          console.log('tightViewPathを相対パスに変換:', config.tightViewPath);
+        }
+
+        // wideViewPathが存在し、絶対パスかチェック
+        if (config.wideViewPath && config.wideViewPath.includes(packagePath)) {
+          config.wideViewPath = config.wideViewPath.replace(
+            packagePath + '/',
+            '',
+          );
+          console.log('wideViewPathを相対パスに変換:', config.wideViewPath);
+        }
+
+        // 変換後のconfig.jsonを保存
+        await fs.promises.writeFile(
+          configPath,
+          JSON.stringify(config, null, 2),
+          'utf-8',
+        );
+
+        console.log('config.jsonを相対パスに変換しました:', configPath);
+        return { success: true, config };
+      } catch (error) {
+        console.error('convert-config-to-relative-path error:', error);
+        return { success: false, error: String(error) };
+      }
+    },
+  );
 };

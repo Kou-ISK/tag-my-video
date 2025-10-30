@@ -217,4 +217,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return false;
     }
   },
+  // 既存のconfig.jsonを相対パスに変換
+  convertConfigToRelativePath: async (packagePath: string) => {
+    try {
+      return await ipcRenderer.invoke(
+        'convert-config-to-relative-path',
+        packagePath,
+      );
+    } catch (e) {
+      console.error('convertConfigToRelativePath error:', e);
+      return { success: false, error: String(e) };
+    }
+  },
 });

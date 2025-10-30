@@ -31,6 +31,11 @@ export interface IElectronAPI {
     },
   ) => Promise<boolean>;
   setManualModeChecked: (checked: boolean) => Promise<boolean>;
+  convertConfigToRelativePath: (packagePath: string) => Promise<{
+    success: boolean;
+    config?: any;
+    error?: string;
+  }>;
 }
 
 export interface PackageDatas {

@@ -168,6 +168,20 @@ export const VideoPathSelector = ({
     const packagePath = await window.electronAPI.openDirectory();
     if (packagePath) {
       console.log(packagePath + '/.metadata/config.json');
+
+      // 既存のconfig.jsonを相対パスに変換（絶対パスの場合のみ）
+      if (window.electronAPI?.convertConfigToRelativePath) {
+        try {
+          const result =
+            await window.electronAPI.convertConfigToRelativePath(packagePath);
+          if (result.success) {
+            console.log('config.jsonを相対パスに変換しました:', result.config);
+          }
+        } catch (e) {
+          console.warn('config.json変換をスキップ:', e);
+        }
+      }
+
       setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
       fetch(packagePath + '/.metadata/config.json')
         .then((response) => {
