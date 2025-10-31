@@ -43,6 +43,15 @@ export const VideoController = ({
   const isVideoPlayingRef = useRef<boolean>(isVideoPlaying); // 最新のisVideoPlaying値を保持
   // 初期値を-Infinityにして、起動直後の操作を阻害しない
   const lastManualSeekTimestamp = useRef<number>(-Infinity);
+  const isSeekingRef = useRef<boolean>(false); // シーク中フラグ（RAF処理停止用）
+
+  // 時刻フォーマット関数（分:秒）
+  const formatTime = (seconds: number): string => {
+    if (!isFinite(seconds) || seconds < 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // isVideoPlayingが変更されたらrefを更新
   useEffect(() => {
@@ -66,24 +75,24 @@ export const VideoController = ({
       return;
     }
 
-    // 頻度制限: 0.2秒以上の変化がある場合のみ実行（シーク操作以外）
+    // 頻度制限: 0.05秒以上の変化がある場合のみ実行（シーク操作以外）
+    // タイムラインの赤い棒をスムーズに動かすため、閾値を下げる
     const now = Date.now();
     const timeDiff = Math.abs(time - lastSetCurrentTimeValueRef.current);
-    const timeSinceLastCall = now - lastSetCurrentTimeTimestampRef.current;
-    const hasSignificantChange = timeDiff > 0.2;
+    const hasSignificantChange = timeDiff > 0.05; // 0.2秒 → 0.05秒に緩和
     const isSyncTick = source.startsWith('RAF');
 
     if (hasSignificantChange || source === 'updateTimeHandler' || isSyncTick) {
-      console.log(`[INFO] safeSetCurrentTime from ${source}: ${time}秒を設定`);
+      // console.log(`[INFO] safeSetCurrentTime from ${source}: ${time}秒を設定`);
       lastSetCurrentTimeValueRef.current = time;
       lastSetCurrentTimeTimestampRef.current = now;
       setCurrentTime(time);
     } else {
-      console.debug(
-        `[DEBUG] safeSetCurrentTime from ${source}: 更新をスキップ (変化=${timeDiff.toFixed(
-          3,
-        )}秒, 経過時間=${timeSinceLastCall}ms)`,
-      );
+      // console.debug(
+      //   `[DEBUG] safeSetCurrentTime from ${source}: 更新をスキップ (変化=${timeDiff.toFixed(
+      //     3,
+      //   )}秒)`,
+      // );
     }
   };
 
@@ -112,6 +121,27 @@ export const VideoController = ({
       );
     }
   }, [maxSec]);
+
+  // シークイベントのリスニング（RAF処理の一時停止/再開）
+  useEffect(() => {
+    const handleSeekStart = () => {
+      console.log('[VideoController] Seek started, pausing RAF');
+      isSeekingRef.current = true;
+    };
+
+    const handleSeekEnd = () => {
+      console.log('[VideoController] Seek ended, resuming RAF');
+      isSeekingRef.current = false;
+    };
+
+    window.addEventListener('video-seek-start', handleSeekStart);
+    window.addEventListener('video-seek-end', handleSeekEnd);
+
+    return () => {
+      window.removeEventListener('video-seek-start', handleSeekStart);
+      window.removeEventListener('video-seek-end', handleSeekEnd);
+    };
+  }, []);
 
   // タイムラインクリック等の外部シーク操作を検知
   const prevCurrentTimeRef = useRef<number>(currentTime);
@@ -378,6 +408,13 @@ export const VideoController = ({
     };
 
     const animationUpdateHandler = (ts?: number) => {
+      // シーク中はRAF処理をスキップ
+      if (isSeekingRef.current) {
+        console.log('[VideoController] RAF skipped (seeking)');
+        animationFrameId = requestAnimationFrame(animationUpdateHandler);
+        return;
+      }
+
       const offset = Number(syncData?.syncOffset || 0);
       const negOffset = !!(syncData?.isAnalyzed && offset < 0);
       const posOffset = !!(syncData?.isAnalyzed && offset > 0);
@@ -651,18 +688,22 @@ export const VideoController = ({
     syncData?.isAnalyzed,
   ]);
 
-  // UI: コントロールバー（最小構成: 再生/一時停止・速度・共通シークバー）
+  // UI: コントロールバー（最小構成: 再生/一時停止・速度調整）
   return (
     <Box
       sx={{
         display: 'flex',
         gap: 1.5,
         alignItems: 'center',
-        p: 1,
+        p: 1.5,
         width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 2,
+        pointerEvents: 'auto',
       }}
     >
-      {/* 左: 再生/一時停止、速度 */}
+      {/* 再生/一時停止、速度調整 */}
       <Box
         sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}
       >
@@ -673,7 +714,10 @@ export const VideoController = ({
         >
           {isVideoPlaying ? 'PAUSE' : 'PLAY ALL'}
         </Button>
-        <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+        <Typography
+          variant="body2"
+          sx={{ whiteSpace: 'nowrap', color: 'white' }}
+        >
           Speed
         </Typography>
         <Slider
@@ -688,26 +732,14 @@ export const VideoController = ({
         <ShortcutGuide />
       </Box>
 
-      {/* 中央: 共通シークバー（負のオフセットに対応） */}
+      {/* 現在時刻表示 */}
       <Box sx={{ flex: 1, px: 2, minWidth: 0 }}>
-        <Slider
-          size="small"
-          min={
-            syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
-              ? (syncData?.syncOffset as number)
-              : 0
-          }
-          max={Math.max(0, maxSec)}
-          step={0.01}
-          value={videoTime}
-          onChange={(e, v) => {
-            // 手動シーク操作のタイムスタンプを記録
-            lastManualSeekTimestamp.current = Date.now();
-            setVideoTime(v as number);
-            handleCurrentTime(e as unknown as Event, v);
-          }}
-          valueLabelDisplay="auto"
-        />
+        <Typography
+          variant="body2"
+          sx={{ textAlign: 'center', color: 'white', fontWeight: 'bold' }}
+        >
+          {formatTime(videoTime)} / {formatTime(maxSec)}
+        </Typography>
       </Box>
     </Box>
   );

@@ -458,11 +458,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         '& .video-js': {
           height: '100%',
           width: '100%',
-          borderRadius: 2,
           backgroundColor: '#000',
         },
         '& .vjs-tech': {
-          objectFit: 'contain',
+          objectFit: 'contain', // 縦横比を保持、映像全体を表示
         },
       }}
     >

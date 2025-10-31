@@ -37,6 +37,7 @@ export const SyncedVideoPlayer = ({
   const [primaryClock, setPrimaryClock] = useState(0);
   const renderCountRef = useRef(0);
   const lastReportedTimeRef = useRef(0); // primaryClock更新を追跡するためのRef
+  const isSeekingRef = useRef(false); // シーク中フラグ（timeupdate無視用）
 
   // レンダリング回数をカウント
   renderCountRef.current += 1;
@@ -46,6 +47,7 @@ export const SyncedVideoPlayer = ({
     offset,
     forceUpdateKey,
     analyzed,
+    isSeeking: isSeekingRef.current,
   });
 
   const noopSetMax = React.useCallback<Dispatch<SetStateAction<number>>>(
@@ -114,6 +116,27 @@ export const SyncedVideoPlayer = ({
     }
   }, [forceUpdateKey]);
 
+  // シークイベントのリスニング（timeupdate処理の一時停止/再開）
+  useEffect(() => {
+    const handleSeekStart = () => {
+      console.log('[SyncedVideoPlayer] Seek started, pausing timeupdate');
+      isSeekingRef.current = true;
+    };
+
+    const handleSeekEnd = () => {
+      console.log('[SyncedVideoPlayer] Seek ended, resuming timeupdate');
+      isSeekingRef.current = false;
+    };
+
+    window.addEventListener('video-seek-start', handleSeekStart);
+    window.addEventListener('video-seek-end', handleSeekEnd);
+
+    return () => {
+      window.removeEventListener('video-seek-start', handleSeekStart);
+      window.removeEventListener('video-seek-end', handleSeekEnd);
+    };
+  }, []);
+
   // timeupdate イベントベースの時刻同期 (RAF不使用でコマ送り回避)
   useEffect(() => {
     const player = (
@@ -141,6 +164,12 @@ export const SyncedVideoPlayer = ({
 
     const handleTimeUpdate = () => {
       try {
+        // シーク中はtimeupdate処理をスキップ
+        if (isSeekingRef.current) {
+          console.log('[SyncedVideoPlayer] timeupdate skipped (seeking)');
+          return;
+        }
+
         const t = player.currentTime?.();
         if (
           typeof t === 'number' &&
@@ -216,15 +245,12 @@ export const SyncedVideoPlayer = ({
   return (
     <Grid
       container
-      spacing={{ xs: 1.5, md: 2 }}
+      spacing={0}
       sx={{
         width: '100%',
+        height: '100%',
         margin: 0,
-        padding: { xs: 1.25, md: 1.75 },
-        borderRadius: 2,
-        background: 'linear-gradient(145deg, #0E1118, #151924)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        boxShadow: '0 30px 60px rgba(0,0,0,0.35)',
+        padding: 0,
       }}
     >
       {videoList.map((filePath, index) => {
@@ -247,18 +273,22 @@ export const SyncedVideoPlayer = ({
             item
             xs={12}
             md={gridColumns}
-            sx={{ display: 'flex' }}
+            sx={{
+              display: 'flex',
+              padding: 0,
+            }}
           >
             <Box
               sx={{
                 position: 'relative',
                 width: '100%',
                 aspectRatio: '16 / 9',
-                borderRadius: 2,
+                minHeight: 0,
                 overflow: 'hidden',
                 backgroundColor: '#000',
-                boxShadow: '0 18px 45px rgba(0,0,0,0.45)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <MemoizedSingleVideoPlayer

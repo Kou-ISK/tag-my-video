@@ -74,6 +74,12 @@ export const useVideoPlayerApp = () => {
   ) => {
     const time = newValue as number;
 
+    // シーク開始を通知（SyncedVideoPlayerがtimeupdateを一時無視）
+    const seekStartEvent = new CustomEvent('video-seek-start', {
+      detail: { time },
+    });
+    window.dispatchEvent(seekStartEvent);
+
     // 负のオフセット時はグローバル時間の下限を拡張
     const minAllowed =
       syncData &&
@@ -160,6 +166,13 @@ export const useVideoPlayerApp = () => {
             console.debug(`プレイヤー${index}のシークでエラー:`, error);
           }
         });
+
+        // シーク完了を通知（500ms後にSyncedVideoPlayerがtimeupdateを再開）
+        // Video.jsのtimeupdateイベントが落ち着くまで待つ
+        setTimeout(() => {
+          const seekEndEvent = new CustomEvent('video-seek-end');
+          window.dispatchEvent(seekEndEvent);
+        }, 500);
       }, 50); // 短いディレイで即座に反映
     } else {
       console.warn('無効な時間値が設定されようとしました:', time);

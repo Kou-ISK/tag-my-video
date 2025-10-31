@@ -60,8 +60,11 @@ export const CodeButton = ({
   return (
     <Button
       sx={{
-        minWidth: { xs: '100%', sm: 140, md: 160 },
-        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+        width: '100%',
+        minHeight: 32,
+        fontSize: '0.75rem',
+        py: 0.5,
+        px: 1,
       }}
       color={color}
       variant={isActionButonPushed ? 'contained' : 'outlined'}

@@ -129,8 +129,6 @@ export const VideoPlayerApp = () => {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
-        p: { xs: 1.5, md: 3 },
         bgcolor: 'background.default',
       }}
     >
@@ -138,97 +136,135 @@ export const VideoPlayerApp = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: '1fr 320px',
-            gridTemplateRows: '1fr auto',
-            gap: 2,
+            gridTemplateColumns: '1fr', // 1列
+            gridTemplateRows: '1fr 250px', // 上: 映像（可変、最大化）、下: タイムライン+アクション（250px固定）
             flex: 1,
             minHeight: 0,
           }}
         >
-          {/* 左上: 映像プレイヤー */}
-          <Paper
-            variant="outlined"
+          {/* 上: 映像プレイヤー（最大化） */}
+          <Box
             sx={{
+              gridColumn: '1',
+              gridRow: '1',
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              gap: 1.5,
-              p: { xs: 1.5, md: 2 },
-              overflow: 'hidden',
+              // overflow: hiddenを削除して、コントローラーが映像の上に表示されるようにする
+              '&:hover .video-controls-overlay': {
+                opacity: 1,
+              },
             }}
           >
-            <VideoPlayer
-              key={videoList.join('|')}
-              videoList={videoList}
-              isVideoPlaying={isVideoPlaying}
-              videoPlayBackRate={videoPlayBackRate}
-              currentTime={currentTime}
-              setMaxSec={setMaxSec}
-              syncData={syncData}
-              syncMode={syncMode}
-              forceUpdateKey={playerForceUpdateKey}
-            />
-            <VideoController
-              setIsVideoPlaying={setisVideoPlaying}
-              isVideoPlaying={isVideoPlaying}
-              setVideoPlayBackRate={setVideoPlayBackRate}
-              setCurrentTime={setCurrentTime}
-              currentTime={currentTime}
-              handleCurrentTime={handleCurrentTime}
-              maxSec={maxSec}
-              videoList={videoList}
-              syncData={syncData}
-            />
-          </Paper>
-
-          {/* 右: CodePanel（固定サイドバー） */}
-          <Paper
-            variant="outlined"
-            sx={{
-              gridRow: '1 / 3',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              p: { xs: 1.5, md: 2 },
-            }}
-          >
-            <CodePanel
-              metaDataConfigFilePath={metaDataConfigFilePath}
-              addTimelineData={addTimelineData}
-              teamNames={teamNames}
-              setTeamNames={setTeamNames}
-            />
-          </Paper>
-
-          {/* 下: ビジュアルタイムライン */}
-          <Paper
-            variant="outlined"
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              height: '280px',
-            }}
-          >
-            <VisualTimeline
-              timeline={timeline}
-              maxSec={maxSec}
-              currentTime={currentTime}
-              onSeek={(time) => {
-                const event = new Event('visual-timeline-seek');
-                handleCurrentTime(event, time);
+            {/* 映像プレイヤー */}
+            <Box
+              sx={{
+                flex: 1,
+                position: 'relative',
+                minHeight: 0,
               }}
-              onDelete={deleteTimelineDatas}
-              selectedIds={selectedTimelineIdList}
-              onSelectionChange={(ids) => {
-                // 選択状態を更新
-                const updatedTimeline = timeline.map((item) => ({
-                  ...item,
-                  isSelected: ids.includes(item.id),
-                }));
-                setTimeline(updatedTimeline);
+            >
+              <VideoPlayer
+                key={videoList.join('|')}
+                videoList={videoList}
+                isVideoPlaying={isVideoPlaying}
+                videoPlayBackRate={videoPlayBackRate}
+                currentTime={currentTime}
+                setMaxSec={setMaxSec}
+                syncData={syncData}
+                syncMode={syncMode}
+                forceUpdateKey={playerForceUpdateKey}
+              />
+            </Box>
+
+            {/* 映像上にホバー表示されるコントロール */}
+            <Box
+              className="video-controls-overlay"
+              sx={{
+                position: 'absolute',
+                bottom: 16,
+                left: 16,
+                right: 16,
+                opacity: 0,
+                transition: 'opacity 0.3s',
+                zIndex: 1000,
+                // 親のpointerEvents: noneを削除し、子要素で制御
               }}
-            />
-          </Paper>
+            >
+              <VideoController
+                setIsVideoPlaying={setisVideoPlaying}
+                isVideoPlaying={isVideoPlaying}
+                setVideoPlayBackRate={setVideoPlayBackRate}
+                setCurrentTime={setCurrentTime}
+                currentTime={currentTime}
+                handleCurrentTime={handleCurrentTime}
+                maxSec={maxSec}
+                videoList={videoList}
+                syncData={syncData}
+              />
+            </Box>
+          </Box>
+
+          {/* 下: タイムライン（左）とアクションパネル（右）を横並び */}
+          <Box
+            sx={{
+              gridColumn: '1',
+              gridRow: '2',
+              display: 'grid',
+              gridTemplateColumns: '1fr 480px', // 左: タイムライン（可変、広め）、右: アクション（480px固定、狭め）
+              minHeight: 0,
+            }}
+          >
+            {/* 左: ビジュアルタイムライン */}
+            <Paper
+              variant="outlined"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              <VisualTimeline
+                timeline={timeline}
+                maxSec={maxSec}
+                currentTime={currentTime}
+                onSeek={(time) => {
+                  const event = new Event('visual-timeline-seek');
+                  handleCurrentTime(event, time);
+                }}
+                onDelete={deleteTimelineDatas}
+                selectedIds={selectedTimelineIdList}
+                onSelectionChange={(ids) => {
+                  // 選択状態を更新
+                  const updatedTimeline = timeline.map((item) => ({
+                    ...item,
+                    isSelected: ids.includes(item.id),
+                  }));
+                  setTimeline(updatedTimeline);
+                }}
+                onUpdateQualifier={updateQualifier}
+                onUpdateActionType={updateActionType}
+                onUpdateActionResult={updateActionResult}
+              />
+            </Paper>
+
+            {/* 右: CodePanel（アクションボタン） */}
+            <Paper
+              variant="outlined"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              <CodePanel
+                metaDataConfigFilePath={metaDataConfigFilePath}
+                addTimelineData={addTimelineData}
+                teamNames={teamNames}
+                setTeamNames={setTeamNames}
+              />
+            </Paper>
+          </Box>
         </Box>
       ) : (
         <Paper

@@ -1,4 +1,4 @@
-import { Box, Stack, Typography, Divider, Grid } from '@mui/material';
+import { Box, Stack, Typography, Grid } from '@mui/material';
 import { CodeButton } from './CodeButton';
 import React, {
   Dispatch,
@@ -72,13 +72,13 @@ export const CodePanel = ({
   );
 
   const renderTeamColumn = (teamName: string, teamIndex: number) => (
-    <Box sx={{ flex: 1, minWidth: 0 }}>
+    <Box>
       <Typography
-        variant="h6"
+        variant="subtitle2"
         sx={{
-          mb: 2,
-          pb: 1,
-          borderBottom: 2,
+          mb: 1,
+          pb: 0.5,
+          borderBottom: 1,
           borderColor: teamIndex === 0 ? 'team1.main' : 'team2.main',
           color: teamIndex === 0 ? 'team1.main' : 'team2.main',
           fontWeight: 'bold',
@@ -86,7 +86,7 @@ export const CodePanel = ({
       >
         {teamName}
       </Typography>
-      <Stack spacing={1}>
+      <Stack spacing={0}>
         {actionGroupEntries.map(([category, actions]) => (
           <React.Fragment key={category}>
             {actions.map((action) => (
@@ -107,42 +107,21 @@ export const CodePanel = ({
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-        overflow: 'hidden',
+        height: '100%',
+        overflowY: 'auto',
       }}
     >
-      <Typography variant="subtitle1" sx={{ mb: 1 }}>
-        アクション入力
+      <Typography variant="h6" gutterBottom sx={{ mb: 1.5 }}>
+        アクション
       </Typography>
-      <Divider sx={{ mb: 2 }} />
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-        }}
-      >
-        {teamNames.length === 2 ? (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              {renderTeamColumn(teamNames[0], 0)}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              {renderTeamColumn(teamNames[1], 1)}
-            </Grid>
-          </Grid>
-        ) : (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              メタデータを読み込むとアクションが表示されます
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <Grid container spacing={0}>
+        <Grid item xs={6}>
+          {teamNames[0] && renderTeamColumn(teamNames[0], 0)}
+        </Grid>
+        <Grid item xs={6}>
+          {teamNames[1] && renderTeamColumn(teamNames[1], 1)}
+        </Grid>
+      </Grid>
     </Box>
   );
 };
