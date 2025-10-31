@@ -86,7 +86,7 @@ export const CodePanel = ({
       >
         {teamName}
       </Typography>
-      <Stack spacing={0}>
+      <Stack spacing={0.75}>
         {actionGroupEntries.map(([category, actions]) => (
           <React.Fragment key={category}>
             {actions.map((action) => (

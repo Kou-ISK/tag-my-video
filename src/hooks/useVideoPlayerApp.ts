@@ -49,6 +49,8 @@ export const useVideoPlayerApp = () => {
   );
   const [syncMode, setSyncMode] = useState<'auto' | 'manual'>('auto');
   const [playerForceUpdateKey, setPlayerForceUpdateKey] = useState(0);
+  const timelineLoadedRef = useRef(false);
+  const timelinePersistedSnapshotRef = useRef<string>('[]');
 
   // 音声同期分析中の状態管理
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -67,6 +69,47 @@ export const useVideoPlayerApp = () => {
     }
     prevCurrentTimeRef.current = currentTime; // 値を記憶
   }, [currentTime]);
+
+  useEffect(() => {
+    timelineLoadedRef.current = false;
+    timelinePersistedSnapshotRef.current = '[]';
+
+    if (!timelineFilePath) {
+      setTimeline([]);
+      timelineLoadedRef.current = true;
+      return;
+    }
+
+    let cancelled = false;
+    const loadTimeline = async () => {
+      try {
+        const response = await fetch(timelineFilePath);
+        if (!response.ok) {
+          throw new Error(
+            `Failed to load timeline file: ${response.status} ${response.statusText}`,
+          );
+        }
+        const raw = await response.json();
+        if (cancelled) return;
+        const normalized = Array.isArray(raw) ? raw : [];
+        timelinePersistedSnapshotRef.current = JSON.stringify(normalized);
+        timelineLoadedRef.current = true;
+        setTimeline(normalized);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('タイムラインの読み込みに失敗しました:', error);
+        timelinePersistedSnapshotRef.current = '[]';
+        timelineLoadedRef.current = true;
+        setTimeline([]);
+      }
+    };
+
+    void loadTimeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [timelineFilePath]);
 
   const handleCurrentTime = (
     event: React.SyntheticEvent | Event,
@@ -196,78 +239,142 @@ export const useVideoPlayerApp = () => {
       actionType: '',
       qualifier,
     };
-    setTimeline([...timeline, newTimelineInstance]);
+    setTimeline((prev) => [...prev, newTimelineInstance]);
   };
 
   const deleteTimelineDatas = (idList: string[]) => {
-    const newTimeline = timeline.filter((item) => !idList.includes(item.id));
-    setTimeline(newTimeline);
+    setTimeline((prev) => prev.filter((item) => !idList.includes(item.id)));
   };
 
   const updateQualifier = (id: string, qualifier: string) => {
-    const updatedTimeline = timeline.map((item) =>
-      item.id === id ? { ...item, qualifier } : item,
+    setTimeline((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, qualifier } : item)),
     );
-    setTimeline(updatedTimeline);
   };
 
   const updateActionResult = (id: string, actionResult: string) => {
-    const updatedTimeline = timeline.map((item) =>
-      item.id === id ? { ...item, actionResult } : item,
+    setTimeline((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, actionResult } : item)),
     );
-    setTimeline(updatedTimeline);
   };
 
   const updateActionType = (id: string, actionType: string) => {
-    const updatedTimeline = timeline.map((item) =>
-      item.id === id ? { ...item, actionType } : item,
+    setTimeline((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, actionType } : item)),
     );
-    setTimeline(updatedTimeline);
+  };
+
+  const updateTimelineRange = (
+    id: string,
+    startTime: number,
+    endTime: number,
+  ) => {
+    const normalizedStart = Number.isFinite(startTime)
+      ? Math.max(0, startTime)
+      : 0;
+    const normalizedEnd = Number.isFinite(endTime)
+      ? Math.max(normalizedStart, endTime)
+      : normalizedStart;
+
+    setTimeline((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              startTime: normalizedStart,
+              endTime: Math.max(normalizedStart, normalizedEnd),
+            }
+          : item,
+      ),
+    );
   };
 
   const getSelectedTimelineId = (
     event: React.ChangeEvent<HTMLInputElement>,
     id: string,
   ) => {
-    if (event.target.checked) {
-      setSelectedTimelineIdList([...selectedTimelineIdList, id]);
-    } else {
-      const newSelectedTimelineIdList = selectedTimelineIdList.filter(
-        (item) => item !== id,
-      );
-      setSelectedTimelineIdList(newSelectedTimelineIdList);
-    }
+    setSelectedTimelineIdList((prev) => {
+      if (event.target.checked) {
+        return prev.includes(id) ? prev : [...prev, id];
+      }
+      return prev.filter((item) => item !== id);
+    });
   };
 
   const sortTimelineDatas = (column: string, sortDesc: boolean) => {
-    const direction = sortDesc ? -1 : 1;
-    const sorted = [...timeline].sort((a, b) => {
-      if (column === 'startTime') {
-        return a.startTime === b.startTime
-          ? 0
-          : a.startTime > b.startTime
-          ? direction
-          : -direction;
-      }
-      if (column === 'endTime') {
-        return a.endTime === b.endTime
-          ? 0
-          : a.endTime > b.endTime
-          ? direction
-          : -direction;
-      }
-      if (column === 'actionName') {
-        return (
-          a.actionName.localeCompare(b.actionName, undefined, {
-            sensitivity: 'base',
-          }) * direction
-        );
-      }
-      return 0;
+    setTimeline((prev) => {
+      const direction = sortDesc ? -1 : 1;
+      const sorted = [...prev].sort((a, b) => {
+        if (column === 'startTime') {
+          return a.startTime === b.startTime
+            ? 0
+            : a.startTime > b.startTime
+            ? direction
+            : -direction;
+        }
+        if (column === 'endTime') {
+          return a.endTime === b.endTime
+            ? 0
+            : a.endTime > b.endTime
+            ? direction
+            : -direction;
+        }
+        if (column === 'actionName') {
+          return (
+            a.actionName.localeCompare(b.actionName, undefined, {
+              sensitivity: 'base',
+            }) * direction
+          );
+        }
+        return 0;
+      });
+      return sorted;
     });
-
-    setTimeline(sorted);
   };
+
+  const saveTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (
+      !timelineFilePath ||
+      !window?.electronAPI?.exportTimeline ||
+      typeof window.electronAPI.exportTimeline !== 'function' ||
+      !timelineLoadedRef.current
+    ) {
+      return;
+    }
+
+    const nextSnapshot = JSON.stringify(timeline);
+    if (nextSnapshot === timelinePersistedSnapshotRef.current) {
+      return;
+    }
+
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+
+    const payload = timeline.map((item) => ({ ...item }));
+
+    saveTimerRef.current = window.setTimeout(() => {
+      window.electronAPI
+        ?.exportTimeline(timelineFilePath, payload)
+        .then(() => {
+          timelinePersistedSnapshotRef.current = nextSnapshot;
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to export timeline:', error);
+        })
+        .finally(() => {
+          saveTimerRef.current = null;
+        });
+    }, 300);
+
+    return () => {
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [timeline, timelineFilePath]);
 
   // 音声同期機能
   const resyncAudio = async () => {
@@ -559,6 +666,7 @@ export const useVideoPlayerApp = () => {
     updateQualifier,
     updateActionResult,
     updateActionType,
+    updateTimelineRange,
     getSelectedTimelineId,
     sortTimelineDatas,
     resyncAudio,

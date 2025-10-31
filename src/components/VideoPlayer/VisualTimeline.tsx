@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import {
   Box,
@@ -33,6 +34,7 @@ interface VisualTimelineProps {
   onUpdateQualifier?: (id: string, qualifier: string) => void;
   onUpdateActionType?: (id: string, actionType: string) => void;
   onUpdateActionResult?: (id: string, actionResult: string) => void;
+  onUpdateTimeRange?: (id: string, startTime: number, endTime: number) => void;
 }
 
 export const VisualTimeline: React.FC<VisualTimelineProps> = ({
@@ -46,7 +48,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
   onUpdateQualifier,
   onUpdateActionType,
   onUpdateActionResult,
-}) => {
+  onUpdateTimeRange,
+}: VisualTimelineProps) => {
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -58,6 +61,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     currentActionType: string;
     currentActionResult: string;
     actionName: string;
+    currentStartTime: number;
+    currentEndTime: number;
   }>({
     open: false,
     itemId: '',
@@ -65,10 +70,14 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     currentActionType: '',
     currentActionResult: '',
     actionName: '',
+    currentStartTime: 0,
+    currentEndTime: 0,
   });
   const [labelInput, setLabelInput] = useState('');
   const [actionTypeInput, setActionTypeInput] = useState('');
   const [actionResultInput, setActionResultInput] = useState('');
+  const [startTimeInput, setStartTimeInput] = useState('');
+  const [endTimeInput, setEndTimeInput] = useState('');
 
   // コンテナ幅の監視
   useEffect(() => {
@@ -167,10 +176,14 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         currentActionType: item.actionType || '',
         currentActionResult: item.actionResult || '',
         actionName: item.actionName,
+        currentStartTime: item.startTime,
+        currentEndTime: item.endTime,
       });
       setLabelInput(item.qualifier || '');
       setActionTypeInput(item.actionType || '');
       setActionResultInput(item.actionResult || '');
+      setStartTimeInput(item.startTime.toString());
+      setEndTimeInput(item.endTime.toString());
     }
   };
 
@@ -187,6 +200,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       labelInput,
       actionTypeInput,
       actionResultInput,
+      startTimeInput,
+      endTimeInput,
     });
     if (labelDialog.itemId) {
       // qualifier, actionType, actionResultは空文字列でも保存（クリアする場合もある）
@@ -208,6 +223,22 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         );
         onUpdateActionResult(labelDialog.itemId, actionResultInput);
       }
+      if (onUpdateTimeRange) {
+        const parsedStart = Number(startTimeInput);
+        const parsedEnd = Number(endTimeInput);
+        const safeStart = Number.isFinite(parsedStart)
+          ? Math.max(0, parsedStart)
+          : labelDialog.currentStartTime;
+        const safeEndSource = Number.isFinite(parsedEnd)
+          ? parsedEnd
+          : labelDialog.currentEndTime;
+        const safeEnd = Math.max(safeStart, safeEndSource);
+        console.log('[VisualTimeline] Calling onUpdateTimeRange', {
+          start: safeStart,
+          end: safeEnd,
+        });
+        onUpdateTimeRange(labelDialog.itemId, safeStart, safeEnd);
+      }
     }
     setLabelDialog({
       open: false,
@@ -216,10 +247,14 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       currentActionType: '',
       currentActionResult: '',
       actionName: '',
+      currentStartTime: 0,
+      currentEndTime: 0,
     });
     setLabelInput('');
     setActionTypeInput('');
     setActionResultInput('');
+    setStartTimeInput('');
+    setEndTimeInput('');
   };
 
   // ラベルダイアログを閉じる
@@ -231,10 +266,20 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       currentActionType: '',
       currentActionResult: '',
       actionName: '',
+      currentStartTime: 0,
+      currentEndTime: 0,
     });
     setLabelInput('');
     setActionTypeInput('');
     setActionResultInput('');
+    setStartTimeInput('');
+    setEndTimeInput('');
+  };
+  const handleDeleteSingle = () => {
+    if (labelDialog.itemId) {
+      onDelete([labelDialog.itemId]);
+    }
+    handleCloseLabel();
   };
 
   // 時刻表示用のフォーマット
@@ -451,6 +496,16 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
                             {formatTime(item.startTime)} -{' '}
                             {formatTime(item.endTime)}
                           </Typography>
+                          {item.actionType && (
+                            <Typography variant="caption">
+                              種別: {item.actionType}
+                            </Typography>
+                          )}
+                          {item.actionResult && (
+                            <Typography variant="caption">
+                              結果: {item.actionResult}
+                            </Typography>
+                          )}
                           {item.qualifier && (
                             <Typography variant="caption">
                               備考: {item.qualifier}
@@ -553,6 +608,24 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         <DialogTitle>アクション詳細を編集</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                label="開始秒"
+                type="number"
+                value={startTimeInput}
+                onChange={(event) => setStartTimeInput(event.target.value)}
+                fullWidth
+                inputProps={{ min: 0, step: 0.1 }}
+              />
+              <TextField
+                label="終了秒"
+                type="number"
+                value={endTimeInput}
+                onChange={(event) => setEndTimeInput(event.target.value)}
+                fullWidth
+                inputProps={{ min: 0, step: 0.1 }}
+              />
+            </Stack>
             {/* アクションタイプ */}
             {(() => {
               const actionDef = getActionDefinition(labelDialog.actionName);
@@ -620,6 +693,13 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
           </Stack>
         </DialogContent>
         <DialogActions>
+          <Button
+            color="error"
+            onClick={handleDeleteSingle}
+            disabled={!labelDialog.itemId}
+          >
+            削除
+          </Button>
           <Button onClick={handleCloseLabel}>キャンセル</Button>
           <Button onClick={handleSaveLabel} variant="contained">
             保存

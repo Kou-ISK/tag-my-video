@@ -1,19 +1,40 @@
-import { Box, Button, Slider, Typography, Stack } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Typography,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import React, {
   Dispatch,
   SetStateAction,
   useEffect,
   useRef,
   useState,
+  useCallback,
 } from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
 import { ShortcutGuide } from '../ShortcutGuide';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import Forward10Icon from '@mui/icons-material/Forward10';
+import Forward30Icon from '@mui/icons-material/Forward30';
+import Replay10Icon from '@mui/icons-material/Replay10';
+import Replay30Icon from '@mui/icons-material/Replay30';
+import SlowMotionVideoIcon from '@mui/icons-material/SlowMotionVideo';
+import SpeedIcon from '@mui/icons-material/Speed';
 
 interface VideoControllerProps {
   setIsVideoPlaying: Dispatch<SetStateAction<boolean>>;
   isVideoPlaying: boolean;
   setVideoPlayBackRate: Dispatch<SetStateAction<number>>;
+  videoPlayBackRate: number;
   setCurrentTime: Dispatch<SetStateAction<number>>;
   currentTime: number; // タイムライン等からの外部シーク検知用
   handleCurrentTime: (
@@ -29,6 +50,7 @@ export const VideoController = ({
   setIsVideoPlaying,
   isVideoPlaying,
   setVideoPlayBackRate,
+  videoPlayBackRate,
   setCurrentTime,
   currentTime,
   handleCurrentTime,
@@ -44,6 +66,41 @@ export const VideoController = ({
   // 初期値を-Infinityにして、起動直後の操作を阻害しない
   const lastManualSeekTimestamp = useRef<number>(-Infinity);
   const isSeekingRef = useRef<boolean>(false); // シーク中フラグ（RAF処理停止用）
+  const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 6, 8];
+  const SMALL_SKIP_SECONDS = 10;
+  const LARGE_SKIP_SECONDS = 30;
+  const hasVideos = videoList.some((path) => path && path.trim() !== '');
+  const speedPresets: Array<{
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+  }> = [
+    {
+      label: '0.5x',
+      value: 0.5,
+      icon: <SlowMotionVideoIcon fontSize="small" />,
+    },
+    {
+      label: '2x',
+      value: 2,
+      icon: <SpeedIcon fontSize="small" />,
+    },
+    {
+      label: '4x',
+      value: 4,
+      icon: <SpeedIcon fontSize="small" />,
+    },
+    {
+      label: '6x',
+      value: 6,
+      icon: <SpeedIcon fontSize="small" />,
+    },
+    {
+      label: '8x',
+      value: 8,
+      icon: <SpeedIcon fontSize="small" />,
+    },
+  ];
 
   // 時刻フォーマット関数（分:秒）
   const formatTime = (seconds: number): string => {
@@ -688,13 +745,132 @@ export const VideoController = ({
     syncData?.isAnalyzed,
   ]);
 
-  // UI: コントロールバー（最小構成: 再生/一時停止・速度調整）
+  const handleSpeedChange = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const value = Number(event.target.value);
+      if (!Number.isNaN(value)) {
+        setVideoPlayBackRate(value);
+      }
+    },
+    [setVideoPlayBackRate],
+  );
+
+  const handleSeekAdjust = useCallback(
+    (deltaSeconds: number) => {
+      const minAllowed =
+        syncData?.isAnalyzed &&
+        typeof syncData.syncOffset === 'number' &&
+        syncData.syncOffset < 0
+          ? syncData.syncOffset
+          : 0;
+      const maxAllowed =
+        typeof maxSec === 'number' && maxSec > minAllowed
+          ? maxSec
+          : Number.POSITIVE_INFINITY;
+      const base = Number.isFinite(videoTime) ? videoTime : 0;
+      const target = base + deltaSeconds;
+      const clamped = Math.min(maxAllowed, Math.max(minAllowed, target));
+      lastManualSeekTimestamp.current = Date.now();
+      setVideoTime(clamped);
+      try {
+        handleCurrentTime(new Event('video-controller-seek'), clamped);
+      } catch {
+        handleCurrentTime({} as React.SyntheticEvent, clamped);
+      }
+    },
+    [videoTime, syncData, maxSec, handleCurrentTime],
+  );
+
+  const togglePlayback = useCallback(() => {
+    setIsVideoPlaying((prev) => !prev);
+  }, [setIsVideoPlaying]);
+
+  const controlButtonSx = {
+    color: 'white',
+    borderRadius: 1.5,
+  } as const;
+
+  const renderSpeedPresetButton = (preset: {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+  }) => {
+    const isActive = Math.abs(videoPlayBackRate - preset.value) < 0.0001;
+    return (
+      <Tooltip title={`${preset.label}で再生`}>
+        <span>
+          <IconButton
+            onClick={() => setVideoPlayBackRate(preset.value)}
+            disabled={!hasVideos}
+            sx={{
+              ...controlButtonSx,
+              flexDirection: 'column',
+              bgcolor: isActive
+                ? 'primary.main'
+                : 'rgba(255,255,255,0.12)',
+              '&:hover': {
+                bgcolor: isActive
+                  ? 'primary.dark'
+                  : 'rgba(255,255,255,0.24)',
+              },
+              color: 'white',
+            }}
+            size="large"
+          >
+            {preset.icon}
+            <Typography
+              variant="caption"
+              sx={{ lineHeight: 1, color: 'inherit', fontWeight: 'bold' }}
+            >
+              {preset.label}
+            </Typography>
+          </IconButton>
+        </span>
+      </Tooltip>
+    );
+  };
+
+  const renderIconButton = (
+    title: string,
+    onClick: () => void,
+    icon: React.ReactNode,
+    options?: { highlight?: boolean },
+  ) => (
+    <Tooltip title={title}>
+      <span>
+        <IconButton
+          onClick={onClick}
+          disabled={!hasVideos}
+          sx={{
+            ...controlButtonSx,
+            ...(options?.highlight
+              ? {
+                  bgcolor: hasVideos ? 'primary.main' : 'rgba(255,255,255,0.12)',
+                  '&:hover': hasVideos
+                    ? { bgcolor: 'primary.dark' }
+                    : undefined,
+                }
+              : {
+                  bgcolor: 'rgba(255,255,255,0.12)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.24)' },
+                }),
+          }}
+          size="large"
+        >
+          {icon}
+        </IconButton>
+      </span>
+    </Tooltip>
+  );
+
+  // UI: コントロールバー（アイコン操作 + 速度セレクト）
   return (
     <Box
       sx={{
         display: 'flex',
-        gap: 1.5,
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
         alignItems: 'center',
+        gap: { xs: 1, md: 1.5 },
         p: 1.5,
         width: '100%',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -703,44 +879,78 @@ export const VideoController = ({
         pointerEvents: 'auto',
       }}
     >
-      {/* 再生/一時停止、速度調整 */}
-      <Box
-        sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}
-      >
-        <Button
-          variant="contained"
-          onClick={() => setIsVideoPlaying(!isVideoPlaying)}
-          sx={{ minWidth: 100 }}
-        >
-          {isVideoPlaying ? 'PAUSE' : 'PLAY ALL'}
-        </Button>
-        <Typography
-          variant="body2"
-          sx={{ whiteSpace: 'nowrap', color: 'white' }}
-        >
-          Speed
-        </Typography>
-        <Slider
-          size="small"
-          min={0.25}
-          max={2}
-          step={0.25}
-          valueLabelDisplay="auto"
-          onChange={(_, v) => setVideoPlayBackRate(v as number)}
-          sx={{ width: 120 }}
-        />
-        <ShortcutGuide />
-      </Box>
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        {renderIconButton('30秒戻る', () => handleSeekAdjust(-LARGE_SKIP_SECONDS), <Replay30Icon />)}
+        {renderIconButton('10秒戻る', () => handleSeekAdjust(-SMALL_SKIP_SECONDS), <Replay10Icon />)}
+        {renderIconButton(
+          isVideoPlaying ? '一時停止' : '再生',
+          togglePlayback,
+          isVideoPlaying ? <PauseIcon /> : <PlayArrowIcon />,
+          { highlight: true },
+        )}
+        {renderIconButton('10秒進む', () => handleSeekAdjust(SMALL_SKIP_SECONDS), <Forward10Icon />)}
+        {renderIconButton('30秒進む', () => handleSeekAdjust(LARGE_SKIP_SECONDS), <Forward30Icon />)}
+      </Stack>
 
-      {/* 現在時刻表示 */}
-      <Box sx={{ flex: 1, px: 2, minWidth: 0 }}>
-        <Typography
-          variant="body2"
-          sx={{ textAlign: 'center', color: 'white', fontWeight: 'bold' }}
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        {speedPresets.map((preset) => (
+          <Box key={preset.label}>{renderSpeedPresetButton(preset)}</Box>
+        ))}
+      </Stack>
+
+      <FormControl
+        size="small"
+        variant="outlined"
+        sx={{
+          minWidth: 120,
+          '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+          '& .MuiInputLabel-shrink': { color: 'primary.light' },
+          '& .MuiOutlinedInput-input': { color: 'white' },
+          '& .MuiSvgIcon-root': { color: 'white' },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255,255,255,0.3)',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255,255,255,0.6)',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'primary.light',
+          },
+        }}
+      >
+        <InputLabel id="playback-speed-label">Speed</InputLabel>
+        <Select
+          labelId="playback-speed-label"
+          label="Speed"
+          value={String(videoPlayBackRate)}
+          onChange={handleSpeedChange}
+          sx={{
+            '& .MuiSelect-icon': { color: 'white' },
+          }}
         >
-          {formatTime(videoTime)} / {formatTime(maxSec)}
-        </Typography>
-      </Box>
+          {speedOptions.map((speed) => (
+            <MenuItem key={speed} value={speed.toString()}>
+              {speed}x
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <ShortcutGuide />
+
+      <Box sx={{ flexGrow: 1 }} />
+
+      <Typography
+        variant="body2"
+        sx={{
+          textAlign: 'right',
+          color: 'white',
+          fontWeight: 'bold',
+          minWidth: 140,
+        }}
+      >
+        {formatTime(videoTime)} / {formatTime(maxSec)}
+      </Typography>
     </Box>
   );
 };

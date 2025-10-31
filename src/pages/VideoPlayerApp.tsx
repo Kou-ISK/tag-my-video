@@ -56,6 +56,7 @@ export const VideoPlayerApp = () => {
     updateQualifier,
     updateActionResult,
     updateActionType,
+    updateTimelineRange,
     getSelectedTimelineId,
     sortTimelineDatas,
     resyncAudio,
@@ -189,6 +190,7 @@ export const VideoPlayerApp = () => {
                 setIsVideoPlaying={setisVideoPlaying}
                 isVideoPlaying={isVideoPlaying}
                 setVideoPlayBackRate={setVideoPlayBackRate}
+                videoPlayBackRate={videoPlayBackRate}
                 setCurrentTime={setCurrentTime}
                 currentTime={currentTime}
                 handleCurrentTime={handleCurrentTime}
@@ -207,6 +209,8 @@ export const VideoPlayerApp = () => {
               display: 'grid',
               gridTemplateColumns: '1fr 480px', // 左: タイムライン（可変、広め）、右: アクション（480px固定、狭め）
               minHeight: 0,
+              gap: 1.5,
+              p: 1.5,
             }}
           >
             {/* 左: ビジュアルタイムライン */}
@@ -216,6 +220,7 @@ export const VideoPlayerApp = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
+                height: '100%',
               }}
             >
               <VisualTimeline
@@ -239,6 +244,7 @@ export const VideoPlayerApp = () => {
                 onUpdateQualifier={updateQualifier}
                 onUpdateActionType={updateActionType}
                 onUpdateActionResult={updateActionResult}
+                onUpdateTimeRange={updateTimelineRange}
               />
             </Paper>
 
@@ -249,6 +255,7 @@ export const VideoPlayerApp = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
+                height: '100%',
               }}
             >
               <CodePanel

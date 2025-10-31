@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { TimelineData } from '../../types/TimelineData';
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ActionResultSelector } from './ActionResultSelector';
@@ -122,26 +122,6 @@ export const TimelineTable = ({
     });
     return Array.from(results);
   }, [timeline]);
-
-  useEffect(() => {
-    if (!timelineFilePath) {
-      return;
-    }
-
-    let isActive = true;
-    fetch(timelineFilePath)
-      .then((response) => response.json())
-      .then((data) => {
-        if (isActive) {
-          setTimeline(data);
-        }
-      })
-      .catch((error) => console.error('Error loading JSON:', error));
-
-    return () => {
-      isActive = false;
-    };
-  }, [timelineFilePath, setTimeline]);
 
   const filteredTimeline = useMemo(() => {
     let filtered = timeline;
