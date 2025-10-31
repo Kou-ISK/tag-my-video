@@ -137,31 +137,26 @@ export const VideoPlayerApp = () => {
           sx={{
             display: 'grid',
             gridTemplateColumns: '1fr', // 1列
-            gridTemplateRows: '1fr 250px', // 上: 映像（可変、最大化）、下: タイムライン+アクション（250px固定）
+            gridTemplateRows: 'auto minmax(250px, 1fr)', // 上: 映像（比率に応じて可変）、下: タイムライン+アクション（250px以上で可変）
             flex: 1,
             minHeight: 0,
           }}
         >
-          {/* 上: 映像プレイヤー（最大化） */}
+          {/* 上: 映像プレイヤー */}
           <Box
             sx={{
               gridColumn: '1',
               gridRow: '1',
               position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              // overflow: hiddenを削除して、コントローラーが映像の上に表示されるようにする
               '&:hover .video-controls-overlay': {
                 opacity: 1,
               },
             }}
           >
-            {/* 映像プレイヤー */}
             <Box
               sx={{
-                flex: 1,
                 position: 'relative',
-                minHeight: 0,
+                width: '100%',
               }}
             >
               <VideoPlayer
@@ -188,7 +183,6 @@ export const VideoPlayerApp = () => {
                 opacity: 0,
                 transition: 'opacity 0.3s',
                 zIndex: 1000,
-                // 親のpointerEvents: noneを削除し、子要素で制御
               }}
             >
               <VideoController

@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React, {
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -21,6 +22,7 @@ interface SingleVideoPlayerProps {
   blockPlay?: boolean;
   allowSeek?: boolean;
   offsetSeconds?: number;
+  onAspectRatioChange?: (ratio: number) => void;
 }
 
 const formatSource = (src: string) => {
@@ -54,6 +56,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   blockPlay = false,
   allowSeek = true,
   offsetSeconds = 0,
+  onAspectRatioChange,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -64,6 +67,44 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   const initialMuteApplied = useRef(false);
   const techErrorHandlerRef = useRef<((event?: Event) => void) | null>(null);
   const metadataHandlerRef = useRef<(() => void) | null>(null);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
+  const aspectRatioCallbackRef = useRef<
+    ((ratio: number) => void) | undefined
+  >(onAspectRatioChange);
+  const lastReportedAspectRatioRef = useRef<number | null>(null);
+  void forceUpdate;
+
+  useEffect(() => {
+    aspectRatioCallbackRef.current = onAspectRatioChange;
+  }, [onAspectRatioChange]);
+
+  const reportAspectRatio = useCallback(
+    (playerInstance: Player) => {
+      const withDimensions = playerInstance as Player & {
+        videoWidth?: () => number;
+        videoHeight?: () => number;
+      };
+      const width = withDimensions.videoWidth?.() ?? 0;
+      const height = withDimensions.videoHeight?.() ?? 0;
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+      const ratio = width / height;
+      if (!Number.isFinite(ratio) || ratio <= 0) {
+        return;
+      }
+      const rounded = Math.round(ratio * 1000) / 1000;
+      if (
+        lastReportedAspectRatioRef.current !== null &&
+        Math.abs(lastReportedAspectRatioRef.current - rounded) < 0.001
+      ) {
+        return;
+      }
+      lastReportedAspectRatioRef.current = rounded;
+      aspectRatioCallbackRef.current?.(rounded);
+    },
+    [],
+  );
 
   // プレイヤー初期化
   useEffect(() => {
@@ -180,14 +221,21 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           setMaxSec(mediaDuration);
         }
         setIsReady(true);
+        reportAspectRatio(playerInstance);
       };
       metadataHandlerRef.current = handleMetadata;
+
+      const handleResize = () => {
+        reportAspectRatio(playerInstance);
+      };
+      resizeHandlerRef.current = handleResize;
 
       playerInstance.ready(handleReady);
       playerInstance.on('loadedmetadata', handleMetadata);
       playerInstance.on('durationchange', handleMetadata);
       playerInstance.on('loadeddata', handleMetadata);
       playerInstance.on('error', handleTechError);
+      playerInstance.on('resize', handleResize);
     };
 
     initializePlayer();
@@ -211,6 +259,10 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           playerInstance.off('durationchange', handleMetadata);
           playerInstance.off('loadeddata', handleMetadata);
         }
+        const handleResize = resizeHandlerRef.current;
+        if (handleResize) {
+          playerInstance.off('resize', handleResize);
+        }
         playerInstance.dispose();
       } else {
         const tech = videoRef.current;
@@ -222,8 +274,9 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
       videoRef.current = null;
       techErrorHandlerRef.current = null;
       metadataHandlerRef.current = null;
+      resizeHandlerRef.current = null;
     };
-  }, [id, setMaxSec]);
+  }, [id, setMaxSec, reportAspectRatio]);
 
   // ソース設定
   useEffect(() => {
@@ -248,6 +301,8 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     if (currentSource === source) {
       return;
     }
+
+    lastReportedAspectRatioRef.current = null;
 
     setShowEndMask(false);
 

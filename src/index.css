@@ -15,7 +15,7 @@ code {
 /* 映像の黒い余白を削除 */
 .video-js video,
 .vjs-tech {
-  object-fit: cover !important;
+  object-fit: contain !important;
   width: 100% !important;
   height: 100% !important;
 }

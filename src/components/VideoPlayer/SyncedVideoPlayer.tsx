@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect,
   useState,
+  useCallback,
 } from 'react';
 import videojs from 'video.js';
 import { MemoizedSingleVideoPlayer } from './SingleVideoPlayer';
@@ -35,9 +36,11 @@ export const SyncedVideoPlayer = ({
   const analyzed = syncData?.isAnalyzed ?? false;
   const releaseRef = useRef<boolean[]>([]);
   const [primaryClock, setPrimaryClock] = useState(0);
+  const [videoAspectRatios, setVideoAspectRatios] = useState<number[]>([]);
   const renderCountRef = useRef(0);
   const lastReportedTimeRef = useRef(0); // primaryClock更新を追跡するためのRef
   const isSeekingRef = useRef(false); // シーク中フラグ（timeupdate無視用）
+  const DEFAULT_ASPECT_RATIO = 16 / 9;
 
   // レンダリング回数をカウント
   renderCountRef.current += 1;
@@ -60,6 +63,41 @@ export const SyncedVideoPlayer = ({
   useEffect(() => {
     releaseRef.current = [];
   }, [videoList, offset, analyzed]);
+
+  useEffect(() => {
+    setVideoAspectRatios((prev) => {
+      const next = videoList.map((_, index) => {
+        const candidate = prev[index];
+        return Number.isFinite(candidate) && candidate > 0
+          ? candidate
+          : DEFAULT_ASPECT_RATIO;
+      });
+      if (
+        prev.length === next.length &&
+        next.every((value, index) => value === prev[index])
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [videoList, DEFAULT_ASPECT_RATIO]);
+
+  const handleAspectRatioChange = useCallback(
+    (index: number, ratio: number) => {
+      if (!Number.isFinite(ratio) || ratio <= 0) {
+        return;
+      }
+      setVideoAspectRatios((prev) => {
+        const next = [...prev];
+        if (Math.abs((next[index] ?? 0) - ratio) < 0.0001) {
+          return prev;
+        }
+        next[index] = ratio;
+        return next;
+      });
+    },
+    [],
+  );
 
   // forceUpdateKeyが変更されたら、primaryClockを即座に更新
   // Video.jsのcurrentTime()は非同期的に更新されるため、ポーリングで待機
@@ -248,9 +286,9 @@ export const SyncedVideoPlayer = ({
       spacing={0}
       sx={{
         width: '100%',
-        height: '100%',
         margin: 0,
         padding: 0,
+        alignItems: 'start',
       }}
     >
       {videoList.map((filePath, index) => {
@@ -266,6 +304,9 @@ export const SyncedVideoPlayer = ({
         }
 
         const gridColumns = activeVideoCount > 1 ? 6 : 12;
+        const aspectRatio = videoAspectRatios[index] ?? DEFAULT_ASPECT_RATIO;
+        const paddingTop =
+          aspectRatio > 0 ? `${(1 / aspectRatio) * 100}%` : '56.25%';
 
         return (
           <Grid
@@ -274,7 +315,7 @@ export const SyncedVideoPlayer = ({
             xs={12}
             md={gridColumns}
             sx={{
-              display: 'flex',
+              display: 'block',
               padding: 0,
             }}
           >
@@ -282,13 +323,11 @@ export const SyncedVideoPlayer = ({
               sx={{
                 position: 'relative',
                 width: '100%',
-                aspectRatio: '16 / 9',
+                paddingTop,
+                height: 0,
                 minHeight: 0,
                 overflow: 'hidden',
                 backgroundColor: '#000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
             >
               <MemoizedSingleVideoPlayer
@@ -301,6 +340,9 @@ export const SyncedVideoPlayer = ({
                 allowSeek={allowSeek}
                 forceUpdate={forceUpdateKey}
                 offsetSeconds={index === 0 ? 0 : offset}
+                onAspectRatioChange={(ratio) =>
+                  handleAspectRatioChange(index, ratio)
+                }
               />
             </Box>
           </Grid>
