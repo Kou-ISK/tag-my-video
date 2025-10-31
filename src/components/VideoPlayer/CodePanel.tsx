@@ -1,4 +1,4 @@
-import { Box, Stack, Typography, Grid } from '@mui/material';
+import { Box, Typography, Grid } from '@mui/material';
 import { CodeButton } from './CodeButton';
 import React, {
   Dispatch,
@@ -86,21 +86,23 @@ export const CodePanel = ({
       >
         {teamName}
       </Typography>
-      <Stack spacing={0.75}>
-        {actionGroupEntries.map(([category, actions]) => (
-          <React.Fragment key={category}>
-            {actions.map((action) => (
-              <CodeButton
-                key={`${teamName}-${action}`}
-                actionName={`${teamName} ${action}`}
-                displayName={action}
-                addTimelineData={addTimelineData}
-                color={teamIndex === 0 ? 'team1' : 'team2'}
-              />
-            ))}
-          </React.Fragment>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 0.75,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+        }}
+      >
+        {actionGroupEntries.flatMap(([, actions]) => actions).map((action) => (
+          <CodeButton
+            key={`${teamName}-${action}`}
+            actionName={`${teamName} ${action}`}
+            displayName={action}
+            addTimelineData={addTimelineData}
+            color={teamIndex === 0 ? 'team1' : 'team2'}
+          />
         ))}
-      </Stack>
+      </Box>
     </Box>
   );
 
@@ -111,10 +113,7 @@ export const CodePanel = ({
         overflowY: 'auto',
       }}
     >
-      <Typography variant="h6" gutterBottom sx={{ mb: 1.5 }}>
-        アクション
-      </Typography>
-      <Grid container spacing={0}>
+      <Grid container spacing={0.5}>
         <Grid item xs={6}>
           {teamNames[0] && renderTeamColumn(teamNames[0], 0)}
         </Grid>

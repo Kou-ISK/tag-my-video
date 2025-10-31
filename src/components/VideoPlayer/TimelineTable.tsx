@@ -211,16 +211,12 @@ export const TimelineTable = ({
           alignItems="center"
           justifyContent="space-between"
         >
-          <Typography variant="subtitle1">
-            タイムライン
-            <Typography
-              component="span"
-              variant="caption"
-              color="text.secondary"
-              sx={{ ml: 1 }}
-            >
-              {filteredTimeline.length}件 / 全{timeline.length}件
-            </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontWeight: 500 }}
+          >
+            {filteredTimeline.length}件 / 全{timeline.length}件
           </Typography>
 
           {hasActiveFilters && (

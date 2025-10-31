@@ -145,7 +145,9 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
           created.className = 'video-js vjs-big-play-centered';
           created.setAttribute('playsinline', 'playsinline');
           created.setAttribute('preload', 'auto');
-          created.setAttribute('controls', '');
+          if (allowSeek) {
+            created.setAttribute('controls', '');
+          }
           container.appendChild(created);
           videoRef.current = created;
           return created;
@@ -172,7 +174,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
 
       console.log(`[${id}] create video.js`, videoEl);
       const playerInstance = videojs(videoEl, {
-        controls: true,
+        controls: allowSeek,
         preload: 'auto',
         autoplay: false,
         playsinline: true,
@@ -188,6 +190,11 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
       });
 
       playerRef.current = playerInstance;
+      try {
+        playerInstance.controls(allowSeek);
+      } catch {
+        /* noop */
+      }
 
       const handleReady = () => {
         console.log(`[${id}] ready event`, {
@@ -328,6 +335,23 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     if (progressControl instanceof HTMLElement) {
       progressControl.style.pointerEvents = allowSeek ? 'auto' : 'none';
       progressControl.style.opacity = allowSeek ? '1' : '0.6';
+    }
+  }, [allowSeek]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    const videoEl = videoRef.current;
+    try {
+      player?.controls?.(allowSeek);
+    } catch {
+      /* noop */
+    }
+    if (videoEl) {
+      if (allowSeek) {
+        videoEl.setAttribute('controls', '');
+      } else {
+        videoEl.removeAttribute('controls');
+      }
     }
   }, [allowSeek]);
 
@@ -524,7 +548,7 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
         ref={videoRef}
         className="video-js vjs-big-play-centered"
         id={id}
-        controls
+        controls={allowSeek}
         preload="auto"
         playsInline
       />

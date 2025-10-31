@@ -8,6 +8,7 @@ import {
   Select,
   MenuItem,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import React, {
@@ -66,10 +67,12 @@ export const VideoController = ({
   // 初期値を-Infinityにして、起動直後の操作を阻害しない
   const lastManualSeekTimestamp = useRef<number>(-Infinity);
   const isSeekingRef = useRef<boolean>(false); // シーク中フラグ（RAF処理停止用）
-  const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 6, 8];
+  const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 4, 6];
   const SMALL_SKIP_SECONDS = 10;
   const LARGE_SKIP_SECONDS = 30;
   const hasVideos = videoList.some((path) => path && path.trim() !== '');
+  const [flashStates, setFlashStates] = useState<Record<string, boolean>>({});
+  const flashTimeoutsRef = useRef<Record<string, number>>({});
   const speedPresets: Array<{
     label: string;
     value: number;
@@ -93,11 +96,6 @@ export const VideoController = ({
     {
       label: '6x',
       value: 6,
-      icon: <SpeedIcon fontSize="small" />,
-    },
-    {
-      label: '8x',
-      value: 8,
       icon: <SpeedIcon fontSize="small" />,
     },
   ];
@@ -255,6 +253,9 @@ export const VideoController = ({
         if (args > 0) {
           console.log(`[HOTKEY] 再生速度変更: ${args}倍速`);
           setVideoPlayBackRate(args);
+          if (args !== 1) {
+            triggerFlash(`speed-${args}`);
+          }
           if (args === 1) {
             console.log(`[HOTKEY] 再生/一時停止トグル実行`);
             try {
@@ -292,6 +293,7 @@ export const VideoController = ({
             const newState = !currentState;
             console.log(`[HOTKEY] 再生状態変更: ${currentState} → ${newState}`);
             setIsVideoPlaying(newState);
+            triggerFlash('toggle-play');
           }
         } else {
           console.log(`[HOTKEY] シーク操作: ${args}秒`);
@@ -336,6 +338,11 @@ export const VideoController = ({
 
             return newTime;
           });
+          if (args === -10) {
+            triggerFlash('rewind-10');
+          } else if (args === -5) {
+            triggerFlash('rewind-10');
+          }
         }
       };
 
@@ -745,14 +752,44 @@ export const VideoController = ({
     syncData?.isAnalyzed,
   ]);
 
+  const triggerFlash = useCallback(
+    (key: string) => {
+      if (!key) return;
+      setFlashStates((prev) => ({
+        ...prev,
+        [key]: true,
+      }));
+      if (flashTimeoutsRef.current[key]) {
+        window.clearTimeout(flashTimeoutsRef.current[key]);
+      }
+      flashTimeoutsRef.current[key] = window.setTimeout(() => {
+        setFlashStates((prev) => ({
+          ...prev,
+          [key]: false,
+        }));
+        delete flashTimeoutsRef.current[key];
+      }, 220);
+    },
+    [],
+  );
+  useEffect(() => {
+    return () => {
+      Object.values(flashTimeoutsRef.current).forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+      flashTimeoutsRef.current = {};
+    };
+  }, []);
+
   const handleSpeedChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const value = Number(event.target.value);
       if (!Number.isNaN(value)) {
         setVideoPlayBackRate(value);
+        triggerFlash(`speed-${value}`);
       }
     },
-    [setVideoPlayBackRate],
+    [setVideoPlayBackRate, triggerFlash],
   );
 
   const handleSeekAdjust = useCallback(
@@ -795,21 +832,25 @@ export const VideoController = ({
     value: number;
     icon: React.ReactNode;
   }) => {
+    const key = `speed-${preset.value}`;
     const isActive = Math.abs(videoPlayBackRate - preset.value) < 0.0001;
+    const isFlashing = !!flashStates[key];
+    const lit = isActive || isFlashing;
     return (
       <Tooltip title={`${preset.label}で再生`}>
         <span>
           <IconButton
-            onClick={() => setVideoPlayBackRate(preset.value)}
+            onClick={() => {
+              setVideoPlayBackRate(preset.value);
+              triggerFlash(key);
+            }}
             disabled={!hasVideos}
             sx={{
               ...controlButtonSx,
               flexDirection: 'column',
-              bgcolor: isActive
-                ? 'primary.main'
-                : 'rgba(255,255,255,0.12)',
+              bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
               '&:hover': {
-                bgcolor: isActive
+                bgcolor: lit
                   ? 'primary.dark'
                   : 'rgba(255,255,255,0.24)',
               },
@@ -832,125 +873,189 @@ export const VideoController = ({
 
   const renderIconButton = (
     title: string,
+    actionKey: string,
     onClick: () => void,
     icon: React.ReactNode,
-    options?: { highlight?: boolean },
-  ) => (
-    <Tooltip title={title}>
-      <span>
-        <IconButton
-          onClick={onClick}
-          disabled={!hasVideos}
-          sx={{
-            ...controlButtonSx,
-            ...(options?.highlight
-              ? {
-                  bgcolor: hasVideos ? 'primary.main' : 'rgba(255,255,255,0.12)',
-                  '&:hover': hasVideos
-                    ? { bgcolor: 'primary.dark' }
-                    : undefined,
-                }
-              : {
-                  bgcolor: 'rgba(255,255,255,0.12)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.24)' },
-                }),
-          }}
-          size="large"
-        >
-          {icon}
-        </IconButton>
-      </span>
-    </Tooltip>
-  );
+    options?: { emphasize?: boolean; active?: boolean },
+  ) => {
+    const emphasize = !!options?.emphasize;
+    const isFlashing = !!flashStates[actionKey];
+    const isActive = !!options?.active || isFlashing;
+    const baseBg = emphasize ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)';
+    const hoverBg = emphasize ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.24)';
+    const activeBg = emphasize ? 'primary.main' : 'rgba(255,255,255,0.32)';
+    const activeHoverBg = emphasize ? 'primary.dark' : 'rgba(255,255,255,0.4)';
+
+    return (
+      <Tooltip title={title}>
+        <span>
+          <IconButton
+            onClick={() => {
+              onClick();
+              triggerFlash(actionKey);
+            }}
+            disabled={!hasVideos}
+            sx={{
+              ...controlButtonSx,
+              bgcolor: isActive ? activeBg : baseBg,
+              '&:hover': {
+                bgcolor: isActive ? activeHoverBg : hoverBg,
+              },
+              boxShadow: isFlashing
+                ? '0 0 0 2px rgba(255,255,255,0.4)'
+                : undefined,
+            }}
+            size="large"
+          >
+            {icon}
+          </IconButton>
+        </span>
+      </Tooltip>
+    );
+  };
 
   // UI: コントロールバー（アイコン操作 + 速度セレクト）
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexWrap: { xs: 'wrap', md: 'nowrap' },
-        alignItems: 'center',
-        gap: { xs: 1, md: 1.5 },
-        p: 1.5,
         width: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.72)',
         backdropFilter: 'blur(10px)',
         borderRadius: 2,
         pointerEvents: 'auto',
+        p: { xs: 1.25, md: 1.5 },
       }}
     >
-      <Stack direction="row" spacing={0.5} alignItems="center">
-        {renderIconButton('30秒戻る', () => handleSeekAdjust(-LARGE_SKIP_SECONDS), <Replay30Icon />)}
-        {renderIconButton('10秒戻る', () => handleSeekAdjust(-SMALL_SKIP_SECONDS), <Replay10Icon />)}
-        {renderIconButton(
-          isVideoPlaying ? '一時停止' : '再生',
-          togglePlayback,
-          isVideoPlaying ? <PauseIcon /> : <PlayArrowIcon />,
-          { highlight: true },
-        )}
-        {renderIconButton('10秒進む', () => handleSeekAdjust(SMALL_SKIP_SECONDS), <Forward10Icon />)}
-        {renderIconButton('30秒進む', () => handleSeekAdjust(LARGE_SKIP_SECONDS), <Forward30Icon />)}
-      </Stack>
-
-      <Stack direction="row" spacing={0.5} alignItems="center">
-        {speedPresets.map((preset) => (
-          <Box key={preset.label}>{renderSpeedPresetButton(preset)}</Box>
-        ))}
-      </Stack>
-
-      <FormControl
-        size="small"
-        variant="outlined"
+      <Box
         sx={{
-          minWidth: 120,
-          '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-          '& .MuiInputLabel-shrink': { color: 'primary.light' },
-          '& .MuiOutlinedInput-input': { color: 'white' },
-          '& .MuiSvgIcon-root': { color: 'white' },
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'rgba(255,255,255,0.3)',
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'rgba(255,255,255,0.6)',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'primary.light',
-          },
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: { xs: 1, md: 1.5 },
         }}
       >
-        <InputLabel id="playback-speed-label">Speed</InputLabel>
-        <Select
-          labelId="playback-speed-label"
-          label="Speed"
-          value={String(videoPlayBackRate)}
-          onChange={handleSpeedChange}
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          {renderIconButton(
+            '30秒戻る',
+            'rewind-30',
+            () => handleSeekAdjust(-LARGE_SKIP_SECONDS),
+            <Replay30Icon />,
+          )}
+          {renderIconButton(
+            '10秒戻る',
+            'rewind-10',
+            () => handleSeekAdjust(-SMALL_SKIP_SECONDS),
+            <Replay10Icon />,
+          )}
+          {renderIconButton(
+            isVideoPlaying ? '一時停止' : '再生',
+            'toggle-play',
+            togglePlayback,
+            isVideoPlaying ? <PauseIcon /> : <PlayArrowIcon />,
+            { emphasize: true, active: isVideoPlaying },
+          )}
+          {renderIconButton(
+            '10秒進む',
+            'forward-10',
+            () => handleSeekAdjust(SMALL_SKIP_SECONDS),
+            <Forward10Icon />,
+          )}
+          {renderIconButton(
+            '30秒進む',
+            'forward-30',
+            () => handleSeekAdjust(LARGE_SKIP_SECONDS),
+            <Forward30Icon />,
+          )}
+        </Stack>
+
+        <Divider
+          orientation="vertical"
+          flexItem
           sx={{
-            '& .MuiSelect-icon': { color: 'white' },
+            borderColor: 'rgba(255,255,255,0.16)',
+            display: { xs: 'none', md: 'block' },
+          }}
+        />
+
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          {speedPresets.map((preset) => (
+            <Box key={preset.label}>{renderSpeedPresetButton(preset)}</Box>
+          ))}
+        </Stack>
+
+        <Divider
+          orientation="vertical"
+          flexItem
+          sx={{
+            borderColor: 'rgba(255,255,255,0.16)',
+            display: { xs: 'none', md: 'block' },
+          }}
+        />
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
           }}
         >
-          {speedOptions.map((speed) => (
-            <MenuItem key={speed} value={speed.toString()}>
-              {speed}x
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <FormControl
+            size="small"
+            variant="outlined"
+            sx={{
+              minWidth: 120,
+              '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+              '& .MuiInputLabel-shrink': { color: 'primary.light' },
+              '& .MuiOutlinedInput-input': { color: 'white' },
+              '& .MuiSvgIcon-root': { color: 'white' },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.3)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.6)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.light',
+              },
+            }}
+          >
+            <InputLabel id="playback-speed-label">Speed</InputLabel>
+            <Select
+              labelId="playback-speed-label"
+              label="Speed"
+              value={String(videoPlayBackRate)}
+              onChange={handleSpeedChange}
+              sx={{
+                '& .MuiSelect-icon': { color: 'white' },
+              }}
+            >
+              {speedOptions.map((speed) => (
+                <MenuItem key={speed} value={speed.toString()}>
+                  {speed}x
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <ShortcutGuide />
+        </Box>
 
-      <ShortcutGuide />
+        <Box sx={{ flexGrow: 1 }} />
 
-      <Box sx={{ flexGrow: 1 }} />
-
-      <Typography
-        variant="body2"
-        sx={{
-          textAlign: 'right',
-          color: 'white',
-          fontWeight: 'bold',
-          minWidth: 140,
-        }}
-      >
-        {formatTime(videoTime)} / {formatTime(maxSec)}
-      </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            textAlign: { xs: 'left', md: 'right' },
+            color: 'white',
+            fontWeight: 'bold',
+            minWidth: { xs: 'auto', md: 140 },
+            lineHeight: 1.2,
+          }}
+        >
+          {formatTime(videoTime)} / {formatTime(maxSec)}
+        </Typography>
+      </Box>
     </Box>
   );
+
 };
