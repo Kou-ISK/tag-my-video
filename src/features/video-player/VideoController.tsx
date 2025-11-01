@@ -21,7 +21,7 @@ import React, {
 } from 'react';
 import videojs from 'video.js';
 import { VideoSyncData } from '../../types/VideoSync';
-import { ShortcutGuide } from '../ShortcutGuide';
+import { ShortcutGuide } from '../../components/ShortcutGuide';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import Forward10Icon from '@mui/icons-material/Forward10';

@@ -42,12 +42,19 @@ export const CodeButton = ({
         if (!isActionButonPushed) {
           setStartTime(currentTime);
           setPendingLabel(`${actionName} 記録中`);
-        } else {
-          const newEndTime = currentTime;
-          addTimelineData(actionName, startTime, newEndTime, qualifier);
-          setPendingLabel(null);
+          setIsActionButtonPushed(true);
+          return;
         }
-        setIsActionButtonPushed(!isActionButonPushed);
+
+        const newEndTime = currentTime;
+        const [begin, end] =
+          newEndTime >= startTime
+            ? [startTime, newEndTime]
+            : [newEndTime, startTime];
+
+        addTimelineData(actionName, begin, end, qualifier);
+        setPendingLabel(null);
+        setIsActionButtonPushed(false);
       }
     }
   };

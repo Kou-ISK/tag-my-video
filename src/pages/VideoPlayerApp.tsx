@@ -13,14 +13,14 @@ import {
   LinearProgress,
 } from '@mui/material';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import { VideoController } from '../components/VideoPlayer/VideoController';
-import { VideoPathSelector } from '../components/VideoPlayer/VideoPathSelector';
-import { VisualTimeline } from '../components/VideoPlayer/VisualTimeline';
-import { CodePanel } from '../components/VideoPlayer/CodePanel';
+import { VideoController } from '../features/video-player/VideoController';
+import { VideoPathSelector } from '../features/video-player/VideoPathSelector';
+import { VisualTimeline } from '../features/video-player/VisualTimeline';
+import { CodePanel } from '../features/video-player/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
-import { StatsModal } from '../components/VideoPlayer/StatsModal';
+import { StatsModal } from '../features/video-player/StatsModal';
 import React, { useEffect } from 'react';
-import { VideoPlayer } from '../components/VideoPlayer/VideoPlayer';
+import { VideoPlayer } from '../features/video-player/VideoPlayer';
 
 export const VideoPlayerApp = () => {
   const {
