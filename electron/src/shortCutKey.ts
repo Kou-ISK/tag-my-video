@@ -31,4 +31,19 @@ export const shortCutKeys = (mainWindow) => {
   local_shortcut.register(mainWindow, 'Command+Shift+A', () =>
     mainWindow.webContents.send('general-shortcut-event', 'analyze'),
   );
+  local_shortcut.register(mainWindow, 'Command+Shift+1', () =>
+    mainWindow.webContents.send('menu-show-stats', 'possession'),
+  );
+  local_shortcut.register(mainWindow, 'Command+Shift+2', () =>
+    mainWindow.webContents.send('menu-show-stats', 'results'),
+  );
+  local_shortcut.register(mainWindow, 'Command+Shift+3', () =>
+    mainWindow.webContents.send('menu-show-stats', 'types'),
+  );
+  local_shortcut.register(mainWindow, 'Command+Shift+4', () =>
+    mainWindow.webContents.send('menu-show-stats', 'momentum'),
+  );
+  local_shortcut.register(mainWindow, 'Command+Shift+5', () =>
+    mainWindow.webContents.send('menu-show-stats', 'matrix'),
+  );
 };

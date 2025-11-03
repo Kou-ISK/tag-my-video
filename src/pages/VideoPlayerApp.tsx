@@ -21,6 +21,7 @@ import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
 import { StatsModal, StatsView } from '../features/video-player/StatsModal';
 import React, { useEffect, useState } from 'react';
 import { VideoPlayer } from '../features/video-player/VideoPlayer';
+import { TimelineData } from '../types/TimelineData';
 
 export const VideoPlayerApp = () => {
   const {
@@ -166,6 +167,13 @@ export const VideoPlayerApp = () => {
       }
     };
   }, []);
+
+  const handleJumpToSegment = (segment: TimelineData) => {
+    const targetTime = Math.max(0, segment.startTime);
+    handleCurrentTime(new Event('matrix-jump'), targetTime);
+    setisVideoPlaying(true);
+    setStatsOpen(false);
+  };
 
   return (
     <Box
@@ -339,6 +347,7 @@ export const VideoPlayerApp = () => {
         onViewChange={setStatsView}
         timeline={timeline}
         teamNames={teamNames}
+        onJumpToSegment={handleJumpToSegment}
       />
 
       {/* エラー通知 */}

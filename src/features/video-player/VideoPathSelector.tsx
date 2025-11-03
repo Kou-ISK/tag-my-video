@@ -172,18 +172,33 @@ export const VideoPathSelector = ({
       // 既存のconfig.jsonを相対パスに変換（絶対パスの場合のみ）
       if (window.electronAPI?.convertConfigToRelativePath) {
         try {
-          const result =
-            await window.electronAPI.convertConfigToRelativePath(packagePath);
+          const result = await window.electronAPI.convertConfigToRelativePath(
+            packagePath,
+          );
           if (result.success) {
             console.log('config.jsonを相対パスに変換しました:', result.config);
+          } else {
+            console.warn(
+              'config.jsonを相対パスに変換できませんでした。相対パスへの変換はスキップします。詳細:',
+              result.error,
+            );
           }
         } catch (e) {
           console.warn('config.json変換をスキップ:', e);
         }
       }
 
-      setMetaDataConfigFilePath(packagePath + '/.metadata/config.json');
-      fetch(packagePath + '/.metadata/config.json')
+      const configFilePath = packagePath + '/.metadata/config.json';
+      const exists = await window.electronAPI?.checkFileExists?.(
+        configFilePath,
+      );
+      if (!exists) {
+        alert('選択したパッケージ内に .metadata/config.json が見つかりません。');
+        return;
+      }
+
+      setMetaDataConfigFilePath(configFilePath);
+      fetch(configFilePath)
         .then((response) => {
           if (!response.ok) {
             throw new Error('Network response was not ok');

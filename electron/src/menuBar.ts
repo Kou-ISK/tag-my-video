@@ -132,6 +132,13 @@ export const menuBar = Menu.buildFromTemplate([
           browserWindow?.webContents.send('menu-show-stats', 'momentum');
         },
       },
+      {
+        label: 'クロス集計を表示',
+        accelerator: 'CmdOrCtrl+Shift+5',
+        click: (_menuItem, browserWindow) => {
+          browserWindow?.webContents.send('menu-show-stats', 'matrix');
+        },
+      },
       { type: 'separator' },
       {
         label: 'ショートカットキー一覧',

@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import * as fs from 'fs';
+import * as path from 'path';
 import { PackageDatas } from '../../src/renderer';
 
 // メインプロセスで使用するメソッドを切り出し
@@ -192,35 +193,110 @@ export const Utils = () => {
     'convert-config-to-relative-path',
     async (_, packagePath: string) => {
       try {
-        const configPath = packagePath + '/.metadata/config.json';
+        const configPath = path.join(packagePath, '.metadata', 'config.json');
 
-        // config.jsonを読み込み
+        try {
+          await fs.promises.access(configPath, fs.constants.F_OK);
+        } catch {
+          console.warn(
+            `[convert-config-to-relative-path] config.json not found: ${configPath}`,
+          );
+          return {
+            success: false,
+            error: 'config.json not found',
+          };
+        }
+
         const raw = await fs.promises.readFile(configPath, 'utf-8');
-        const config = JSON.parse(raw);
+        const config = JSON.parse(raw ?? '{}');
 
-        // tightViewPathが絶対パスかチェック
-        if (
-          config.tightViewPath &&
-          config.tightViewPath.includes(packagePath)
-        ) {
-          // 絶対パスから相対パスに変換
-          config.tightViewPath = config.tightViewPath.replace(
-            packagePath + '/',
-            '',
+        const packageRoot = path.resolve(packagePath);
+        const videosDir = path.join(packageRoot, 'videos');
+
+        const ensureRelativeVideoPath = async (value: unknown) => {
+          if (typeof value !== 'string' || value.trim() === '') {
+            return value;
+          }
+
+          const normalized = path.normalize(value);
+          const resolved = path.isAbsolute(normalized)
+            ? normalized
+            : path.resolve(packageRoot, normalized);
+
+          const relativeFromPackage = path.relative(packageRoot, resolved);
+          const isInsidePackage =
+            relativeFromPackage &&
+            !relativeFromPackage.startsWith('..') &&
+            !path.isAbsolute(relativeFromPackage);
+
+          if (isInsidePackage) {
+            if (!resolved.startsWith(videosDir + path.sep)) {
+              console.warn(
+                `[convert-config] ${resolved} は videos フォルダ外です。構成を見直してください。`,
+              );
+            }
+            return relativeFromPackage.replace(/\\/g, '/');
+          }
+
+          const baseName = path.basename(resolved);
+          const directCandidate = path.join(videosDir, baseName);
+          const tryCandidate = async (candidatePath: string) => {
+            try {
+              await fs.promises.access(candidatePath, fs.constants.F_OK);
+              const relative = path.relative(packageRoot, candidatePath);
+              console.warn(
+                `[convert-config] ${resolved} を ${relative} に更新します`,
+              );
+              return relative.replace(/\\/g, '/');
+            } catch {
+              return null;
+            }
+          };
+
+          const directMatch = await tryCandidate(directCandidate);
+          if (directMatch) {
+            return directMatch;
+          }
+
+          try {
+            const entries = await fs.promises.readdir(videosDir);
+            const matched = entries.find(
+              (entry) => entry.toLowerCase() === baseName.toLowerCase(),
+            );
+            if (matched) {
+              const fallback = path.join(videosDir, matched);
+              const relative = path.relative(packageRoot, fallback);
+              console.warn(
+                `[convert-config] ${resolved} を ${relative} に更新します`,
+              );
+              return relative.replace(/\\/g, '/');
+            }
+          } catch (scanError) {
+            console.debug('videosフォルダの走査に失敗:', scanError);
+          }
+
+          console.warn(
+            `[convert-config] ${resolved} はパッケージ外のため絶対パスのまま保持します`,
           );
-          console.log('tightViewPathを相対パスに変換:', config.tightViewPath);
+          return resolved.replace(/\\/g, '/');
+        };
+
+        if (config.tightViewPath) {
+          const converted = await ensureRelativeVideoPath(config.tightViewPath);
+          if (converted !== config.tightViewPath) {
+            config.tightViewPath = converted;
+            console.log('tightViewPathを更新:', converted);
+          }
         }
 
-        // wideViewPathが存在し、絶対パスかチェック
-        if (config.wideViewPath && config.wideViewPath.includes(packagePath)) {
-          config.wideViewPath = config.wideViewPath.replace(
-            packagePath + '/',
-            '',
-          );
-          console.log('wideViewPathを相対パスに変換:', config.wideViewPath);
+        if (config.wideViewPath) {
+          const converted = await ensureRelativeVideoPath(config.wideViewPath);
+          if (converted !== config.wideViewPath) {
+            config.wideViewPath = converted;
+            console.log('wideViewPathを更新:', converted);
+          }
         }
 
-        // 変換後のconfig.jsonを保存
         await fs.promises.writeFile(
           configPath,
           JSON.stringify(config, null, 2),
