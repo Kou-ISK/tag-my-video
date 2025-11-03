@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IconButton,
   Dialog,
@@ -45,7 +45,14 @@ const shortcuts: ShortcutItem[] = [
   },
   {
     category: '統計・分析',
-    items: [{ key: 'Command + Shift + A', action: '統計モーダル表示' }],
+    items: [
+      { key: 'Command + Shift + A', action: '統計モーダルをトグル' },
+      { key: 'Command + Shift + 1', action: 'ポゼッションを表示' },
+      { key: 'Command + Shift + 2', action: 'アクション結果を表示' },
+      { key: 'Command + Shift + 3', action: 'アクション種別を表示' },
+      { key: 'Command + Shift + 4', action: 'モーメンタムを表示' },
+      { key: 'Command + /', action: 'ショートカット一覧を表示' },
+    ],
   },
 ];
 
@@ -54,6 +61,24 @@ export const ShortcutGuide: React.FC = () => {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  useEffect(() => {
+    if (!window.electronAPI?.on) {
+      return;
+    }
+
+    const handler = () => setOpen(true);
+
+    window.electronAPI.on('menu-show-shortcuts', handler);
+
+    return () => {
+      try {
+        window.electronAPI?.off?.('menu-show-shortcuts', handler);
+      } catch (error) {
+        console.debug('shortcut menu cleanup error', error);
+      }
+    };
+  }, []);
 
   return (
     <>

@@ -18,8 +18,8 @@ import { VideoPathSelector } from '../features/video-player/VideoPathSelector';
 import { VisualTimeline } from '../features/video-player/VisualTimeline';
 import { CodePanel } from '../features/video-player/CodePanel';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
-import { StatsModal } from '../features/video-player/StatsModal';
-import React, { useEffect } from 'react';
+import { StatsModal, StatsView } from '../features/video-player/StatsModal';
+import React, { useEffect, useState } from 'react';
 import { VideoPlayer } from '../features/video-player/VideoPlayer';
 
 export const VideoPlayerApp = () => {
@@ -69,6 +69,9 @@ export const VideoPlayerApp = () => {
     syncProgress,
     syncStage,
   } = useVideoPlayerApp();
+
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsView, setStatsView] = useState<StatsView>('possession');
 
   // エラーメッセージの生成
   const getErrorTitle = (type: string) => {
@@ -123,6 +126,46 @@ export const VideoPlayerApp = () => {
       };
     }
   }, [resyncAudio, resetSync, manualSyncFromPlayers, setSyncMode]);
+
+  useEffect(() => {
+    if (!window.electronAPI?.on) {
+      return;
+    }
+
+    const statsViewOptions: StatsView[] = [
+      'possession',
+      'results',
+      'types',
+      'momentum',
+    ];
+
+    const shortcutHandler = (_event: unknown, args: unknown) => {
+      if (args === 'analyze') {
+        setStatsView('possession');
+        setStatsOpen((prev) => !prev);
+      }
+    };
+
+    const menuStatsHandler = (_event: unknown, requested?: unknown) => {
+      const nextView = statsViewOptions.includes(requested as StatsView)
+        ? (requested as StatsView)
+        : 'possession';
+      setStatsView(nextView);
+      setStatsOpen(true);
+    };
+
+    window.electronAPI.on('general-shortcut-event', shortcutHandler);
+    window.electronAPI.on('menu-show-stats', menuStatsHandler);
+
+    return () => {
+      try {
+        window.electronAPI?.off?.('general-shortcut-event', shortcutHandler);
+        window.electronAPI?.off?.('menu-show-stats', menuStatsHandler);
+      } catch (error) {
+        console.debug('stats event cleanup error', error);
+      }
+    };
+  }, []);
 
   return (
     <Box
@@ -289,7 +332,14 @@ export const VideoPlayerApp = () => {
           />
         </Paper>
       )}
-      <StatsModal timeline={timeline} teamNames={teamNames} />
+      <StatsModal
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
+        view={statsView}
+        onViewChange={setStatsView}
+        timeline={timeline}
+        teamNames={teamNames}
+      />
 
       {/* エラー通知 */}
       <Snackbar

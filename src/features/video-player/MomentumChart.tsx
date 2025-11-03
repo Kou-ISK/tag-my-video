@@ -5,9 +5,12 @@ import {
   ResponsiveContainer,
   XAxis,
   YAxis,
+  Tooltip,
+  ReferenceLine,
+  CartesianGrid,
 } from 'recharts';
-import React from 'react';
-import { Box } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Paper, Typography, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 interface MomentumChartProps {
@@ -20,6 +23,7 @@ const getLegendData = (theme: any) => [
   { color: theme.palette.momentum.try, label: 'Try' },
   { color: theme.palette.momentum.positive, label: 'Positive' },
   { color: theme.palette.momentum.negative, label: 'Negative' },
+  { color: theme.palette.momentum.neutral, label: 'Neutral' },
 ];
 
 // 凡例コンポーネント
@@ -27,21 +31,23 @@ const LegendComponent = ({ theme }: { theme: any }) => {
   const legendData = getLegendData(theme);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <Stack direction="row" spacing={2} alignItems="center">
       {legendData.map((item, index) => (
-        <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-          <div
-            style={{
-              width: '10px',
-              height: '10px',
-              backgroundColor: item.color,
-              marginRight: '5px',
+        <Stack key={index} direction="row" spacing={1} alignItems="center">
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              bgcolor: item.color,
             }}
-          ></div>
-          <span>{item.label}</span>
-        </div>
+          />
+          <Typography variant="caption" color="text.secondary">
+            {item.label}
+          </Typography>
+        </Stack>
       ))}
-    </div>
+    </Stack>
   );
 };
 
@@ -50,11 +56,32 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
   teamNames,
 }: MomentumChartProps) => {
   const theme = useTheme();
-  const data = createMomentumData(teamNames[0], teamNames[1]);
-  const minYValue =
-    Math.round(Math.min(...data.map((item: any) => item.value))) - 5;
-  const maxYValue =
-    Math.round(Math.max(...data.map((item: any) => item.value))) + 5;
+  const rawData = createMomentumData(teamNames[0], teamNames[1]) as Array<{
+    teamName: string;
+    value: number;
+    absoluteValue: number;
+    possessionStart: string;
+    possessionResult: string;
+    outcome: string;
+  }>;
+
+  const chartData = useMemo(
+    () =>
+      rawData.map((entry, index) => ({
+        ...entry,
+        index: index + 1,
+        displayLabel: `${index + 1}. ${entry.teamName}`,
+      })),
+    [rawData],
+  );
+
+  const maxAbsValue = useMemo(() => {
+    if (chartData.length === 0) return 10;
+    const peak = Math.max(...chartData.map((item) => Math.abs(item.value)));
+    if (!Number.isFinite(peak)) return 10;
+    // ラベルのために余白を持たせる
+    return Math.ceil((peak + 5) / 10) * 10;
+  }, [chartData]);
 
   const getBarColor = (entry: any) => {
     // テーマ色を使用
@@ -63,45 +90,99 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
     // ポゼッションの終わり方によって異なる色を割り当て
     if (entry.outcome === 'Try') {
       return momentum.try;
-    } else if (entry.outcome === 'Positive') {
-      return momentum.positive;
-    } else if (entry.outcome === 'Negative') {
-      return momentum.negative;
-    } else {
-      return momentum.neutral;
     }
+    if (entry.outcome === 'Positive') {
+      return momentum.positive;
+    }
+    if (entry.outcome === 'Negative') {
+      return momentum.negative;
+    }
+    return momentum.neutral;
   };
 
-  return (
-    <>
-      <h2>モメンタムチャート</h2>
-      <Box
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const datum = payload[0].payload;
+    return (
+      <Paper elevation={4} sx={{ p: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          {datum.teamName}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          ポゼッション: {datum.possessionStart || '不明'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          結果: {datum.possessionResult || '不明'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          所要時間: {datum.absoluteValue.toFixed(1)} 秒
+        </Typography>
+      </Paper>
+    );
+  };
+
+  if (chartData.length === 0) {
+    return (
+      <Paper
+        elevation={0}
         sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-evenly',
+          p: 4,
+          textAlign: 'center',
+          borderRadius: 2,
+          border: '1px dashed',
+          borderColor: 'divider',
+          bgcolor: 'background.default',
         }}
       >
-        {teamNames &&
-          teamNames.map((value, index) => <h3 key={index}>{value}</h3>)}
+        <Typography variant="body2" color="text.secondary">
+          モメンタムを計算するタイムラインがまだありません。
+        </Typography>
+      </Paper>
+    );
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          モメンタムチャート
+        </Typography>
+        <LegendComponent theme={theme} />
       </Box>
-      <LegendComponent theme={theme} />
-      <ResponsiveContainer height={500} width="90%">
+
+      <Typography variant="body2" color="text.secondary">
+        中央線を境に左が {teamNames[0]}、右が {teamNames[1]} のポゼッションを表します。
+      </Typography>
+
+      <ResponsiveContainer height={420} width="100%">
         <BarChart
-          data={data}
+          data={chartData}
           layout="vertical"
-          barCategoryGap={0}
-          margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          barSize={18}
+          margin={{ top: 10, right: 24, bottom: 10, left: 24 }}
         >
-          <XAxis type="number" domain={[minYValue, maxYValue]} />
-          <YAxis type="category" hide />
-          <Bar dataKey="value">
-            {data.map((entry: any, index: number) => (
+          <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+          <XAxis
+            type="number"
+            domain={[-maxAbsValue, maxAbsValue]}
+            tickFormatter={(val) => `${Math.abs(val)}`}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            dataKey="displayLabel"
+            type="category"
+            width={160}
+            tick={{ fontSize: 12 }}
+          />
+          <ReferenceLine x={0} stroke={theme.palette.divider} strokeWidth={2} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+          <Bar dataKey="value" radius={[4, 4, 4, 4]}>
+            {chartData.map((entry, index) => (
               <Cell key={index} fill={getBarColor(entry)} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </>
+    </Stack>
   );
 };
