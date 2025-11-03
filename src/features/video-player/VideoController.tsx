@@ -752,26 +752,23 @@ export const VideoController = ({
     syncData?.isAnalyzed,
   ]);
 
-  const triggerFlash = useCallback(
-    (key: string) => {
-      if (!key) return;
+  const triggerFlash = useCallback((key: string) => {
+    if (!key) return;
+    setFlashStates((prev) => ({
+      ...prev,
+      [key]: true,
+    }));
+    if (flashTimeoutsRef.current[key]) {
+      window.clearTimeout(flashTimeoutsRef.current[key]);
+    }
+    flashTimeoutsRef.current[key] = window.setTimeout(() => {
       setFlashStates((prev) => ({
         ...prev,
-        [key]: true,
+        [key]: false,
       }));
-      if (flashTimeoutsRef.current[key]) {
-        window.clearTimeout(flashTimeoutsRef.current[key]);
-      }
-      flashTimeoutsRef.current[key] = window.setTimeout(() => {
-        setFlashStates((prev) => ({
-          ...prev,
-          [key]: false,
-        }));
-        delete flashTimeoutsRef.current[key];
-      }, 220);
-    },
-    [],
-  );
+      delete flashTimeoutsRef.current[key];
+    }, 220);
+  }, []);
   useEffect(() => {
     return () => {
       Object.values(flashTimeoutsRef.current).forEach((timeoutId) => {
@@ -850,9 +847,7 @@ export const VideoController = ({
               flexDirection: 'column',
               bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
               '&:hover': {
-                bgcolor: lit
-                  ? 'primary.dark'
-                  : 'rgba(255,255,255,0.24)',
+                bgcolor: lit ? 'primary.dark' : 'rgba(255,255,255,0.24)',
               },
               color: 'white',
             }}
@@ -881,8 +876,12 @@ export const VideoController = ({
     const emphasize = !!options?.emphasize;
     const isFlashing = !!flashStates[actionKey];
     const isActive = !!options?.active || isFlashing;
-    const baseBg = emphasize ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)';
-    const hoverBg = emphasize ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.24)';
+    const baseBg = emphasize
+      ? 'rgba(255,255,255,0.2)'
+      : 'rgba(255,255,255,0.12)';
+    const hoverBg = emphasize
+      ? 'rgba(255,255,255,0.28)'
+      : 'rgba(255,255,255,0.24)';
     const activeBg = emphasize ? 'primary.main' : 'rgba(255,255,255,0.32)';
     const activeHoverBg = emphasize ? 'primary.dark' : 'rgba(255,255,255,0.4)';
 
@@ -1057,5 +1056,4 @@ export const VideoController = ({
       </Box>
     </Box>
   );
-
 };

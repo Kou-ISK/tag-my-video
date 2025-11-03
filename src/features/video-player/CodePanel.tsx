@@ -93,15 +93,17 @@ export const CodePanel = ({
           gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
         }}
       >
-        {actionGroupEntries.flatMap(([, actions]) => actions).map((action) => (
-          <CodeButton
-            key={`${teamName}-${action}`}
-            actionName={`${teamName} ${action}`}
-            displayName={action}
-            addTimelineData={addTimelineData}
-            color={teamIndex === 0 ? 'team1' : 'team2'}
-          />
-        ))}
+        {actionGroupEntries
+          .flatMap(([, actions]) => actions)
+          .map((action) => (
+            <CodeButton
+              key={`${teamName}-${action}`}
+              actionName={`${teamName} ${action}`}
+              displayName={action}
+              addTimelineData={addTimelineData}
+              color={teamIndex === 0 ? 'team1' : 'team2'}
+            />
+          ))}
       </Box>
     </Box>
   );

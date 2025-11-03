@@ -172,9 +172,8 @@ export const VideoPathSelector = ({
       // 既存のconfig.jsonを相対パスに変換（絶対パスの場合のみ）
       if (window.electronAPI?.convertConfigToRelativePath) {
         try {
-          const result = await window.electronAPI.convertConfigToRelativePath(
-            packagePath,
-          );
+          const result =
+            await window.electronAPI.convertConfigToRelativePath(packagePath);
           if (result.success) {
             console.log('config.jsonを相対パスに変換しました:', result.config);
           } else {
@@ -189,11 +188,12 @@ export const VideoPathSelector = ({
       }
 
       const configFilePath = packagePath + '/.metadata/config.json';
-      const exists = await window.electronAPI?.checkFileExists?.(
-        configFilePath,
-      );
+      const exists =
+        await window.electronAPI?.checkFileExists?.(configFilePath);
       if (!exists) {
-        alert('選択したパッケージ内に .metadata/config.json が見つかりません。');
+        alert(
+          '選択したパッケージ内に .metadata/config.json が見つかりません。',
+        );
         return;
       }
 

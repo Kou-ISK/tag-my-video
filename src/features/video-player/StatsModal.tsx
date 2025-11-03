@@ -32,7 +32,12 @@ import { useAnalysis } from '../../hooks/useAnalysis';
 import { ActionPieChart } from './ActionPieChart';
 import { MomentumChart } from './MomentumChart';
 
-export type StatsView = 'possession' | 'results' | 'types' | 'momentum' | 'matrix';
+export type StatsView =
+  | 'possession'
+  | 'results'
+  | 'types'
+  | 'momentum'
+  | 'matrix';
 
 interface StatsModalProps {
   open: boolean;
@@ -44,12 +49,36 @@ interface StatsModalProps {
   onJumpToSegment?: (segment: TimelineData) => void;
 }
 
-const TAB_DEFINITIONS: { value: StatsView; label: string; icon: ReactElement }[] = [
-  { value: 'possession', label: 'ポゼッション', icon: <PieChartIcon fontSize="small" /> },
-  { value: 'results', label: 'アクション結果', icon: <QueryStatsIcon fontSize="small" /> },
-  { value: 'types', label: 'アクション種別', icon: <InsightsIcon fontSize="small" /> },
-  { value: 'momentum', label: 'モーメンタム', icon: <TimelineIcon fontSize="small" /> },
-  { value: 'matrix', label: 'クロス集計', icon: <InsightsIcon fontSize="small" /> },
+const TAB_DEFINITIONS: {
+  value: StatsView;
+  label: string;
+  icon: ReactElement;
+}[] = [
+  {
+    value: 'possession',
+    label: 'ポゼッション',
+    icon: <PieChartIcon fontSize="small" />,
+  },
+  {
+    value: 'results',
+    label: 'アクション結果',
+    icon: <QueryStatsIcon fontSize="small" />,
+  },
+  {
+    value: 'types',
+    label: 'アクション種別',
+    icon: <InsightsIcon fontSize="small" />,
+  },
+  {
+    value: 'momentum',
+    label: 'モーメンタム',
+    icon: <TimelineIcon fontSize="small" />,
+  },
+  {
+    value: 'matrix',
+    label: 'クロス集計',
+    icon: <InsightsIcon fontSize="small" />,
+  },
 ];
 
 const ACTIONS_TO_SUMMARISE = ['スクラム', 'ラインアウト', 'キック', 'PK'];
@@ -75,7 +104,10 @@ export const StatsModal: React.FC<StatsModalProps> = ({
     setCurrentView(view);
   }, [view]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: StatsView) => {
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: StatsView,
+  ) => {
     setCurrentView(newValue);
     onViewChange?.(newValue);
   };
@@ -88,7 +120,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
   } = useAnalysis(timeline);
 
   const possessionData = useMemo(() => {
-    return calculateActionDuration().filter((item) => item.name.includes('ポゼッション'));
+    return calculateActionDuration().filter((item) =>
+      item.name.includes('ポゼッション'),
+    );
   }, [calculateActionDuration]);
 
   const hasTimelineData = timeline.length > 0;
@@ -140,9 +174,10 @@ export const StatsModal: React.FC<StatsModalProps> = ({
     const colMap = new Map<string, number>();
     columnKeys.forEach((key, index) => colMap.set(key, index));
 
-    const cells: Array<Array<{ count: number; entries: TimelineData[] }>> = rowKeys.map(() =>
-      columnKeys.map(() => ({ count: 0, entries: [] as TimelineData[] })),
-    );
+    const cells: Array<Array<{ count: number; entries: TimelineData[] }>> =
+      rowKeys.map(() =>
+        columnKeys.map(() => ({ count: 0, entries: [] as TimelineData[] })),
+      );
 
     entries.forEach((item) => {
       const rowKey = rowAccessor(item);
@@ -184,7 +219,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
     >();
 
     resolvedTeamNames.forEach((team) => {
-      const entries = timeline.filter((item) => item.actionName.startsWith(`${team} `));
+      const entries = timeline.filter((item) =>
+        item.actionName.startsWith(`${team} `),
+      );
       const actionSet = new Set<string>();
       entries.forEach((item) => {
         const parts = item.actionName.split(' ');
@@ -302,19 +339,33 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                         cy="50%"
                         outerRadius="80%"
                         innerRadius="55%"
-                        label={({ name, value }) => `${name.replace(' ポゼッション', '')}: ${value.toFixed(0)} sec`}
+                        label={({ name, value }) =>
+                          `${name.replace(
+                            ' ポゼッション',
+                            '',
+                          )}: ${value.toFixed(0)} sec`
+                        }
                       >
                         {possessionData.map((_, index) => (
-                          <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          <Cell
+                            key={index}
+                            fill={PIE_COLORS[index % PIE_COLORS.length]}
+                          />
                         ))}
                       </Pie>
-                      <Legend verticalAlign="bottom" iconType="circle" height={36} />
+                      <Legend
+                        verticalAlign="bottom"
+                        iconType="circle"
+                        height={36}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </Box>
               </Paper>
             ) : (
-              renderNoData('ポゼッションを算出するためのタイムラインがまだありません。')
+              renderNoData(
+                'ポゼッションを算出するためのタイムラインがまだありません。',
+              )
             )}
           </Box>
         )}
@@ -325,8 +376,15 @@ export const StatsModal: React.FC<StatsModalProps> = ({
             {hasTimelineData ? (
               <Stack spacing={3}>
                 {ACTIONS_TO_SUMMARISE.map((actionName) => (
-                  <Paper key={actionName} elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                  <Paper
+                    key={actionName}
+                    elevation={1}
+                    sx={{ p: 3, borderRadius: 2 }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       {actionName} の結果別割合
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -345,7 +403,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                 ))}
               </Stack>
             ) : (
-              renderNoData('アクションの結果を表示するにはタイムラインを作成してください。')
+              renderNoData(
+                'アクションの結果を表示するにはタイムラインを作成してください。',
+              )
             )}
           </Box>
         )}
@@ -356,8 +416,15 @@ export const StatsModal: React.FC<StatsModalProps> = ({
             {hasTimelineData ? (
               <Stack spacing={3}>
                 {ACTIONS_TO_SUMMARISE.map((actionName) => (
-                  <Paper key={actionName} elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                  <Paper
+                    key={actionName}
+                    elevation={1}
+                    sx={{ p: 3, borderRadius: 2 }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       {actionName} の種別別内訳
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -376,7 +443,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                 ))}
               </Stack>
             ) : (
-              renderNoData('アクション種別を表示するにはタイムラインを作成してください。')
+              renderNoData(
+                'アクション種別を表示するにはタイムラインを作成してください。',
+              )
             )}
           </Box>
         )}
@@ -396,7 +465,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                 />
               </Paper>
             ) : (
-              renderNoData('モーメンタムを表示するにはタイムラインを作成してください。')
+              renderNoData(
+                'モーメンタムを表示するにはタイムラインを作成してください。',
+              )
             )}
           </Box>
         )}
@@ -411,7 +482,9 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                   rowKeys={uniqueActionTypes}
                   columnKeys={uniqueActionResults}
                   matrix={actionTypeVsResult}
-                  onDrilldown={(title, entries) => setMatrixDetail({ title, entries })}
+                  onDrilldown={(title, entries) =>
+                    setMatrixDetail({ title, entries })
+                  }
                 />
                 {Array.from(actionsByTeam.entries()).map(([team, matrices]) => {
                   if (matrices.actions.length === 0) {
@@ -424,21 +497,27 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                         rowKeys={matrices.actions}
                         columnKeys={uniqueActionTypes}
                         matrix={matrices.byType}
-                        onDrilldown={(title, entries) => setMatrixDetail({ title, entries })}
+                        onDrilldown={(title, entries) =>
+                          setMatrixDetail({ title, entries })
+                        }
                       />
                       <MatrixSection
                         title={`${team} - アクション × アクション結果`}
                         rowKeys={matrices.actions}
                         columnKeys={uniqueActionResults}
                         matrix={matrices.byResult}
-                        onDrilldown={(title, entries) => setMatrixDetail({ title, entries })}
+                        onDrilldown={(title, entries) =>
+                          setMatrixDetail({ title, entries })
+                        }
                       />
                     </Stack>
                   );
                 })}
               </Stack>
             ) : (
-              renderNoData('クロス集計を表示するにはタイムラインを作成してください。')
+              renderNoData(
+                'クロス集計を表示するにはタイムラインを作成してください。',
+              )
             )}
           </Box>
         )}
@@ -481,7 +560,11 @@ const MatrixSection: React.FC<MatrixSectionProps> = ({
         {title}
       </Typography>
       <Divider sx={{ mb: 2 }} />
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{ borderRadius: 2 }}
+      >
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -499,19 +582,31 @@ const MatrixSection: React.FC<MatrixSectionProps> = ({
           <TableBody>
             {rowKeys.map((rowKey, rowIndex) => {
               const rowCells = matrix[rowIndex] ?? [];
-              const rowTotal = rowCells.reduce((sum, cell) => sum + cell.count, 0);
+              const rowTotal = rowCells.reduce(
+                (sum, cell) => sum + cell.count,
+                0,
+              );
               return (
                 <TableRow key={rowKey} hover>
-                  <TableCell sx={{ fontWeight: 600 }}>{rowKey || '未設定'}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {rowKey || '未設定'}
+                  </TableCell>
                   {columnKeys.map((columnKey, colIndex) => {
-                    const cell = rowCells[colIndex] ?? { count: 0, entries: [] };
-                    const titleLabel = `${title} - ${rowKey || '未設定'} × ${columnKey || '未設定'}`;
+                    const cell = rowCells[colIndex] ?? {
+                      count: 0,
+                      entries: [],
+                    };
+                    const titleLabel = `${title} - ${rowKey || '未設定'} × ${
+                      columnKey || '未設定'
+                    }`;
                     return (
                       <TableCell key={`${rowKey}-${columnKey}`} align="center">
                         {cell.count > 0 ? (
                           <Button
                             size="small"
-                            onClick={() => onDrilldown(titleLabel, cell.entries)}
+                            onClick={() =>
+                              onDrilldown(titleLabel, cell.entries)
+                            }
                           >
                             {cell.count}
                           </Button>
@@ -544,12 +639,22 @@ interface DrilldownDialogProps {
   onJump: (entry: TimelineData) => void;
 }
 
-const DrilldownDialog: React.FC<DrilldownDialogProps> = ({ detail, onClose, onJump }) => {
+const DrilldownDialog: React.FC<DrilldownDialogProps> = ({
+  detail,
+  onClose,
+  onJump,
+}) => {
   if (!detail) return null;
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           {detail.title}
         </Typography>
@@ -583,11 +688,18 @@ const DrilldownDialog: React.FC<DrilldownDialogProps> = ({ detail, onClose, onJu
                       アクション: {action}
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip size="small" label={`種別: ${entry.actionType || '未設定'}`} />
-                      <Chip size="small" label={`結果: ${entry.actionResult || '未設定'}`} />
+                      <Chip
+                        size="small"
+                        label={`種別: ${entry.actionType || '未設定'}`}
+                      />
+                      <Chip
+                        size="small"
+                        label={`結果: ${entry.actionResult || '未設定'}`}
+                      />
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
-                      {entry.startTime.toFixed(1)}s - {entry.endTime.toFixed(1)}s
+                      {entry.startTime.toFixed(1)}s - {entry.endTime.toFixed(1)}
+                      s
                     </Typography>
                   </Stack>
                   <Button

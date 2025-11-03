@@ -68,9 +68,9 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   const techErrorHandlerRef = useRef<((event?: Event) => void) | null>(null);
   const metadataHandlerRef = useRef<(() => void) | null>(null);
   const resizeHandlerRef = useRef<(() => void) | null>(null);
-  const aspectRatioCallbackRef = useRef<
-    ((ratio: number) => void) | undefined
-  >(onAspectRatioChange);
+  const aspectRatioCallbackRef = useRef<((ratio: number) => void) | undefined>(
+    onAspectRatioChange,
+  );
   const lastReportedAspectRatioRef = useRef<number | null>(null);
   void forceUpdate;
 
@@ -78,33 +78,30 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
     aspectRatioCallbackRef.current = onAspectRatioChange;
   }, [onAspectRatioChange]);
 
-  const reportAspectRatio = useCallback(
-    (playerInstance: Player) => {
-      const withDimensions = playerInstance as Player & {
-        videoWidth?: () => number;
-        videoHeight?: () => number;
-      };
-      const width = withDimensions.videoWidth?.() ?? 0;
-      const height = withDimensions.videoHeight?.() ?? 0;
-      if (width <= 0 || height <= 0) {
-        return;
-      }
-      const ratio = width / height;
-      if (!Number.isFinite(ratio) || ratio <= 0) {
-        return;
-      }
-      const rounded = Math.round(ratio * 1000) / 1000;
-      if (
-        lastReportedAspectRatioRef.current !== null &&
-        Math.abs(lastReportedAspectRatioRef.current - rounded) < 0.001
-      ) {
-        return;
-      }
-      lastReportedAspectRatioRef.current = rounded;
-      aspectRatioCallbackRef.current?.(rounded);
-    },
-    [],
-  );
+  const reportAspectRatio = useCallback((playerInstance: Player) => {
+    const withDimensions = playerInstance as Player & {
+      videoWidth?: () => number;
+      videoHeight?: () => number;
+    };
+    const width = withDimensions.videoWidth?.() ?? 0;
+    const height = withDimensions.videoHeight?.() ?? 0;
+    if (width <= 0 || height <= 0) {
+      return;
+    }
+    const ratio = width / height;
+    if (!Number.isFinite(ratio) || ratio <= 0) {
+      return;
+    }
+    const rounded = Math.round(ratio * 1000) / 1000;
+    if (
+      lastReportedAspectRatioRef.current !== null &&
+      Math.abs(lastReportedAspectRatioRef.current - rounded) < 0.001
+    ) {
+      return;
+    }
+    lastReportedAspectRatioRef.current = rounded;
+    aspectRatioCallbackRef.current?.(rounded);
+  }, []);
 
   // プレイヤー初期化
   useEffect(() => {

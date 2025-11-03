@@ -151,7 +151,8 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
       </Box>
 
       <Typography variant="body2" color="text.secondary">
-        中央線を境に左が {teamNames[0]}、右が {teamNames[1]} のポゼッションを表します。
+        中央線を境に左が {teamNames[0]}、右が {teamNames[1]}{' '}
+        のポゼッションを表します。
       </Typography>
 
       <ResponsiveContainer height={420} width="100%">
@@ -175,7 +176,10 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
             tick={{ fontSize: 12 }}
           />
           <ReferenceLine x={0} stroke={theme.palette.divider} strokeWidth={2} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          />
           <Bar dataKey="value" radius={[4, 4, 4, 4]}>
             {chartData.map((entry, index) => (
               <Cell key={index} fill={getBarColor(entry)} />
