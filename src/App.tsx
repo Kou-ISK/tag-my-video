@@ -3,11 +3,7 @@ import './App.css';
 import { VideoPlayerApp } from './pages/VideoPlayerApp';
 
 function App() {
-  return (
-    <>
-      <VideoPlayerApp />
-    </>
-  );
+  return <VideoPlayerApp />;
 }
 
 export default App;

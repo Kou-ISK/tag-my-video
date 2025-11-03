@@ -44,6 +44,7 @@
     "video-react": "^0.16.0",
     "video.js": "^8.3.0",
     "wait-on": "^7.0.1",
+    "web-audio-api": "^0.2.2",
     "web-vitals": "^2.1.0"
   },
   "main": "build/electron/src/main.js",

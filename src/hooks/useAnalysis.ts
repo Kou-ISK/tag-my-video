@@ -92,17 +92,18 @@ export const useAnalysis = (timeline: TimelineData[]) => {
 
   // TODO: possessionStartを追加する
   const createMomentumData = (team1Name: string, team2Name: string) => {
-    const momentumData: any[] = [];
-    timeline
+    const teamA = team1Name;
+    const teamB = team2Name;
+
+    return timeline
       .filter((value) => value.actionName.includes('ポゼッション'))
-      .forEach((item) => {
-        const duration = item.endTime - item.startTime;
-        const teamName = item.actionName.includes(team1Name)
-          ? team1Name
-          : team2Name;
-        const possessionStart = item.actionType;
-        const possessionResult = item.actionResult;
-        let outcome: string;
+      .map((item) => {
+        const duration = Math.max(0, item.endTime - item.startTime);
+        const teamName = item.actionName.includes(teamA) ? teamA : teamB;
+        const possessionStart = item.actionType || '開始情報なし';
+        const possessionResult = item.actionResult || '結果なし';
+
+        let outcome: 'Try' | 'Positive' | 'Negative' | 'Neutral';
         if (item.actionResult === 'Try') {
           outcome = 'Try';
         } else if (
@@ -120,16 +121,18 @@ export const useAnalysis = (timeline: TimelineData[]) => {
         } else {
           outcome = 'Neutral';
         }
-        const momentumItem = {
-          teamName: teamName,
-          value: `${teamName === team1Name ? -duration : duration}`, //チーム1の場合、負の数を返す
+
+        const signedDuration = teamName === teamA ? -duration : duration;
+
+        return {
+          teamName,
+          value: signedDuration,
+          absoluteValue: duration,
           possessionStart,
           possessionResult,
           outcome,
         };
-        momentumData.push(momentumItem);
       });
-    return momentumData;
   };
   return {
     calculateActionDuration,
