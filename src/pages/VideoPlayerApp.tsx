@@ -329,7 +329,6 @@ export const VideoPlayerApp = () => {
           <VideoPathSelector
             setVideoList={setVideoList}
             setIsFileSelected={setIsFileSelected}
-            isFileSelected={isFileSelected}
             setTimelineFilePath={setTimelineFilePath}
             setPackagePath={setPackagePath}
             setMetaDataConfigFilePath={setMetaDataConfigFilePath}

@@ -10,6 +10,8 @@ import React, {
 import videojs from 'video.js';
 import { VideoSyncData } from '../../../../types/VideoSync';
 import { VideoControllerToolbar } from './video-controller/VideoControllerToolbar';
+import { useFlashStates } from './video-controller/hooks/useFlashStates';
+import { useHotkeyPlayback } from './video-controller/hooks/useHotkeyPlayback';
 
 interface VideoControllerProps {
   setIsVideoPlaying: Dispatch<SetStateAction<boolean>>;
@@ -51,8 +53,7 @@ export const VideoController = ({
   const SMALL_SKIP_SECONDS = 10;
   const LARGE_SKIP_SECONDS = 30;
   const hasVideos = videoList.some((path) => path && path.trim() !== '');
-  const [flashStates, setFlashStates] = useState<Record<string, boolean>>({});
-  const flashTimeoutsRef = useRef<Record<string, number>>({});
+  const { flashStates, triggerFlash } = useFlashStates();
   // 時刻フォーマット関数（分:秒）
   const formatTime = (seconds: number): string => {
     if (!isFinite(seconds) || seconds < 0) return '0:00';
@@ -181,7 +182,7 @@ export const VideoController = ({
     (el: string): VjsPlayer | undefined;
     getPlayer?: (id: string) => VjsPlayer | undefined;
   };
-  const getExistingPlayer = (id: string): VjsPlayer | undefined => {
+  const getExistingPlayer = useCallback((id: string): VjsPlayer | undefined => {
     try {
       const anyVjs: VjsNamespace = videojs as unknown as VjsNamespace;
 
@@ -195,139 +196,19 @@ export const VideoController = ({
       console.debug('getExistingPlayer error', e);
       return undefined;
     }
-  };
-
-  // キーボードショートカットのイベントリスナー（Electron環境でのみ実行）
-  useEffect(() => {
-    if (window.electronAPI && typeof window.electronAPI.on === 'function') {
-      const channel = 'video-shortcut-event';
-      const handler = (_event: unknown, args: number) => {
-        console.log(`[HOTKEY] ショートカットキー受信: args=${args}`);
-        if (args > 0) {
-          console.log(`[HOTKEY] 再生速度変更: ${args}倍速`);
-          setVideoPlayBackRate(args);
-          if (args !== 1) {
-            triggerFlash(`speed-${args}`);
-          }
-          if (args === 1) {
-            console.log(`[HOTKEY] 再生/一時停止トグル実行`);
-            try {
-              // 全プレイヤーのミュート解除を先に試行
-              ['video_0', 'video_1'].forEach((id) => {
-                try {
-                  // anyを使わずにgetPlayerを厳密化
-                  type VjsNSLocal = {
-                    getPlayer?: (pid: string) => VjsPlayer | undefined;
-                  };
-                  const vjsLocal = videojs as unknown as VjsNSLocal;
-                  const p = vjsLocal.getPlayer?.(id);
-                  if (p && !p.isDisposed?.()) {
-                    try {
-                      p.muted?.(false);
-                    } catch (e) {
-                      console.debug('unmute via vjs error', e);
-                    }
-                    const ve = (p as unknown as { el?: () => Element | null })
-                      .el?.()
-                      ?.querySelector('video') as HTMLVideoElement | null;
-                    if (ve) {
-                      ve.muted = false;
-                    }
-                  }
-                } catch (e) {
-                  console.debug('getPlayer/unmute loop error', e);
-                }
-              });
-            } catch (e) {
-              console.debug('unmute-all try block error', e);
-            }
-            // refから最新の値を取得してトグル
-            const currentState = isVideoPlayingRef.current;
-            const newState = !currentState;
-            console.log(`[HOTKEY] 再生状態変更: ${currentState} → ${newState}`);
-            setIsVideoPlaying(newState);
-            triggerFlash('toggle-play');
-          }
-        } else {
-          console.log(`[HOTKEY] シーク操作: ${args}秒`);
-          // 手動シーク操作のタイムスタンプを記録
-          lastManualSeekTimestamp.current = Date.now();
-
-          setCurrentTime((prev) => {
-            const newTime = Math.max(0, prev + args); // 負の値を防止
-            console.log(`[HOTKEY] 時間変更: ${prev}秒 → ${newTime}秒`);
-
-            // 即座にVideo.jsプレイヤーにもシークを適用
-            videoList.forEach((_, index) => {
-              try {
-                const player = getExistingPlayer(`video_${index}`);
-                if (player && !player.isDisposed?.()) {
-                  const offset =
-                    index > 0 && syncData?.isAnalyzed
-                      ? syncData.syncOffset || 0
-                      : 0;
-                  const targetTime = Math.max(
-                    0,
-                    newTime - (index > 0 ? offset : 0),
-                  );
-
-                  try {
-                    (
-                      player as unknown as {
-                        currentTime?: (t?: number) => number;
-                      }
-                    ).currentTime?.(targetTime);
-                    console.log(
-                      `[HOTKEY] Video ${index}をシーク: ${targetTime}秒`,
-                    );
-                  } catch (e) {
-                    console.debug(`[HOTKEY] Video ${index}シークエラー:`, e);
-                  }
-                }
-              } catch (e) {
-                console.debug(`[HOTKEY] Video ${index}アクセスエラー:`, e);
-              }
-            });
-
-            return newTime;
-          });
-          if (args === -10) {
-            triggerFlash('rewind-10');
-          } else if (args === -5) {
-            triggerFlash('rewind-10');
-          }
-        }
-      };
-
-      // 既存の同一ハンドラを一旦解除してから登録（重複回避）
-      try {
-        window.electronAPI?.off?.(
-          channel,
-          handler as unknown as (...args: unknown[]) => void,
-        );
-      } catch (e) {
-        // ignore if not previously registered
-        console.debug('keyboard pre-off ignored', e);
-      }
-
-      window.electronAPI.on(
-        channel,
-        handler as unknown as (event: Event, args: number) => void,
-      );
-      return () => {
-        try {
-          window.electronAPI?.off?.(
-            channel,
-            handler as unknown as (...args: unknown[]) => void,
-          );
-        } catch (e) {
-          console.debug('keyboard off error', e);
-        }
-      };
-    } else {
-      console.log('ブラウザ環境: Electron APIは利用できません');
-    }
   }, []);
+
+  useHotkeyPlayback({
+    setVideoPlayBackRate,
+    triggerFlash,
+    setIsVideoPlaying,
+    isVideoPlayingRef,
+    setCurrentTime,
+    videoList,
+    syncData,
+    lastManualSeekTimestamp,
+    getExistingPlayer,
+  });
 
   // 映像の再生位置を監視（共通シークバーとの連動）
   useEffect(() => {
@@ -704,32 +585,6 @@ export const VideoController = ({
     syncData?.syncOffset,
     syncData?.isAnalyzed,
   ]);
-
-  const triggerFlash = useCallback((key: string) => {
-    if (!key) return;
-    setFlashStates((prev) => ({
-      ...prev,
-      [key]: true,
-    }));
-    if (flashTimeoutsRef.current[key]) {
-      window.clearTimeout(flashTimeoutsRef.current[key]);
-    }
-    flashTimeoutsRef.current[key] = window.setTimeout(() => {
-      setFlashStates((prev) => ({
-        ...prev,
-        [key]: false,
-      }));
-      delete flashTimeoutsRef.current[key];
-    }, 220);
-  }, []);
-  useEffect(() => {
-    return () => {
-      Object.values(flashTimeoutsRef.current).forEach((timeoutId) => {
-        window.clearTimeout(timeoutId);
-      });
-      flashTimeoutsRef.current = {};
-    };
-  }, []);
 
   const handleSpeedChange = useCallback(
     (event: SelectChangeEvent<string>) => {
