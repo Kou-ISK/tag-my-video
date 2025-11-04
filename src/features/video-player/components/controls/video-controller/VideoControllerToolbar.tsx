@@ -1,16 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Box,
-  Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Divider, Stack, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
@@ -18,36 +7,10 @@ import Forward10Icon from '@mui/icons-material/Forward10';
 import Forward30Icon from '@mui/icons-material/Forward30';
 import Replay10Icon from '@mui/icons-material/Replay10';
 import Replay30Icon from '@mui/icons-material/Replay30';
-import SlowMotionVideoIcon from '@mui/icons-material/SlowMotionVideo';
-import SpeedIcon from '@mui/icons-material/Speed';
-import { ShortcutGuide } from '../../../../../components/ShortcutGuide';
-
-const SPEED_PRESETS: Array<{
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-}> = [
-  {
-    label: '0.5x',
-    value: 0.5,
-    icon: <SlowMotionVideoIcon fontSize="small" />,
-  },
-  {
-    label: '2x',
-    value: 2,
-    icon: <SpeedIcon fontSize="small" />,
-  },
-  {
-    label: '4x',
-    value: 4,
-    icon: <SpeedIcon fontSize="small" />,
-  },
-  {
-    label: '6x',
-    value: 6,
-    icon: <SpeedIcon fontSize="small" />,
-  },
-];
+import { ControlButton } from './toolbar/ControlButton';
+import { SpeedPresetButton } from './toolbar/SpeedPresetButton';
+import { SpeedSelector } from './toolbar/SpeedSelector';
+import { SPEED_PRESETS } from './toolbar/constants';
 
 interface VideoControllerToolbarProps {
   hasVideos: boolean;
@@ -73,11 +36,6 @@ interface ControlButtonConfig {
   emphasize?: boolean;
   active?: boolean;
 }
-
-const CONTROL_BUTTON_SX = {
-  color: 'white',
-  borderRadius: 1.5,
-} as const;
 
 export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
   hasVideos,
@@ -138,98 +96,6 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
     ],
   );
 
-  const renderIconButton = ({
-    title,
-    actionKey,
-    onClick,
-    icon,
-    emphasize,
-    active,
-  }: ControlButtonConfig) => {
-    const isFlashing = !!flashStates[actionKey];
-    const isActive = !!active || isFlashing;
-    const baseBg = emphasize
-      ? 'rgba(255,255,255,0.2)'
-      : 'rgba(255,255,255,0.12)';
-    const hoverBg = emphasize
-      ? 'rgba(255,255,255,0.28)'
-      : 'rgba(255,255,255,0.24)';
-    const activeBg = emphasize ? 'primary.main' : 'rgba(255,255,255,0.32)';
-    const activeHoverBg = emphasize ? 'primary.dark' : 'rgba(255,255,255,0.4)';
-
-    return (
-      <Tooltip title={title} key={actionKey}>
-        <span>
-          <IconButton
-            onClick={() => {
-              if (!hasVideos) return;
-              onClick();
-              triggerFlash(actionKey);
-            }}
-            disabled={!hasVideos}
-            sx={{
-              ...CONTROL_BUTTON_SX,
-              bgcolor: isActive ? activeBg : baseBg,
-              '&:hover': {
-                bgcolor: isActive ? activeHoverBg : hoverBg,
-              },
-              boxShadow: isFlashing
-                ? '0 0 0 2px rgba(255,255,255,0.4)'
-                : undefined,
-            }}
-            size="large"
-          >
-            {icon}
-          </IconButton>
-        </span>
-      </Tooltip>
-    );
-  };
-
-  const renderSpeedPresetButton = (preset: {
-    label: string;
-    value: number;
-    icon: React.ReactNode;
-  }) => {
-    const key = `speed-${preset.value}`;
-    const isActive = Math.abs(playbackRate - preset.value) < 0.0001;
-    const isFlashing = !!flashStates[key];
-    const lit = isActive || isFlashing;
-
-    return (
-      <Tooltip title={`${preset.label}で再生`} key={preset.label}>
-        <span>
-          <IconButton
-            onClick={() => {
-              if (!hasVideos) return;
-              onSpeedPresetSelect(preset.value);
-              triggerFlash(key);
-            }}
-            disabled={!hasVideos}
-            sx={{
-              ...CONTROL_BUTTON_SX,
-              flexDirection: 'column',
-              bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
-              '&:hover': {
-                bgcolor: lit ? 'primary.dark' : 'rgba(255,255,255,0.24)',
-              },
-              color: 'white',
-            }}
-            size="large"
-          >
-            {preset.icon}
-            <Typography
-              variant="caption"
-              sx={{ lineHeight: 1, color: 'inherit', fontWeight: 'bold' }}
-            >
-              {preset.label}
-            </Typography>
-          </IconButton>
-        </span>
-      </Tooltip>
-    );
-  };
-
   return (
     <Box
       sx={{
@@ -250,7 +116,20 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">
-          {controlButtons.map((button) => renderIconButton(button))}
+          {controlButtons.map((button) => (
+            <ControlButton
+              key={button.actionKey}
+              title={button.title}
+              icon={button.icon}
+              actionKey={button.actionKey}
+              disabled={!hasVideos}
+              flashing={!!flashStates[button.actionKey]}
+              active={button.active}
+              emphasize={button.emphasize}
+              onClick={button.onClick}
+              onTriggerFlash={triggerFlash}
+            />
+          ))}
         </Stack>
 
         <Divider
@@ -263,7 +142,19 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
         />
 
         <Stack direction="row" spacing={0.5} alignItems="center">
-          {SPEED_PRESETS.map((preset) => renderSpeedPresetButton(preset))}
+          {SPEED_PRESETS.map((preset) => (
+            <SpeedPresetButton
+              key={preset.label}
+              label={preset.label}
+              value={preset.value}
+              icon={preset.icon}
+              playbackRate={playbackRate}
+              disabled={!hasVideos}
+              flashing={!!flashStates[`speed-${preset.value}`]}
+              onSelect={onSpeedPresetSelect}
+              onTriggerFlash={triggerFlash}
+            />
+          ))}
         </Stack>
 
         <Divider
@@ -275,53 +166,12 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
           }}
         />
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            flexWrap: 'wrap',
-          }}
-        >
-          <FormControl
-            size="small"
-            variant="outlined"
-            sx={{
-              minWidth: 120,
-              '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-              '& .MuiInputLabel-shrink': { color: 'primary.light' },
-              '& .MuiOutlinedInput-input': { color: 'white' },
-              '& .MuiSvgIcon-root': { color: 'white' },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgba(255,255,255,0.3)',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgba(255,255,255,0.6)',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.light',
-              },
-            }}
-          >
-            <InputLabel id="playback-speed-label">Speed</InputLabel>
-            <Select
-              labelId="playback-speed-label"
-              label="Speed"
-              value={String(playbackRate)}
-              onChange={onSpeedChange}
-              sx={{
-                '& .MuiSelect-icon': { color: 'white' },
-              }}
-            >
-              {speedOptions.map((speed) => (
-                <MenuItem key={speed} value={speed.toString()}>
-                  {speed}x
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <ShortcutGuide />
-        </Box>
+        <SpeedSelector
+          playbackRate={playbackRate}
+          speedOptions={speedOptions}
+          disabled={!hasVideos}
+          onSpeedChange={onSpeedChange}
+        />
 
         <Box sx={{ flexGrow: 1 }} />
 
