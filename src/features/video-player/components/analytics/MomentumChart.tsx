@@ -1,3 +1,5 @@
+import React, { useMemo } from 'react';
+import { Box, Paper, Typography, Stack } from '@mui/material';
 import {
   Bar,
   BarChart,
@@ -9,17 +11,26 @@ import {
   ReferenceLine,
   CartesianGrid,
 } from 'recharts';
-import React, { useMemo } from 'react';
-import { Box, Paper, Typography, Stack } from '@mui/material';
+import type { TooltipProps } from 'recharts';
 import { useTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
+import type {
+  CreateMomentumDataFn,
+  MomentumSegment,
+} from '../../../../types/Analysis';
 
 interface MomentumChartProps {
-  createMomentumData: any;
+  createMomentumData: CreateMomentumDataFn;
   teamNames: string[];
 }
 
+interface MomentumChartDatum extends MomentumSegment {
+  index: number;
+  displayLabel: string;
+}
+
 // 凡例用のデータ（テーマ色を使用するため関数化）
-const getLegendData = (theme: any) => [
+const getLegendData = (theme: Theme) => [
   { color: theme.palette.momentum.try, label: 'Try' },
   { color: theme.palette.momentum.positive, label: 'Positive' },
   { color: theme.palette.momentum.negative, label: 'Negative' },
@@ -27,7 +38,7 @@ const getLegendData = (theme: any) => [
 ];
 
 // 凡例コンポーネント
-const LegendComponent = ({ theme }: { theme: any }) => {
+const LegendComponent = ({ theme }: { theme: Theme }) => {
   const legendData = getLegendData(theme);
 
   return (
@@ -56,18 +67,14 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
   teamNames,
 }: MomentumChartProps) => {
   const theme = useTheme();
-  const rawData = createMomentumData(teamNames[0], teamNames[1]) as Array<{
-    teamName: string;
-    value: number;
-    absoluteValue: number;
-    possessionStart: string;
-    possessionResult: string;
-    outcome: string;
-  }>;
+  const [teamA, teamB] = teamNames;
+
+  const rawData: MomentumSegment[] =
+    teamA && teamB ? createMomentumData(teamA, teamB) : [];
 
   const chartData = useMemo(
     () =>
-      rawData.map((entry, index) => ({
+      rawData.map<MomentumChartDatum>((entry, index) => ({
         ...entry,
         index: index + 1,
         displayLabel: `${index + 1}. ${entry.teamName}`,
@@ -83,7 +90,7 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
     return Math.ceil((peak + 5) / 10) * 10;
   }, [chartData]);
 
-  const getBarColor = (entry: any) => {
+  const getBarColor = (entry: MomentumSegment) => {
     // テーマ色を使用
     const { momentum } = theme.palette;
 
@@ -100,9 +107,12 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
     return momentum.neutral;
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<number, string>> = ({
+    active,
+    payload,
+  }) => {
     if (!active || !payload?.length) return null;
-    const datum = payload[0].payload;
+    const datum = payload[0].payload as MomentumChartDatum;
     return (
       <Paper elevation={4} sx={{ p: 1.5 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>

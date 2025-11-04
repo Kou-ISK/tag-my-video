@@ -5,34 +5,34 @@ import {
   Select,
   SelectChangeEvent,
 } from '@mui/material';
-import { ActionList } from '../../ActionList';
+import { ActionList } from '../../../../ActionList';
 import React from 'react';
 
-interface ActionResultSelectorProps {
+interface ActionTypeSelectorProps {
   id: string;
   actionName: string;
-  actionResult: string;
-  updateActionResult: (id: string, actionResult: string) => void;
+  actionType: string;
+  updateActionType: (id: string, actionType: string) => void;
 }
-export const ActionResultSelector = ({
+export const ActionTypeSelector = ({
   id,
   actionName,
-  actionResult,
-  updateActionResult,
-}: ActionResultSelectorProps) => {
-  const results = ActionList.find((value) => actionName.includes(value.action))
-    ?.results;
+  actionType,
+  updateActionType,
+}: ActionTypeSelectorProps) => {
+  const types = ActionList.find((value) => actionName.includes(value.action))
+    ?.types;
   const handleChange = (event: SelectChangeEvent) => {
-    updateActionResult(id, event.target.value);
+    updateActionType(id, event.target.value);
   };
   return (
     <>
       <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-        <InputLabel id={id + '_result'}>Result</InputLabel>
+        <InputLabel id={id + '_type'}>Type</InputLabel>
         <Select
-          id={id + '_result'}
-          value={actionResult}
-          label="Result"
+          id={id + '_type'}
+          value={actionType}
+          label="Type"
           onChange={handleChange}
           size="small"
           MenuProps={{
@@ -44,8 +44,8 @@ export const ActionResultSelector = ({
           <MenuItem value="">
             <em>None</em>
           </MenuItem>
-          {results &&
-            results.map((value, index) => (
+          {types &&
+            types.map((value, index) => (
               <MenuItem key={index} value={value}>
                 {value}
               </MenuItem>

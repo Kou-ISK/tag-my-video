@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react';
 import { SyncedVideoPlayer } from './SyncedVideoPlayer';
-import { VideoSyncData } from '../../types/VideoSync';
+import { VideoSyncData } from '../../../../types/VideoSync';
 
 interface VideoPlayerProps {
   videoList: string[];

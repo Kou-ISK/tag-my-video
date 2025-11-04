@@ -1,26 +1,26 @@
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Paper,
-  Stack,
-  Typography,
-  Snackbar,
   Alert,
   AlertTitle,
   Backdrop,
-  CircularProgress,
+  Box,
   Card,
   CardContent,
+  CircularProgress,
   LinearProgress,
+  Paper,
+  Snackbar,
+  Stack,
+  Typography,
 } from '@mui/material';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import { VideoController } from '../features/video-player/VideoController';
-import { VideoPathSelector } from '../features/video-player/VideoPathSelector';
-import { VisualTimeline } from '../features/video-player/VisualTimeline';
-import { CodePanel } from '../features/video-player/CodePanel';
+import { VideoController } from '../features/video-player/components/controls/VideoController';
+import { VideoPathSelector } from '../features/video-player/components/setup/VideoPathSelector';
+import { VisualTimeline } from '../features/video-player/components/timeline/VisualTimeline';
+import { CodePanel } from '../features/video-player/components/controls/CodePanel';
+import { StatsModal, StatsView } from '../features/video-player/components/analytics/StatsModal';
+import { VideoPlayer } from '../features/video-player/components/player/VideoPlayer';
 import { useVideoPlayerApp } from '../hooks/useVideoPlayerApp';
-import { StatsModal, StatsView } from '../features/video-player/StatsModal';
-import React, { useEffect, useState } from 'react';
-import { VideoPlayer } from '../features/video-player/VideoPlayer';
 import { TimelineData } from '../types/TimelineData';
 
 export const VideoPlayerApp = () => {
@@ -32,7 +32,6 @@ export const VideoPlayerApp = () => {
     setVideoList,
     currentTime,
     setCurrentTime,
-    timelineFilePath,
     setTimelineFilePath,
     metaDataConfigFilePath,
     setMetaDataConfigFilePath,
@@ -58,8 +57,6 @@ export const VideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
-    getSelectedTimelineId,
-    sortTimelineDatas,
     resyncAudio,
     resetSync,
     manualSyncFromPlayers,

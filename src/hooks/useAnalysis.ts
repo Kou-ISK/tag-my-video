@@ -1,5 +1,10 @@
 import { TimelineData } from '../types/TimelineData';
 import { rechartsData } from '../types/RechartsData';
+import {
+  CreateMomentumDataFn,
+  MomentumOutcome,
+  MomentumSegment,
+} from '../types/Analysis';
 
 export const useAnalysis = (timeline: TimelineData[]) => {
   const rechartsDataComparator = (x: rechartsData, y: rechartsData) => {
@@ -91,19 +96,22 @@ export const useAnalysis = (timeline: TimelineData[]) => {
   };
 
   // TODO: possessionStartを追加する
-  const createMomentumData = (team1Name: string, team2Name: string) => {
+  const createMomentumData: CreateMomentumDataFn = (
+    team1Name: string,
+    team2Name: string,
+  ) => {
     const teamA = team1Name;
     const teamB = team2Name;
 
     return timeline
       .filter((value) => value.actionName.includes('ポゼッション'))
-      .map((item) => {
+      .map((item): MomentumSegment => {
         const duration = Math.max(0, item.endTime - item.startTime);
         const teamName = item.actionName.includes(teamA) ? teamA : teamB;
         const possessionStart = item.actionType || '開始情報なし';
         const possessionResult = item.actionResult || '結果なし';
 
-        let outcome: 'Try' | 'Positive' | 'Negative' | 'Neutral';
+        let outcome: MomentumOutcome;
         if (item.actionResult === 'Try') {
           outcome = 'Try';
         } else if (

@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
 import React from 'react';
-import { rechartsData } from '../../types/RechartsData';
+import { rechartsData } from '../../../../types/RechartsData';
 
 interface ActionPieChartProps {
   countActionFunction: (teamName: string, actionName: string) => rechartsData[];

@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import videojs from 'video.js';
 import { MemoizedSingleVideoPlayer } from './SingleVideoPlayer';
-import { VideoSyncData } from '../../types/VideoSync';
+import { VideoSyncData } from '../../../../types/VideoSync';
 
 interface SyncedVideoPlayerProps {
   videoList: string[];

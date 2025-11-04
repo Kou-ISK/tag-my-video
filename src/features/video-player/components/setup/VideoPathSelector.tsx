@@ -21,10 +21,10 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import VideoFileIcon from '@mui/icons-material/VideoFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import { PackageDatas } from '../../renderer';
-import { MetaData } from '../../types/MetaData';
-import { AudioSyncAnalyzer } from '../../utils/AudioSyncAnalyzer';
-import { VideoSyncData } from '../../types/VideoSync';
+import { PackageDatas } from '../../../../renderer';
+import { MetaData } from '../../../../types/MetaData';
+import { AudioSyncAnalyzer } from '../../../../utils/AudioSyncAnalyzer';
+import { VideoSyncData } from '../../../../types/VideoSync';
 import React, { Dispatch, SetStateAction, useState } from 'react';
 
 interface VideoPathSelectorProps {
