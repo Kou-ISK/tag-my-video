@@ -11,7 +11,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { TimelineData } from '../../../../../types/TimelineData';
+import { TimelineData } from '../../../../../../types/TimelineData';
 
 interface MatrixSectionProps {
   title: string;

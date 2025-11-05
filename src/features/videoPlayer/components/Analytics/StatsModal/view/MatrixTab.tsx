@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Stack } from '@mui/material';
-import { TimelineData } from '../../../../../types/TimelineData';
+import { TimelineData } from '../../../../../../types/TimelineData';
 import { MatrixSection } from './MatrixSection';
 import { DrilldownDialog } from './DrilldownDialog';
 import { NoDataPlaceholder } from './NoDataPlaceholder';

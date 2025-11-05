@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { TimelineData } from '../../../../../types/TimelineData';
+import { TimelineData } from '../../../../../../types/TimelineData';
 
 interface DrilldownDialogProps {
   detail: { title: string; entries: TimelineData[] } | null;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Divider, Paper, Typography } from '@mui/material';
-import { MomentumChart } from '../MomentumChart';
+import { MomentumChart } from '../../MomentumChart';
 import { NoDataPlaceholder } from './NoDataPlaceholder';
-import { CreateMomentumDataFn } from '../../../../../types/Analysis';
+import { CreateMomentumDataFn } from '../../../../../../types/Analysis';
 
 interface MomentumTabProps {
   hasData: boolean;

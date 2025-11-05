@@ -1,13 +1,13 @@
 import React from 'react';
 import { Grid, Paper, Stack, Typography, Divider } from '@mui/material';
-import { ActionPieChart } from '../ActionPieChart';
+import { ActionPieChart } from '../../ActionPieChart';
 import { NoDataPlaceholder } from './NoDataPlaceholder';
-import { rechartsData } from '../../../../../types/RechartsData';
+import { rechartsData } from '../../../../../../types/RechartsData';
 
 interface ActionBreakdownTabProps {
   hasData: boolean;
-  actions: string[];
-  teamNames: string[];
+  actions: ReadonlyArray<string>;
+  teamNames: ReadonlyArray<string>;
   countActionFunction: (
     teamName: string,
     actionName: string,

@@ -10,10 +10,17 @@
 
 ## 構造と命名
 - React コンポーネントとそれを格納するディレクトリ／ファイルは **PascalCase** で命名します。  
-- ロジック専用モジュール（ユーティリティ、カスタム Hook のファイル名以外）は **camelCase** を用います。  
+- ロジック専用モジュール（ユーティリティ、サービス、hook本体など）のファイル名は **camelCase** を用います。  
 - カスタム Hook は `useXxx.ts` 形式で、`src/hooks` または `src/features/videoPlayer/**/hooks` に配置します。  
 - 共有型は `src/types` にまとめ、既存の `TimelineData` などを再利用します。  
 - Barrels（再エクスポート用 index）は循環参照を作らない範囲でシンプルに保ちます。
+
+## ディレクトリ構成と責務分離
+- 機能単位で `src/features/<FeatureName>/` を作り、その配下に `components/`, `hooks/`, `utils/` などの責務別ディレクトリを設けます。  
+- 各コンポーネント配下では `view/`（純粋な JSX・スタイル）と `hooks/`（状態・副作用）、`types/`（型）を分け、ビューはロジックを直接持たない構成にします。  
+- ページ固有のレイアウトは `src/pages/<PageName>/components` / `hooks` へ配置し、feature への依存方向が一方向になるよう保ちます。  
+- Electron 依存処理は `src/services/electron/` にまとめ、React 側はそのサービス層を介して IPC を呼び出します。  
+- 共通 UI（ボタン、モーダル等）は `src/components/common/` へ集約し、重複実装を防ぎます。
 
 ## 実装時の留意点
 - 使い回す計算結果は `useMemo` / `useCallback` でメモ化します。  
