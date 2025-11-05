@@ -57,7 +57,7 @@ const buildMatrix = (
   return cells;
 };
 
-export const MatrixTab: React.FC<MatrixTabProps> = ({
+export const MatrixTab = ({
   hasData,
   timeline,
   teamNames,
@@ -65,7 +65,7 @@ export const MatrixTab: React.FC<MatrixTabProps> = ({
   uniqueActionResults,
   onJumpToSegment,
   emptyMessage,
-}) => {
+}: MatrixTabProps) => {
   const [detail, setDetail] = useState<{
     title: string;
     entries: TimelineData[];

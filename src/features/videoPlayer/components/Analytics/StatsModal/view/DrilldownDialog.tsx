@@ -19,11 +19,11 @@ interface DrilldownDialogProps {
   onJump: (entry: TimelineData) => void;
 }
 
-export const DrilldownDialog: React.FC<DrilldownDialogProps> = ({
+export const DrilldownDialog = ({
   detail,
   onClose,
   onJump,
-}) => {
+}: DrilldownDialogProps) => {
   if (!detail) return null;
 
   return (

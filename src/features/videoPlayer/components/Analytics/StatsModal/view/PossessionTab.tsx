@@ -17,11 +17,11 @@ interface PossessionTabProps {
 
 const PIE_COLORS = ['#1e88e5', '#43a047', '#fb8c00', '#8e24aa'];
 
-export const PossessionTab: React.FC<PossessionTabProps> = ({
+export const PossessionTab = ({
   hasData,
   data,
   emptyMessage,
-}) => {
+}: PossessionTabProps) => {
   if (!hasData || data.length === 0) {
     return <NoDataPlaceholder message={emptyMessage} />;
   }

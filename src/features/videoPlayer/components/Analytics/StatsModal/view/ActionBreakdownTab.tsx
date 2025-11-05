@@ -16,14 +16,14 @@ interface ActionBreakdownTabProps {
   emptyMessage: string;
 }
 
-export const ActionBreakdownTab: React.FC<ActionBreakdownTabProps> = ({
+export const ActionBreakdownTab = ({
   hasData,
   actions,
   teamNames,
   countActionFunction,
   titleFormatter,
   emptyMessage,
-}) => {
+}: ActionBreakdownTabProps) => {
   if (!hasData || actions.length === 0) {
     return <NoDataPlaceholder message={emptyMessage} />;
   }

@@ -11,12 +11,12 @@ interface MomentumTabProps {
   emptyMessage: string;
 }
 
-export const MomentumTab: React.FC<MomentumTabProps> = ({
+export const MomentumTab = ({
   hasData,
   createMomentumData,
   teamNames,
   emptyMessage,
-}) => {
+}: MomentumTabProps) => {
   if (!hasData) {
     return <NoDataPlaceholder message={emptyMessage} />;
   }

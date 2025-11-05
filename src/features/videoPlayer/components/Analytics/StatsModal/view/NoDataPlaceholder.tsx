@@ -1,13 +1,11 @@
-import { Paper, Typography } from '@mui/material';
 import React from 'react';
+import { Paper, Typography } from '@mui/material';
 
 interface NoDataPlaceholderProps {
   message: string;
 }
 
-export const NoDataPlaceholder: React.FC<NoDataPlaceholderProps> = ({
-  message,
-}) => (
+export const NoDataPlaceholder = ({ message }: NoDataPlaceholderProps) => (
   <Paper
     elevation={0}
     sx={{

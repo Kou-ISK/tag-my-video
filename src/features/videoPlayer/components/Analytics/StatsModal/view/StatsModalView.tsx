@@ -29,7 +29,7 @@ interface StatsModalViewProps extends StatsModalDerivedState {
   onJumpToSegment?: (segment: TimelineData) => void;
 }
 
-export const StatsModalView: React.FC<StatsModalViewProps> = ({
+export const StatsModalView = ({
   open,
   onClose,
   currentView,
@@ -44,7 +44,7 @@ export const StatsModalView: React.FC<StatsModalViewProps> = ({
   createMomentumData,
   timeline,
   onJumpToSegment,
-}) => {
+}: StatsModalViewProps) => {
   return (
     <Dialog
       open={open}

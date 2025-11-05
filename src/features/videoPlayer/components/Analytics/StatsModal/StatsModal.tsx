@@ -20,7 +20,7 @@ interface StatsModalProps {
   onJumpToSegment?: (segment: TimelineData) => void;
 }
 
-export const StatsModal: React.FC<StatsModalProps> = ({
+export const StatsModal = ({
   open,
   onClose,
   view,
@@ -28,7 +28,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({
   timeline,
   teamNames,
   onJumpToSegment,
-}) => {
+}: StatsModalProps) => {
   const [currentView, setCurrentView] = useState<StatsView>(view);
   const derivedState = useStatsModalState({ timeline, teamNames });
 

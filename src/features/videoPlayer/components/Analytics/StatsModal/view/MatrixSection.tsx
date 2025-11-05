@@ -21,13 +21,13 @@ interface MatrixSectionProps {
   onDrilldown: (title: string, entries: TimelineData[]) => void;
 }
 
-export const MatrixSection: React.FC<MatrixSectionProps> = ({
+export const MatrixSection = ({
   title,
   rowKeys,
   columnKeys,
   matrix,
   onDrilldown,
-}) => {
+}: MatrixSectionProps) => {
   if (rowKeys.length === 0 || columnKeys.length === 0) {
     return null;
   }
