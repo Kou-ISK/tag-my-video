@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SyncedVideoPlayer } from '../features/video-player/components/player/SyncedVideoPlayer';
+import { SyncedVideoPlayer } from '../features/videoPlayer/components/Player/SyncedVideoPlayer';
 import { Button, Box, TextField } from '@mui/material';
 
 const TestVideoPage: React.FC = () => {

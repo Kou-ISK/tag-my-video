@@ -1,0 +1,254 @@
+import { useEffect, useRef, useState } from 'react';
+import type { VideoSyncData } from '../../../../../../types/VideoSync';
+
+interface MinimalVideoJsPlayer {
+  isDisposed?: () => boolean;
+  currentTime?: (time?: number) => number;
+  duration?: () => number;
+  play?: () => Promise<void> | void;
+  pause?: () => void;
+  on?: (event: string, handler: () => void) => void;
+  off?: (event: string, handler: () => void) => void;
+}
+
+interface Params {
+  videoList: string[];
+  isVideoPlaying: boolean;
+  maxSec: number;
+  syncData?: VideoSyncData;
+  getExistingPlayer: (id: string) => MinimalVideoJsPlayer | undefined;
+  lastManualSeekTimestamp: React.MutableRefObject<number>;
+  isSeekingRef: React.MutableRefObject<boolean>;
+  safeSetCurrentTime: (time: number, source?: string) => void;
+}
+
+export const usePlaybackTimeTracker = ({
+  videoList,
+  isVideoPlaying,
+  maxSec,
+  syncData,
+  getExistingPlayer,
+  lastManualSeekTimestamp,
+  isSeekingRef,
+  safeSetCurrentTime,
+}: Params) => {
+  const [videoTime, setVideoTime] = useState(0);
+  const rafLastTsRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isNaN(videoTime)) {
+      setVideoTime(0);
+    }
+    const maxAllowedTime = maxSec > 0 ? maxSec + 10 : 7200;
+    if (videoTime > maxAllowedTime) {
+      console.warn(
+        `[WARNING] videoTimeが異常に高い値 (${videoTime}秒、上限=${maxAllowedTime}秒) です。`,
+      );
+    }
+  }, [videoTime, maxSec]);
+
+  useEffect(() => {
+    if (maxSec > 7200) {
+      console.error(
+        `[ERROR] VideoController: 異常に高いmaxSec (${maxSec}秒) が設定されています。`,
+      );
+    }
+  }, [maxSec]);
+
+  useEffect(() => {
+    if (videoList.length === 0) {
+      return;
+    }
+
+    let intervalId: NodeJS.Timeout | undefined;
+    let animationFrameId: number | undefined;
+
+    const updateTimeHandler = () => {
+      try {
+        const primaryPlayer = getExistingPlayer('video_0');
+        if (!primaryPlayer) {
+          return;
+        }
+
+        let duration = 0;
+        try {
+          const dur = primaryPlayer.duration?.();
+          duration = typeof dur === 'number' && !isNaN(dur) ? dur : 0;
+        } catch {
+          duration = 0;
+        }
+
+        if (!(typeof duration === 'number' && !isNaN(duration) && duration > 0)) {
+          return;
+        }
+
+        let newVideoTime = 0;
+        try {
+          const rawTime = primaryPlayer.currentTime ? primaryPlayer.currentTime() || 0 : 0;
+          if (typeof rawTime === 'number' && !isNaN(rawTime) && rawTime >= 0) {
+            if (rawTime > duration + 5) {
+              console.warn(
+                `[WARNING] Video.js currentTime (${rawTime}秒) が duration (${duration}秒) を大幅に超えています。`,
+              );
+              newVideoTime = rawTime;
+            } else if (rawTime > 7200) {
+              console.warn(
+                `[WARNING] Video.js currentTime (${rawTime}秒) が異常に高い値です。`,
+              );
+              newVideoTime = rawTime;
+            } else {
+              newVideoTime = rawTime;
+            }
+          }
+        } catch {
+          newVideoTime = 0;
+        }
+
+        const timeSinceManualSeek = Date.now() - lastManualSeekTimestamp.current;
+        if (timeSinceManualSeek < 500) {
+          return;
+        }
+
+        const negOffset = !!(syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0);
+        if (negOffset && videoTime < 0) {
+          return;
+        }
+
+        if (typeof newVideoTime === 'number' && !isNaN(newVideoTime) && newVideoTime >= 0) {
+          if (Math.abs(newVideoTime - videoTime) > 0.1) {
+            setVideoTime(newVideoTime);
+          }
+        }
+      } catch (error) {
+        console.debug('プレイヤーアクセスエラー:', error);
+      }
+    };
+
+    const animationUpdateHandler = (ts?: number) => {
+      if (isSeekingRef.current) {
+        animationFrameId = requestAnimationFrame(animationUpdateHandler);
+        return;
+      }
+
+      const offset = Number(syncData?.syncOffset || 0);
+      const negOffset = !!(syncData?.isAnalyzed && offset < 0);
+      const posOffset = !!(syncData?.isAnalyzed && offset > 0);
+
+      if (typeof ts === 'number') {
+        if (rafLastTsRef.current == null) {
+          rafLastTsRef.current = ts;
+        }
+        const dt = Math.max(0, (ts - rafLastTsRef.current) / 1000);
+        rafLastTsRef.current = ts;
+
+        if (isVideoPlaying && dt > 0 && dt < 1.0) {
+          try {
+            const primary = getExistingPlayer('video_0');
+            const secondary = getExistingPlayer('video_1');
+            const primaryTime = primary?.currentTime ? primary.currentTime() || 0 : 0;
+            const secondaryTime = secondary?.currentTime ? secondary.currentTime() || 0 : 0;
+            let primaryDuration = 0;
+            let secondaryDuration = 0;
+            try {
+              primaryDuration = primary?.duration ? primary.duration() || 0 : 0;
+              secondaryDuration = secondary?.duration ? secondary.duration() || 0 : 0;
+            } catch {
+              primaryDuration = 0;
+              secondaryDuration = 0;
+            }
+
+            if (negOffset) {
+              if (videoTime < Math.abs(offset) && secondaryTime > 0) {
+                const next = Math.min(Math.abs(offset), videoTime + dt);
+                if (next !== videoTime && next > -600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-negativeOffset-preStart');
+                }
+              } else if (videoTime >= Math.abs(offset) && (primaryTime > 0 || secondaryTime > 0)) {
+                const next = videoTime + dt;
+                if (next < maxSec && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-negativeOffset-both');
+                }
+              }
+            } else if (posOffset) {
+              if (videoTime < offset && primaryTime > 0) {
+                const next = Math.min(offset, videoTime + dt);
+                if (next !== videoTime) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-preStart');
+                }
+              } else if (videoTime >= offset && (primaryTime > 0 || secondaryTime > 0)) {
+                const next = videoTime + dt;
+                if (next < maxSec && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-both');
+                }
+              } else if (primaryDuration > 0 && primaryTime >= primaryDuration - 0.01 && secondaryTime > 0) {
+                const maxAllowed = Math.max(0, maxSec);
+                const next = Math.min(maxAllowed, videoTime + dt);
+                if (next !== videoTime && next < 3600) {
+                  setVideoTime(next);
+                  safeSetCurrentTime(next, 'RAF-positiveOffset-continue');
+                }
+              }
+            } else if (primaryTime > 0 || secondaryTime > 0) {
+              const next = videoTime + dt;
+              if (next < maxSec && next < 3600) {
+                setVideoTime(next);
+                safeSetCurrentTime(next, 'RAF-noOffset');
+              }
+            }
+          } catch {
+            /* noop */
+          }
+        }
+      }
+
+      updateTimeHandler();
+      animationFrameId = requestAnimationFrame(animationUpdateHandler);
+    };
+
+    const timer = setTimeout(() => {
+      try {
+        const primaryPlayer = getExistingPlayer('video_0');
+        if (primaryPlayer) {
+          primaryPlayer.on?.('timeupdate', updateTimeHandler);
+
+          if (isVideoPlaying) {
+            rafLastTsRef.current = null;
+            animationFrameId = requestAnimationFrame(animationUpdateHandler);
+          }
+
+          intervalId = setInterval(updateTimeHandler, 200);
+        }
+      } catch (error) {
+        console.debug('プレイヤー初期化待機中:', error);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      const primaryPlayer = getExistingPlayer('video_0');
+      primaryPlayer?.off?.('timeupdate', updateTimeHandler);
+    };
+  }, [
+    videoList,
+    isVideoPlaying,
+    maxSec,
+    syncData,
+    getExistingPlayer,
+    lastManualSeekTimestamp,
+    isSeekingRef,
+    safeSetCurrentTime,
+    videoTime,
+  ]);
+
+  return { videoTime, setVideoTime };
+};
