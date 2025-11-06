@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { SyncedVideoPlayer } from '../features/video-player/SyncedVideoPlayer';
+import { SyncedVideoPlayer } from '../features/videoPlayer/components/Player/SyncedVideoPlayer';
 import { Button, Box, TextField } from '@mui/material';
 
 const TestVideoPage: React.FC = () => {
   const [videoList, setVideoList] = useState<string[]>([]);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [videoPlayBackRate, setVideoPlayBackRate] = useState(1);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [currentTime, setCurrentTime] = useState(0);
+  const videoPlayBackRate = 1;
   const [maxSec, setMaxSec] = useState(100);
   const [testPath1, setTestPath1] = useState(
     '/Users/isakakou/Desktop/sample/videos/sample 寄り.mp4',
@@ -84,7 +81,6 @@ const TestVideoPage: React.FC = () => {
         <h3>Debug Info:</h3>
         <div>Video List Length: {videoList.length}</div>
         <div>Is Playing: {isVideoPlaying.toString()}</div>
-        <div>Current Time: {currentTime}</div>
         <div>Max Sec: {maxSec}</div>
         <div>Video List: {JSON.stringify(videoList)}</div>
       </Box>

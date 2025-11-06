@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import type { SxProps } from '@mui/system';
 
 // カラーパレットの型拡張
 declare module '@mui/material/styles' {
@@ -22,6 +23,19 @@ declare module '@mui/material/styles' {
       neutral?: string;
     };
   }
+
+  interface Theme {
+    custom: {
+      controllerButton: SxProps<Theme>;
+      controllerPresetButton: SxProps<Theme>;
+    };
+  }
+  interface ThemeOptions {
+    custom?: {
+      controllerButton?: SxProps<Theme>;
+      controllerPresetButton?: SxProps<Theme>;
+    };
+  }
 }
 
 // Buttonコンポーネントのcolor propsに追加
@@ -40,6 +54,17 @@ declare module '@mui/material/Chip' {
 }
 
 export const appTheme = createTheme({
+  custom: {
+    controllerButton: {
+      color: '#ffffff',
+      borderRadius: 12,
+    },
+    controllerPresetButton: {
+      color: '#ffffff',
+      borderRadius: 12,
+      flexDirection: 'column',
+    },
+  },
   palette: {
     // チーム1: 赤系統
     team1: {

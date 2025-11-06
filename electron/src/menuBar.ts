@@ -1,4 +1,4 @@
-import { Menu, app } from 'electron';
+import { Menu, app, BrowserWindow } from 'electron';
 
 export const menuBar = Menu.buildFromTemplate([
   {
@@ -62,8 +62,10 @@ export const menuBar = Menu.buildFromTemplate([
         label: '音声同期を再実行',
         accelerator: 'CmdOrCtrl+Shift+S',
         click: (menuItem, browserWindow) => {
-          if (browserWindow) {
-            browserWindow.webContents.send('menu-resync-audio');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-resync-audio',
+            );
           }
         },
       },
@@ -71,8 +73,10 @@ export const menuBar = Menu.buildFromTemplate([
         label: '同期をリセット',
         accelerator: 'CmdOrCtrl+Shift+R',
         click: (menuItem, browserWindow) => {
-          if (browserWindow) {
-            browserWindow.webContents.send('menu-reset-sync');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-reset-sync',
+            );
           }
         },
       },
@@ -81,8 +85,10 @@ export const menuBar = Menu.buildFromTemplate([
         label: '今の位置で同期',
         accelerator: 'CmdOrCtrl+Shift+M',
         click: (menuItem, browserWindow) => {
-          if (browserWindow) {
-            browserWindow.webContents.send('menu-manual-sync');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-manual-sync',
+            );
           }
         },
       },
@@ -93,9 +99,12 @@ export const menuBar = Menu.buildFromTemplate([
         checked: false,
         accelerator: 'CmdOrCtrl+Shift+T',
         click: (menuItem, browserWindow) => {
-          if (browserWindow) {
+          if (browserWindow && 'webContents' in browserWindow) {
             const mode = menuItem.checked ? 'manual' : 'auto';
-            browserWindow.webContents.send('menu-set-sync-mode', mode);
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-set-sync-mode',
+              mode,
+            );
           }
         },
       },
@@ -108,35 +117,60 @@ export const menuBar = Menu.buildFromTemplate([
         label: 'ポゼッションを表示',
         accelerator: 'CmdOrCtrl+Shift+1',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-stats', 'possession');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-stats',
+              'possession',
+            );
+          }
         },
       },
       {
         label: 'アクション結果を表示',
         accelerator: 'CmdOrCtrl+Shift+2',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-stats', 'results');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-stats',
+              'results',
+            );
+          }
         },
       },
       {
         label: 'アクション種別を表示',
         accelerator: 'CmdOrCtrl+Shift+3',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-stats', 'types');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-stats',
+              'types',
+            );
+          }
         },
       },
       {
         label: 'モーメンタムを表示',
         accelerator: 'CmdOrCtrl+Shift+4',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-stats', 'momentum');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-stats',
+              'momentum',
+            );
+          }
         },
       },
       {
         label: 'クロス集計を表示',
         accelerator: 'CmdOrCtrl+Shift+5',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-stats', 'matrix');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-stats',
+              'matrix',
+            );
+          }
         },
       },
       { type: 'separator' },
@@ -144,7 +178,11 @@ export const menuBar = Menu.buildFromTemplate([
         label: 'ショートカットキー一覧',
         accelerator: 'CmdOrCtrl+/',
         click: (_menuItem, browserWindow) => {
-          browserWindow?.webContents.send('menu-show-shortcuts');
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-show-shortcuts',
+            );
+          }
         },
       },
     ],

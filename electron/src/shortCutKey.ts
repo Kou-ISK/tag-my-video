@@ -1,49 +1,49 @@
-import local_shortcut = require('electron-localshortcut');
+import { BrowserWindow, globalShortcut } from 'electron';
 
-export const shortCutKeys = (mainWindow) => {
-  local_shortcut.register(mainWindow, 'Right', () =>
+export const shortCutKeys = (mainWindow: BrowserWindow) => {
+  globalShortcut.register('Right', () =>
     mainWindow.webContents.send('video-shortcut-event', 0.5),
   );
 
-  local_shortcut.register(mainWindow, 'Shift+Right', () =>
+  globalShortcut.register('Shift+Right', () =>
     mainWindow.webContents.send('video-shortcut-event', 2),
   );
 
-  local_shortcut.register(mainWindow, 'Command+Right', () =>
+  globalShortcut.register('Command+Right', () =>
     mainWindow.webContents.send('video-shortcut-event', 4),
   );
 
-  local_shortcut.register(mainWindow, 'Option+Right', () =>
+  globalShortcut.register('Option+Right', () =>
     mainWindow.webContents.send('video-shortcut-event', 6),
   );
 
-  local_shortcut.register(mainWindow, 'Up', () =>
+  globalShortcut.register('Up', () =>
     mainWindow.webContents.send('video-shortcut-event', 1),
   );
 
-  local_shortcut.register(mainWindow, 'Left', () =>
+  globalShortcut.register('Left', () =>
     mainWindow.webContents.send('video-shortcut-event', -5),
   );
-  local_shortcut.register(mainWindow, 'Shift+Left', () =>
+  globalShortcut.register('Shift+Left', () =>
     mainWindow.webContents.send('video-shortcut-event', -10),
   );
 
-  local_shortcut.register(mainWindow, 'Command+Shift+A', () =>
+  globalShortcut.register('Command+Shift+A', () =>
     mainWindow.webContents.send('general-shortcut-event', 'analyze'),
   );
-  local_shortcut.register(mainWindow, 'Command+Shift+1', () =>
+  globalShortcut.register('Command+Shift+1', () =>
     mainWindow.webContents.send('menu-show-stats', 'possession'),
   );
-  local_shortcut.register(mainWindow, 'Command+Shift+2', () =>
+  globalShortcut.register('Command+Shift+2', () =>
     mainWindow.webContents.send('menu-show-stats', 'results'),
   );
-  local_shortcut.register(mainWindow, 'Command+Shift+3', () =>
+  globalShortcut.register('Command+Shift+3', () =>
     mainWindow.webContents.send('menu-show-stats', 'types'),
   );
-  local_shortcut.register(mainWindow, 'Command+Shift+4', () =>
+  globalShortcut.register('Command+Shift+4', () =>
     mainWindow.webContents.send('menu-show-stats', 'momentum'),
   );
-  local_shortcut.register(mainWindow, 'Command+Shift+5', () =>
+  globalShortcut.register('Command+Shift+5', () =>
     mainWindow.webContents.send('menu-show-stats', 'matrix'),
   );
 };

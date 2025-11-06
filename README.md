@@ -1,6 +1,77 @@
-# このアプリについて
+# Tag My Video
 
-### 概要
+スポーツのビデオ分析のための映像タグ付けアプリケーション
+
+## 技術スタック
+
+- **フロントエンド**: React 18.3.1 + TypeScript 5.9.3
+- **デスクトップ**: Electron 31.7.7
+- **UI**: Material-UI 5.18.0
+- **ビデオ**: Video.js 8.23.4
+- **パッケージマネージャー**: pnpm 9.1.0+
+- **ビルドツール**: react-scripts 5.0.1
+
+## 前提条件
+
+- Node.js 18.0.0 以上
+- pnpm 9.0.0 以上
+
+pnpmのインストール:
+
+```bash
+npm install -g pnpm
+```
+
+## セットアップ
+
+```bash
+# 依存関係のインストール
+pnpm install
+```
+
+## 起動方法
+
+### 開発モード（推奨）
+
+ReactとElectronを同時に起動します：
+
+```bash
+pnpm run electron:dev
+```
+
+### 本番ビルド＋起動
+
+最適化されたビルドを作成してElectronを起動します：
+
+```bash
+pnpm run electron:start
+```
+
+### 配布用アプリケーションのビルド
+
+dmgファイルを生成します（`dist/`配下に出力）：
+
+```bash
+pnpm run electron:build
+```
+
+## その他のコマンド
+
+```bash
+# 型チェック（React側）
+pnpm exec tsc --noEmit
+
+# 型チェック（Electron側）
+pnpm exec tsc -p electron --noEmit
+
+# コードフォーマット
+pnpm run format
+
+# Lint + Format
+pnpm run fix
+```
+
+## 概要
 
 - スポーツのビデオ分析での利用を想定
 - ボタン操作を通じて映像にイベントをタグ付けするアプリ
@@ -19,24 +90,7 @@
 - ⇧ + 左キー: 10秒戻し
 - ⌘ + ⇧ + A: グラフを表示
 
-## ターミナ操作手順
-
-### ターミナルから起動する方法
-
-以下コマンドをターミナルで実行
-
-```zsh
-yarn init
-yarn electron:start
-```
-
-### アプリを配布可能な形式にビルドする手順
-
-以下コマンドを実行することでdist配下にdmgファイルが配置される。
-
-```zsh
-yarn electron:build
-```
+---
 
 ## 新機能：音声同期機能（改善版）
 
@@ -140,3 +194,60 @@ yarn electron:build
 - **デバッグ強化**: 問題追跡のための詳細なログ出力
 
 **結果**: 共通シークバーが常に正常な数値で動作し、安定したUI操作が可能になりました。
+
+---
+
+## バージョン履歴
+
+### v3.0.0 (2025-11-06) - 依存パッケージメジャーアップデート
+
+**主要な変更**:
+
+- パッケージマネージャーを `yarn` から **pnpm** に移行
+- React 18.2.0 → **18.3.1** にアップデート
+- TypeScript 4.9.5 → **5.9.3** にアップデート
+- Electron 25.4.0 → **31.7.7** にアップデート
+- Material-UI を最新安定版（5.18.0）にアップデート
+- すべての依存パッケージを最新安定版に更新
+
+**技術的改善**:
+
+- `electron-localshortcut` を削除し、Electronネイティブの `globalShortcut` に移行
+- TypeScript設定を最適化（`moduleResolution: "bundler"` など）
+- Electron 31対応の型修正（BrowserWindow型アサーション追加）
+- web-vitals v4対応（新しいAPI `onCLS`, `onINP` など）
+- ESLint未使用変数エラーの解消
+
+**破壊的変更**:
+
+- コマンドが `yarn` から `pnpm` に変更
+- Node.js 18.0.0以上が必須
+- pnpm 9.0.0以上のインストールが必要
+
+**移行ガイド**:
+
+```bash
+# pnpmのインストール
+npm install -g pnpm
+
+# 依存関係の再インストール
+pnpm install
+
+# 起動方法の変更
+# 旧: yarn electron:dev
+# 新: pnpm run electron:dev
+```
+
+### v2.2 - 2つ目の映像が表示されなくなる問題の修正
+
+詳細は上記「修正されたバグ（v2.2）」を参照
+
+### v2.1 - 共通シークバーのNaN表示問題の修正
+
+詳細は上記「修正されたバグ（v2.1）」を参照
+
+---
+
+## ライセンス
+
+MIT

@@ -6,8 +6,19 @@ export class AudioSyncAnalyzer {
   private audioContext: AudioContext;
 
   constructor() {
-    this.audioContext = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+    type ExtendedWindow = Window & {
+      webkitAudioContext?: typeof AudioContext;
+    };
+
+    const extendedWindow = window as ExtendedWindow;
+    const AudioContextCtor =
+      window.AudioContext ?? extendedWindow.webkitAudioContext;
+
+    if (!AudioContextCtor) {
+      throw new Error('Web Audio API is not supported in this environment.');
+    }
+
+    this.audioContext = new AudioContextCtor();
   }
 
   /**
