@@ -1,15 +1,18 @@
 export interface IElectronAPI {
   openFile: () => Promise<string>;
   openDirectory: () => Promise<string>;
-  exportTimeline: (filePath: string, source: any) => Promise<void>;
+  exportTimeline: (filePath: string, source: unknown) => Promise<void>;
   createPackage: (
     directoryName: string,
     packageName: string,
     tightViewPath: string,
     wideViewPath: string | null,
-    metaDataConfig: any,
+    metaDataConfig: unknown,
   ) => Promise<PackageDatas>;
-  on: (channel: string, listener: (event: any, args: any) => void) => void;
+  on: (
+    channel: string,
+    listener: (event: unknown, args: unknown) => void,
+  ) => void;
   off: (channel: string, listener: (...args: unknown[]) => void) => void; // 追加
   // メニューからの音声同期イベント
   onResyncAudio: (callback: () => void) => void;
@@ -33,7 +36,7 @@ export interface IElectronAPI {
   setManualModeChecked: (checked: boolean) => Promise<boolean>;
   convertConfigToRelativePath: (packagePath: string) => Promise<{
     success: boolean;
-    config?: any;
+    config?: Record<string, unknown>;
     error?: string;
   }>;
 }

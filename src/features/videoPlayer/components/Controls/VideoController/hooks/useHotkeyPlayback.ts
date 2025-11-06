@@ -37,7 +37,9 @@ const unmuteExistingPlayers = () => {
           console.debug('unmute via vjs error', error);
         }
 
-        const videoElement = (player as unknown as { el?: () => Element | null })
+        const videoElement = (
+          player as unknown as { el?: () => Element | null }
+        )
           .el?.()
           ?.querySelector('video') as HTMLVideoElement | null;
         if (videoElement) {
@@ -100,7 +102,10 @@ export const useHotkeyPlayback = ({
                 index > 0 && syncData?.isAnalyzed
                   ? syncData.syncOffset || 0
                   : 0;
-              const targetTime = Math.max(0, nextTime - (index > 0 ? offset : 0));
+              const targetTime = Math.max(
+                0,
+                nextTime - (index > 0 ? offset : 0),
+              );
 
               try {
                 player.currentTime?.(targetTime);
@@ -126,7 +131,10 @@ export const useHotkeyPlayback = ({
       console.debug('keyboard pre-off ignored', error);
     }
 
-    api.on(channel, handler as unknown as (event: Event, args: number) => void);
+    api.on(
+      channel,
+      handler as unknown as (event: unknown, args: unknown) => void,
+    );
     return () => {
       try {
         api.off?.(channel, handler as unknown as (...args: unknown[]) => void);

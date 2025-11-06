@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { SyncedVideoPlayer } from '../features/videoPlayer/components/Player/SyncedVideoPlayer';
 import { Button, Box, TextField } from '@mui/material';
 
