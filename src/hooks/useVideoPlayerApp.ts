@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
-import { TimelineData } from '../types/TimelineData';
 import { VideoSyncData } from '../types/VideoSync';
 import { useTimelinePersistence } from './videoPlayer/useTimelinePersistence';
 import { useTimelineSelection } from './videoPlayer/useTimelineSelection';
@@ -10,14 +9,13 @@ import { useSyncActions } from './videoPlayer/useSyncActions';
 
 export const useVideoPlayerApp = () => {
   const isDev = process.env.NODE_ENV === 'development';
+  const { timeline, setTimeline, timelineFilePath, setTimelineFilePath } =
+    useTimelinePersistence();
   const {
-    timeline,
-    setTimeline,
-    timelineFilePath,
-    setTimelineFilePath,
-  } = useTimelinePersistence();
-  const { selectedTimelineIdList, setSelectedTimelineIdList, getSelectedTimelineId } =
-    useTimelineSelection();
+    selectedTimelineIdList,
+    setSelectedTimelineIdList,
+    getSelectedTimelineId,
+  } = useTimelineSelection();
   const {
     addTimelineData,
     deleteTimelineDatas,

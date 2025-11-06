@@ -1,6 +1,5 @@
 import React from 'react';
 import { SingleVideoPlayer } from './SingleVideoPlayer';
-import type { SingleVideoPlayerProps } from './types';
 
 export const MemoizedSingleVideoPlayer = React.memo(
   SingleVideoPlayer,

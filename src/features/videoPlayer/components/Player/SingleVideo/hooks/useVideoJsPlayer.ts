@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import type Player from 'video.js/dist/types/player';
 import { formatSource } from '../utils';
@@ -11,10 +11,13 @@ interface UseVideoJsPlayerParams {
   onAspectRatioChange?: (ratio: number) => void;
 }
 
-const reportAspectRatioFactory = (
-  aspectRatioCallbackRef: React.MutableRefObject<((ratio: number) => void) | undefined>,
-  lastReportedAspectRatioRef: React.MutableRefObject<number | null>,
-) =>
+const reportAspectRatioFactory =
+  (
+    aspectRatioCallbackRef: React.MutableRefObject<
+      ((ratio: number) => void) | undefined
+    >,
+    lastReportedAspectRatioRef: React.MutableRefObject<number | null>,
+  ) =>
   (playerInstance: Player) => {
     const withDimensions = playerInstance as Player & {
       videoWidth?: () => number;

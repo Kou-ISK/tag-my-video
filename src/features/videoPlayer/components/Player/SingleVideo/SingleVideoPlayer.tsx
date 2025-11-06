@@ -13,22 +13,16 @@ export const SingleVideoPlayer: React.FC<SingleVideoPlayerProps> = ({
   forceUpdate = 0,
   blockPlay = false,
   allowSeek = true,
-  offsetSeconds = 0,
   onAspectRatioChange,
 }) => {
-  const {
-    containerRef,
-    videoRef,
-    playerRef,
-    isReady,
-    durationSec,
-  } = useVideoJsPlayer({
-    id,
-    videoSrc,
-    allowSeek,
-    setMaxSec,
-    onAspectRatioChange,
-  });
+  const { containerRef, videoRef, playerRef, isReady, durationSec } =
+    useVideoJsPlayer({
+      id,
+      videoSrc,
+      allowSeek,
+      setMaxSec,
+      onAspectRatioChange,
+    });
 
   const [showEndMask, setShowEndMask] = useState(false);
 

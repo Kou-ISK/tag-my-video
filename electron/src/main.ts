@@ -15,10 +15,11 @@ const createWindow = () => {
     height: 1000,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      // ローカル file:// リソースを許可
+      // ローカル file:// リソースを許可（開発用）
       webSecurity: false,
-      // Preload からのみブリッジする
+      // セキュリティ: Preloadスクリプトからのみブリッジする
       contextIsolation: true,
+      // Electron 31対応: sandboxは無効化（レガシー動作を維持）
       sandbox: false,
     },
   });

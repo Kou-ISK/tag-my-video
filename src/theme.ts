@@ -1,6 +1,5 @@
 import { createTheme } from '@mui/material/styles';
 import type { SxProps } from '@mui/system';
-import type { Theme } from '@mui/material/styles';
 
 // カラーパレットの型拡張
 declare module '@mui/material/styles' {

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Paper, Stack } from '@mui/material';
+import React, { useState } from 'react';
+import { Box } from '@mui/material';
 import {
   StatsModal,
   StatsView,
@@ -153,7 +153,11 @@ export const VideoPlayerApp = () => {
       />
 
       <ErrorSnackbar error={error} onClose={() => setError(null)} />
-      <SyncAnalysisBackdrop open={isAnalyzing} progress={syncProgress} stage={syncStage} />
+      <SyncAnalysisBackdrop
+        open={isAnalyzing}
+        progress={syncProgress}
+        stage={syncStage}
+      />
     </Box>
   );
 };

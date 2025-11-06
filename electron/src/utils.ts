@@ -13,6 +13,7 @@ export const setMainWindow = (window: Electron.BrowserWindow) => {
 
 export const Utils = () => {
   ipcMain.handle('open-directory', async () => {
+    if (!mainWindow) return { canceled: true };
     return dialog
       .showOpenDialog(mainWindow, {
         properties: ['openDirectory'],
@@ -32,6 +33,7 @@ export const Utils = () => {
   });
 
   ipcMain.handle('open-file', async () => {
+    if (!mainWindow) return { canceled: true };
     return dialog
       .showOpenDialog(mainWindow, {
         properties: ['openFile'],

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useSyncPlayback } from './useSyncPlayback';
 import { useVideoAspectRatios } from './useVideoAspectRatios';
 import type { SyncedVideoPlayerProps } from '../types';
@@ -23,10 +23,12 @@ export const useSyncedVideoPlayer = ({
     forceUpdateKey,
   });
 
-  const { aspectRatios, handleAspectRatioChange } = useVideoAspectRatios(videoList);
+  const { aspectRatios, handleAspectRatioChange } =
+    useVideoAspectRatios(videoList);
 
   const activeVideoCount = useMemo(
-    () => videoList.filter((filePath) => filePath && filePath.trim() !== '').length,
+    () =>
+      videoList.filter((filePath) => filePath && filePath.trim() !== '').length,
     [videoList],
   );
 

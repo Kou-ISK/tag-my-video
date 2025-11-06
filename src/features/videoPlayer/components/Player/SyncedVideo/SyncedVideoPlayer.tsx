@@ -23,7 +23,6 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = ({
   const offset = syncData?.syncOffset ?? 0;
 
   const {
-    adjustedCurrentTimes,
     blockPlayStates,
     aspectRatios,
     handleAspectRatioChange,
@@ -51,10 +50,17 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = ({
 
         const columns = activeVideoCount > 1 ? 6 : 12;
         const aspectRatio = aspectRatios[index] ?? DEFAULT_ASPECT_RATIO;
-        const paddingTop = aspectRatio > 0 ? `${(1 / aspectRatio) * 100}%` : '56.25%';
+        const paddingTop =
+          aspectRatio > 0 ? `${(1 / aspectRatio) * 100}%` : '56.25%';
 
         return (
-          <Grid key={`${filePath}-${index}`} item xs={12} md={columns} sx={{ padding: 0 }}>
+          <Grid
+            key={`${filePath}-${index}`}
+            item
+            xs={12}
+            md={columns}
+            sx={{ padding: 0 }}
+          >
             <Box
               sx={{
                 position: 'relative',
@@ -75,7 +81,9 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = ({
                 allowSeek={allowSeek}
                 forceUpdate={forceUpdateKey}
                 offsetSeconds={index === 0 ? 0 : offset}
-                onAspectRatioChange={(ratio) => handleAspectRatioChange(index, ratio)}
+                onAspectRatioChange={(ratio) =>
+                  handleAspectRatioChange(index, ratio)
+                }
               />
             </Box>
           </Grid>

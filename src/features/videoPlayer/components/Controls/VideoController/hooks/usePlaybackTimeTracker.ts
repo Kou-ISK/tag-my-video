@@ -78,13 +78,17 @@ export const usePlaybackTimeTracker = ({
           duration = 0;
         }
 
-        if (!(typeof duration === 'number' && !isNaN(duration) && duration > 0)) {
+        if (
+          !(typeof duration === 'number' && !isNaN(duration) && duration > 0)
+        ) {
           return;
         }
 
         let newVideoTime = 0;
         try {
-          const rawTime = primaryPlayer.currentTime ? primaryPlayer.currentTime() || 0 : 0;
+          const rawTime = primaryPlayer.currentTime
+            ? primaryPlayer.currentTime() || 0
+            : 0;
           if (typeof rawTime === 'number' && !isNaN(rawTime) && rawTime >= 0) {
             if (rawTime > duration + 5) {
               console.warn(
@@ -104,17 +108,24 @@ export const usePlaybackTimeTracker = ({
           newVideoTime = 0;
         }
 
-        const timeSinceManualSeek = Date.now() - lastManualSeekTimestamp.current;
+        const timeSinceManualSeek =
+          Date.now() - lastManualSeekTimestamp.current;
         if (timeSinceManualSeek < 500) {
           return;
         }
 
-        const negOffset = !!(syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0);
+        const negOffset = !!(
+          syncData?.isAnalyzed && (syncData?.syncOffset ?? 0) < 0
+        );
         if (negOffset && videoTime < 0) {
           return;
         }
 
-        if (typeof newVideoTime === 'number' && !isNaN(newVideoTime) && newVideoTime >= 0) {
+        if (
+          typeof newVideoTime === 'number' &&
+          !isNaN(newVideoTime) &&
+          newVideoTime >= 0
+        ) {
           if (Math.abs(newVideoTime - videoTime) > 0.1) {
             setVideoTime(newVideoTime);
           }
@@ -145,16 +156,17 @@ export const usePlaybackTimeTracker = ({
           try {
             const primary = getExistingPlayer('video_0');
             const secondary = getExistingPlayer('video_1');
-            const primaryTime = primary?.currentTime ? primary.currentTime() || 0 : 0;
-            const secondaryTime = secondary?.currentTime ? secondary.currentTime() || 0 : 0;
+            const primaryTime = primary?.currentTime
+              ? primary.currentTime() || 0
+              : 0;
+            const secondaryTime = secondary?.currentTime
+              ? secondary.currentTime() || 0
+              : 0;
             let primaryDuration = 0;
-            let secondaryDuration = 0;
             try {
               primaryDuration = primary?.duration ? primary.duration() || 0 : 0;
-              secondaryDuration = secondary?.duration ? secondary.duration() || 0 : 0;
             } catch {
               primaryDuration = 0;
-              secondaryDuration = 0;
             }
 
             if (negOffset) {
@@ -164,7 +176,10 @@ export const usePlaybackTimeTracker = ({
                   setVideoTime(next);
                   safeSetCurrentTime(next, 'RAF-negativeOffset-preStart');
                 }
-              } else if (videoTime >= Math.abs(offset) && (primaryTime > 0 || secondaryTime > 0)) {
+              } else if (
+                videoTime >= Math.abs(offset) &&
+                (primaryTime > 0 || secondaryTime > 0)
+              ) {
                 const next = videoTime + dt;
                 if (next < maxSec && next < 3600) {
                   setVideoTime(next);
@@ -178,13 +193,20 @@ export const usePlaybackTimeTracker = ({
                   setVideoTime(next);
                   safeSetCurrentTime(next, 'RAF-positiveOffset-preStart');
                 }
-              } else if (videoTime >= offset && (primaryTime > 0 || secondaryTime > 0)) {
+              } else if (
+                videoTime >= offset &&
+                (primaryTime > 0 || secondaryTime > 0)
+              ) {
                 const next = videoTime + dt;
                 if (next < maxSec && next < 3600) {
                   setVideoTime(next);
                   safeSetCurrentTime(next, 'RAF-positiveOffset-both');
                 }
-              } else if (primaryDuration > 0 && primaryTime >= primaryDuration - 0.01 && secondaryTime > 0) {
+              } else if (
+                primaryDuration > 0 &&
+                primaryTime >= primaryDuration - 0.01 &&
+                secondaryTime > 0
+              ) {
                 const maxAllowed = Math.max(0, maxSec);
                 const next = Math.min(maxAllowed, videoTime + dt);
                 if (next !== videoTime && next < 3600) {

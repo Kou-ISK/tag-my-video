@@ -95,8 +95,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     channel: string,
     listener: (event: IpcRendererEvent, ...args: unknown[]) => void,
   ) => {
-    const wrapped = (event: IpcRendererEvent, ...args: unknown[]) =>
-      listener(event, ...args);
+    const wrapped = (...args: unknown[]) => {
+      const [event, ...rest] = args as [IpcRendererEvent, ...unknown[]];
+      listener(event, ...rest);
+    };
 
     let map = __listenerStore.get(channel);
     if (!map) {
@@ -104,7 +106,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       __listenerStore.set(channel, map);
     }
     map.set(listener, wrapped);
-    ipcRenderer.on(channel, wrapped as any);
+    ipcRenderer.on(channel, wrapped);
   },
   off: (channel: string, listener: (...args: unknown[]) => void) => {
     try {
