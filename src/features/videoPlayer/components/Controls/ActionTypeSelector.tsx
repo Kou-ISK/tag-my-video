@@ -20,8 +20,9 @@ export const ActionTypeSelector = ({
   actionType,
   updateActionType,
 }: ActionTypeSelectorProps) => {
-  const types = ActionList.find((value) => actionName.includes(value.action))
-    ?.types;
+  const types = ActionList.find((value) =>
+    actionName.includes(value.action),
+  )?.types;
   const handleChange = (event: SelectChangeEvent) => {
     updateActionType(id, event.target.value);
   };

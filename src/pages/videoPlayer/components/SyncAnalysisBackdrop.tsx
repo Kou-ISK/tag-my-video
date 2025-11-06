@@ -32,7 +32,9 @@ export const SyncAnalysisBackdrop: React.FC<SyncAnalysisBackdropProps> = ({
       backgroundColor: 'rgba(0, 0, 0, 0.7)',
     }}
   >
-    <Card sx={{ minWidth: 400, maxWidth: 500, backgroundColor: 'background.paper' }}>
+    <Card
+      sx={{ minWidth: 400, maxWidth: 500, backgroundColor: 'background.paper' }}
+    >
       <CardContent>
         <Stack spacing={3} alignItems="center">
           <Box
@@ -43,7 +45,11 @@ export const SyncAnalysisBackdrop: React.FC<SyncAnalysisBackdropProps> = ({
               justifyContent: 'center',
             }}
           >
-            <CircularProgress size={80} thickness={4} sx={{ color: 'primary.main' }} />
+            <CircularProgress
+              size={80}
+              thickness={4}
+              sx={{ color: 'primary.main' }}
+            />
             <Box
               sx={{
                 position: 'absolute',
@@ -65,7 +71,11 @@ export const SyncAnalysisBackdrop: React.FC<SyncAnalysisBackdropProps> = ({
           </Typography>
 
           <Box sx={{ width: '100%' }}>
-            <LinearProgress variant="determinate" value={progress} sx={{ height: 8, borderRadius: 4 }} />
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
             <Typography
               variant="caption"
               color="text.secondary"

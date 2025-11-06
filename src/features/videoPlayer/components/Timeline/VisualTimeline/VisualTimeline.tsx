@@ -10,10 +10,7 @@ import { TimelineData } from '../../../../../types/TimelineData';
 import { TimelineHeader } from './TimelineHeader';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineLane } from './TimelineLane';
-import {
-  TimelineEditDialog,
-  TimelineEditDraft,
-} from './TimelineEditDialog';
+import { TimelineEditDialog, TimelineEditDraft } from './TimelineEditDialog';
 
 interface VisualTimelineProps {
   timeline: TimelineData[];
@@ -116,7 +113,9 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
 
       if (event.shiftKey) {
         if (selectedIds.includes(id)) {
-          onSelectionChange(selectedIds.filter((selectedId) => selectedId !== id));
+          onSelectionChange(
+            selectedIds.filter((selectedId) => selectedId !== id),
+          );
         } else {
           onSelectionChange([...selectedIds, id]);
         }
@@ -125,7 +124,9 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
 
       if (event.metaKey || event.ctrlKey) {
         if (selectedIds.includes(id)) {
-          onSelectionChange(selectedIds.filter((selectedId) => selectedId !== id));
+          onSelectionChange(
+            selectedIds.filter((selectedId) => selectedId !== id),
+          );
         } else {
           onSelectionChange([...selectedIds, id]);
         }

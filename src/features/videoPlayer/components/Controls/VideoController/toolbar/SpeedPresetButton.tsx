@@ -34,17 +34,17 @@ export const SpeedPresetButton: React.FC<SpeedPresetButtonProps> = ({
         <IconButton
           onClick={() => {
             if (disabled) return;
-          onSelect(value);
-          onTriggerFlash(key);
-        }}
-        disabled={disabled}
-        sx={{
-          ...theme.custom.controllerPresetButton,
-          bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
-          '&:hover': {
-            bgcolor: lit ? 'primary.dark' : 'rgba(255,255,255,0.24)',
-          },
-          color: 'white',
+            onSelect(value);
+            onTriggerFlash(key);
+          }}
+          disabled={disabled}
+          sx={{
+            ...theme.custom.controllerPresetButton,
+            bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
+            '&:hover': {
+              bgcolor: lit ? 'primary.dark' : 'rgba(255,255,255,0.24)',
+            },
+            color: 'white',
           }}
           size="large"
         >

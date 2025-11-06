@@ -117,8 +117,8 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   backgroundColor: isSelected
                     ? theme.palette.secondary.main
                     : isTeam1
-                    ? theme.palette.team1.main
-                    : theme.palette.team2.main,
+                      ? theme.palette.team1.main
+                      : theme.palette.team2.main,
                   opacity: isHovered ? 1 : isSelected ? 0.9 : 0.7,
                   borderRadius: 1,
                   cursor: 'pointer',

@@ -17,7 +17,9 @@ interface AudioSyncBackdropProps {
   status: SyncStatus;
 }
 
-export const AudioSyncBackdrop: React.FC<AudioSyncBackdropProps> = ({ status }) => (
+export const AudioSyncBackdrop: React.FC<AudioSyncBackdropProps> = ({
+  status,
+}) => (
   <Backdrop
     open={status.isAnalyzing}
     sx={{
@@ -38,7 +40,11 @@ export const AudioSyncBackdrop: React.FC<AudioSyncBackdropProps> = ({ status }) 
               justifyContent: 'center',
             }}
           >
-            <CircularProgress size={80} thickness={4} sx={{ color: 'primary.main' }} />
+            <CircularProgress
+              size={80}
+              thickness={4}
+              sx={{ color: 'primary.main' }}
+            />
             <Box
               sx={{
                 position: 'absolute',

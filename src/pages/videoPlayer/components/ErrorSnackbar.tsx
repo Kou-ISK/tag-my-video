@@ -26,14 +26,22 @@ const getErrorTitle = (type: ErrorState['type']) => {
   }
 };
 
-export const ErrorSnackbar: React.FC<ErrorSnackbarProps> = ({ error, onClose }) => (
+export const ErrorSnackbar: React.FC<ErrorSnackbarProps> = ({
+  error,
+  onClose,
+}) => (
   <Snackbar
     open={!!error}
     autoHideDuration={6000}
     onClose={onClose}
     anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
   >
-    <Alert onClose={onClose} severity="error" variant="filled" sx={{ width: '100%' }}>
+    <Alert
+      onClose={onClose}
+      severity="error"
+      variant="filled"
+      sx={{ width: '100%' }}
+    >
       <AlertTitle>{error && getErrorTitle(error.type)}</AlertTitle>
       {error?.message}
     </Alert>

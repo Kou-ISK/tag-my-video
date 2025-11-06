@@ -28,7 +28,9 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
   const theme = useTheme();
   const isActive = !!active || flashing;
   const baseBg = emphasize ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)';
-  const hoverBg = emphasize ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.24)';
+  const hoverBg = emphasize
+    ? 'rgba(255,255,255,0.28)'
+    : 'rgba(255,255,255,0.24)';
   const activeBg = emphasize ? 'primary.main' : 'rgba(255,255,255,0.32)';
   const activeHoverBg = emphasize ? 'primary.dark' : 'rgba(255,255,255,0.4)';
 
@@ -38,17 +40,17 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
         <IconButton
           onClick={() => {
             if (disabled) return;
-          onClick();
-          onTriggerFlash(actionKey);
-        }}
-        disabled={disabled}
-        sx={{
-          ...theme.custom.controllerButton,
-          bgcolor: isActive ? activeBg : baseBg,
-          '&:hover': {
-            bgcolor: isActive ? activeHoverBg : hoverBg,
-          },
-          boxShadow: flashing ? '0 0 0 2px rgba(255,255,255,0.4)' : undefined,
+            onClick();
+            onTriggerFlash(actionKey);
+          }}
+          disabled={disabled}
+          sx={{
+            ...theme.custom.controllerButton,
+            bgcolor: isActive ? activeBg : baseBg,
+            '&:hover': {
+              bgcolor: isActive ? activeHoverBg : hoverBg,
+            },
+            boxShadow: flashing ? '0 0 0 2px rgba(255,255,255,0.4)' : undefined,
           }}
           size="large"
         >

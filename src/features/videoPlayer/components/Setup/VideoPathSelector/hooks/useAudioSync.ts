@@ -26,7 +26,11 @@ export const useAudioSync = ({ setSyncData }: UseAudioSyncOptions) => {
           tightPath,
           widePath,
           (stage, progress) => {
-            setStatus({ isAnalyzing: true, syncProgress: progress, syncStage: stage });
+            setStatus({
+              isAnalyzing: true,
+              syncProgress: progress,
+              syncStage: stage,
+            });
           },
         );
 

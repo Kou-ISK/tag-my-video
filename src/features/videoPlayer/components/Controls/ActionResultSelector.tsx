@@ -20,8 +20,9 @@ export const ActionResultSelector = ({
   actionResult,
   updateActionResult,
 }: ActionResultSelectorProps) => {
-  const results = ActionList.find((value) => actionName.includes(value.action))
-    ?.results;
+  const results = ActionList.find((value) =>
+    actionName.includes(value.action),
+  )?.results;
   const handleChange = (event: SelectChangeEvent) => {
     updateActionResult(id, event.target.value);
   };

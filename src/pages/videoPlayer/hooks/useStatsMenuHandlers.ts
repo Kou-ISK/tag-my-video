@@ -15,7 +15,12 @@ export const useStatsMenuHandlers = ({
       return;
     }
 
-    const statsViewOptions: StatsView[] = ['possession', 'results', 'types', 'momentum'];
+    const statsViewOptions: StatsView[] = [
+      'possession',
+      'results',
+      'types',
+      'momentum',
+    ];
 
     const shortcutHandler = (_event: unknown, args: unknown) => {
       if (args === 'analyze') {

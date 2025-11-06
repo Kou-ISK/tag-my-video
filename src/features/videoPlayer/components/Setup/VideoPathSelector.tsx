@@ -19,7 +19,9 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
   setSyncData,
 }) => {
   const [wizardOpen, setWizardOpen] = useState(false);
-  const { performAudioSync, status: syncStatus } = useAudioSync({ setSyncData });
+  const { performAudioSync, status: syncStatus } = useAudioSync({
+    setSyncData,
+  });
 
   const handlePackageLoaded = useCallback(
     ({

@@ -78,7 +78,9 @@ export const useSyncActions = ({
 
           setPlayerForceUpdateKey((prev) => {
             const newKey = prev + 1;
-            console.log(`[forceUpdate] playerForceUpdateKey updated to ${newKey}`);
+            console.log(
+              `[forceUpdate] playerForceUpdateKey updated to ${newKey}`,
+            );
             return newKey;
           });
 
@@ -104,7 +106,9 @@ export const useSyncActions = ({
     setSyncStage('');
 
     try {
-      const { AudioSyncAnalyzer } = await import('../../utils/AudioSyncAnalyzer');
+      const { AudioSyncAnalyzer } = await import(
+        '../../utils/AudioSyncAnalyzer'
+      );
       const analyzer = new AudioSyncAnalyzer();
 
       console.log('音声同期を再実行中...');

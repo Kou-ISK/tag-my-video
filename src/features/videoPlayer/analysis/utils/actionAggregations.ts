@@ -47,10 +47,7 @@ const filterByTeamAndAction = (
   timeline: TimelineData[],
   teamName: string,
   actionName: string,
-) =>
-  timeline.filter(
-    (item) => item.actionName === `${teamName} ${actionName}`,
-  );
+) => timeline.filter((item) => item.actionName === `${teamName} ${actionName}`);
 
 export const countActionResultsForTeam = (
   timeline: TimelineData[],

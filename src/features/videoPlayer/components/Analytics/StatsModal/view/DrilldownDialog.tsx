@@ -78,7 +78,8 @@ export const DrilldownDialog = ({
                       />
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
-                      {entry.startTime.toFixed(1)}s - {entry.endTime.toFixed(1)}s
+                      {entry.startTime.toFixed(1)}s - {entry.endTime.toFixed(1)}
+                      s
                     </Typography>
                   </Stack>
                   <Button

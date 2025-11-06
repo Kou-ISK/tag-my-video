@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 
 export const useTimelineSelection = () => {
-  const [selectedTimelineIdList, setSelectedTimelineIdList] = useState<string[]>([]);
+  const [selectedTimelineIdList, setSelectedTimelineIdList] = useState<
+    string[]
+  >([]);
 
   const getSelectedTimelineId = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
@@ -15,5 +17,9 @@ export const useTimelineSelection = () => {
     [],
   );
 
-  return { selectedTimelineIdList, setSelectedTimelineIdList, getSelectedTimelineId };
+  return {
+    selectedTimelineIdList,
+    setSelectedTimelineIdList,
+    getSelectedTimelineId,
+  };
 };

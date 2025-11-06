@@ -6,7 +6,10 @@ import { PackageLoadResult } from './types';
 
 interface ExistingPackageLoaderProps {
   onPackageLoaded: (result: PackageLoadResult) => void;
-  performAudioSync: (tightPath: string, widePath: string) => Promise<VideoSyncData>;
+  performAudioSync: (
+    tightPath: string,
+    widePath: string,
+  ) => Promise<VideoSyncData>;
 }
 
 const ensureElectron = () => {
@@ -55,12 +58,18 @@ export const ExistingPackageLoader: React.FC<ExistingPackageLoaderProps> = ({
       const config = await response.json();
 
       const tightRelative = config.tightViewPath as string;
-      const wideRelative = (config.wideViewPath || undefined) as string | undefined;
+      const wideRelative = (config.wideViewPath || undefined) as
+        | string
+        | undefined;
       const tightAbsolute = `${packagePath}/${tightRelative}`;
-      const wideAbsolute = wideRelative ? `${packagePath}/${wideRelative}` : undefined;
+      const wideAbsolute = wideRelative
+        ? `${packagePath}/${wideRelative}`
+        : undefined;
 
       let resultingSyncData: VideoSyncData | undefined;
-      const videoList = wideAbsolute ? [tightAbsolute, wideAbsolute] : [tightAbsolute];
+      const videoList = wideAbsolute
+        ? [tightAbsolute, wideAbsolute]
+        : [tightAbsolute];
 
       if (wideAbsolute) {
         const storedSync = config.syncData as
@@ -81,10 +90,16 @@ export const ExistingPackageLoader: React.FC<ExistingPackageLoaderProps> = ({
                 : undefined,
           } as VideoSyncData;
         } else {
-          resultingSyncData = await performAudioSync(tightAbsolute, wideAbsolute);
+          resultingSyncData = await performAudioSync(
+            tightAbsolute,
+            wideAbsolute,
+          );
           if (resultingSyncData && window.electronAPI?.saveSyncData) {
             try {
-              await window.electronAPI.saveSyncData(configFilePath, resultingSyncData);
+              await window.electronAPI.saveSyncData(
+                configFilePath,
+                resultingSyncData,
+              );
             } catch (error) {
               console.error('同期データの保存に失敗:', error);
             }

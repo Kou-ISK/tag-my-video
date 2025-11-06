@@ -13,11 +13,7 @@ export interface TimelineEditingHandlers {
   updateQualifier: (id: string, qualifier: string) => void;
   updateActionResult: (id: string, actionResult: string) => void;
   updateActionType: (id: string, actionType: string) => void;
-  updateTimelineRange: (
-    id: string,
-    startTime: number,
-    endTime: number,
-  ) => void;
+  updateTimelineRange: (id: string, startTime: number, endTime: number) => void;
   sortTimelineDatas: (column: string, sortDesc: boolean) => void;
 }
 
@@ -25,7 +21,12 @@ export const useTimelineEditing = (
   setTimeline: React.Dispatch<React.SetStateAction<TimelineData[]>>,
 ): TimelineEditingHandlers => {
   const addTimelineData = useCallback(
-    (actionName: string, startTime: number, endTime: number, qualifier: string) => {
+    (
+      actionName: string,
+      startTime: number,
+      endTime: number,
+      qualifier: string,
+    ) => {
       const newTimelineInstance: TimelineData = {
         id: ulid(),
         actionName,
@@ -76,7 +77,9 @@ export const useTimelineEditing = (
 
   const updateTimelineRange = useCallback(
     (id: string, startTime: number, endTime: number) => {
-      const normalizedStart = Number.isFinite(startTime) ? Math.max(0, startTime) : 0;
+      const normalizedStart = Number.isFinite(startTime)
+        ? Math.max(0, startTime)
+        : 0;
       const normalizedEnd = Number.isFinite(endTime)
         ? Math.max(normalizedStart, endTime)
         : normalizedStart;
@@ -105,15 +108,15 @@ export const useTimelineEditing = (
             return a.startTime === b.startTime
               ? 0
               : a.startTime > b.startTime
-              ? direction
-              : -direction;
+                ? direction
+                : -direction;
           }
           if (column === 'endTime') {
             return a.endTime === b.endTime
               ? 0
               : a.endTime > b.endTime
-              ? direction
-              : -direction;
+                ? direction
+                : -direction;
           }
           if (column === 'actionName') {
             return (

@@ -8,10 +8,7 @@ interface ActionBreakdownTabProps {
   hasData: boolean;
   actions: ReadonlyArray<string>;
   teamNames: ReadonlyArray<string>;
-  countActionFunction: (
-    teamName: string,
-    actionName: string,
-  ) => rechartsData[];
+  countActionFunction: (teamName: string, actionName: string) => rechartsData[];
   titleFormatter: (actionName: string) => string;
   emptyMessage: string;
 }
@@ -31,11 +28,7 @@ export const ActionBreakdownTab = ({
   return (
     <Stack spacing={3}>
       {actions.map((actionName) => (
-        <Paper
-          key={actionName}
-          elevation={1}
-          sx={{ p: 3, borderRadius: 2 }}
-        >
+        <Paper key={actionName} elevation={1} sx={{ p: 3, borderRadius: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
             {titleFormatter(actionName)}
           </Typography>

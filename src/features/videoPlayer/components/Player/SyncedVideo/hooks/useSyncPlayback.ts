@@ -26,11 +26,13 @@ interface UseSyncPlaybackReturn {
 
 const ensurePlayer = (id: string) => {
   const namespace = videojs as unknown as {
-    getPlayer?: (pid: string) => {
-      currentTime?: () => number;
-      on?: (event: string, handler: () => void) => void;
-      off?: (event: string, handler: () => void) => void;
-    } | undefined;
+    getPlayer?: (pid: string) =>
+      | {
+          currentTime?: () => number;
+          on?: (event: string, handler: () => void) => void;
+          off?: (event: string, handler: () => void) => void;
+        }
+      | undefined;
   };
   return namespace.getPlayer?.(id);
 };

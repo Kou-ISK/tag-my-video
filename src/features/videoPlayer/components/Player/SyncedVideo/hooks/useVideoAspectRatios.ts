@@ -23,19 +23,22 @@ export const useVideoAspectRatios = (videoList: string[]) => {
     });
   }, [videoList]);
 
-  const handleAspectRatioChange = useCallback((index: number, ratio: number) => {
-    if (!Number.isFinite(ratio) || ratio <= 0) {
-      return;
-    }
-    setAspectRatios((prev) => {
-      const next = [...prev];
-      if (Math.abs((next[index] ?? 0) - ratio) < 0.0001) {
-        return prev;
+  const handleAspectRatioChange = useCallback(
+    (index: number, ratio: number) => {
+      if (!Number.isFinite(ratio) || ratio <= 0) {
+        return;
       }
-      next[index] = ratio;
-      return next;
-    });
-  }, []);
+      setAspectRatios((prev) => {
+        const next = [...prev];
+        if (Math.abs((next[index] ?? 0) - ratio) < 0.0001) {
+          return prev;
+        }
+        next[index] = ratio;
+        return next;
+      });
+    },
+    [],
+  );
 
   return { aspectRatios, handleAspectRatioChange };
 };

@@ -1,12 +1,6 @@
 import React from 'react';
 import { Box, Divider, Paper, Typography } from '@mui/material';
-import {
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Cell,
-  Legend,
-} from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { NoDataPlaceholder } from './NoDataPlaceholder';
 
 interface PossessionTabProps {
@@ -48,7 +42,10 @@ export const PossessionTab = ({
               }
             >
               {data.map((_, index) => (
-                <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                <Cell
+                  key={index}
+                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                />
               ))}
             </Pie>
             <Legend verticalAlign="bottom" iconType="circle" height={36} />

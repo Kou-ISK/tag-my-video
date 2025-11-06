@@ -20,13 +20,21 @@ import VideoFileIcon from '@mui/icons-material/VideoFile';
 import { PackageDatas } from '../../../../../renderer';
 import { MetaData } from '../../../../../types/MetaData';
 import { VideoSyncData } from '../../../../../types/VideoSync';
-import { PackageLoadResult, SyncStatus, WizardFormState, WizardSelectionState } from './types';
+import {
+  PackageLoadResult,
+  SyncStatus,
+  WizardFormState,
+  WizardSelectionState,
+} from './types';
 
 interface CreatePackageWizardProps {
   open: boolean;
   onClose: () => void;
   onPackageCreated: (payload: PackageLoadResult) => void;
-  performAudioSync: (tightPath: string, widePath: string) => Promise<VideoSyncData>;
+  performAudioSync: (
+    tightPath: string,
+    widePath: string,
+  ) => Promise<VideoSyncData>;
   syncStatus: SyncStatus;
 }
 
@@ -60,9 +68,8 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
   syncStatus,
 }) => {
   const [form, setForm] = useState<WizardFormState>(INITIAL_FORM);
-  const [selection, setSelection] = useState<WizardSelectionState>(
-    INITIAL_SELECTION,
-  );
+  const [selection, setSelection] =
+    useState<WizardSelectionState>(INITIAL_SELECTION);
   const [activeStep, setActiveStep] = useState(0);
   const [errors, setErrors] = useState<Partial<WizardFormState>>({});
 
@@ -173,13 +180,14 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
     };
 
     try {
-      const packageDatas: PackageDatas = await window.electronAPI!.createPackage(
-        selection.selectedDirectory,
-        form.packageName,
-        selection.selectedTightVideo,
-        selection.selectedWideVideo || null,
-        metaDataConfig,
-      );
+      const packageDatas: PackageDatas =
+        await window.electronAPI!.createPackage(
+          selection.selectedDirectory,
+          form.packageName,
+          selection.selectedTightVideo,
+          selection.selectedWideVideo || null,
+          metaDataConfig,
+        );
 
       let syncData: VideoSyncData | undefined;
       const videoList = packageDatas.wideViewPath
@@ -247,7 +255,9 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
         label: '映像ファイル',
         value: (
           <Stack spacing={0.5}>
-            <Typography variant="body2">寄り: {selection.selectedTightVideo?.split('/').pop()}</Typography>
+            <Typography variant="body2">
+              寄り: {selection.selectedTightVideo?.split('/').pop()}
+            </Typography>
             {selection.selectedWideVideo && (
               <Typography variant="body2">
                 引き: {selection.selectedWideVideo.split('/').pop()}
@@ -306,7 +316,10 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
               label="パッケージ名"
               value={form.packageName}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, packageName: event.target.value }))
+                setForm((prev) => ({
+                  ...prev,
+                  packageName: event.target.value,
+                }))
               }
               error={!!errors.packageName}
               helperText={errors.packageName || '例: 2024_春季大会_決勝'}
@@ -343,7 +356,8 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
           <Stack spacing={3}>
             <Alert severity="info">
               <AlertTitle>パッケージの保存先を選択してください</AlertTitle>
-              選択したフォルダ内に「{form.packageName || 'パッケージ'}」フォルダが作成されます
+              選択したフォルダ内に「{form.packageName || 'パッケージ'}
+              」フォルダが作成されます
             </Alert>
             {selection.selectedDirectory ? (
               <Paper variant="outlined" sx={{ p: 2, bgcolor: 'success.light' }}>
@@ -383,7 +397,10 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
                 {selection.selectedTightVideo ? '再選択' : '選択'}
               </Button>
               {selection.selectedTightVideo && (
-                <Paper variant="outlined" sx={{ p: 1, bgcolor: 'success.light' }}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 1, bgcolor: 'success.light' }}
+                >
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <CheckCircleIcon color="success" fontSize="small" />
                     <Typography variant="caption" noWrap>
@@ -408,7 +425,10 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
                 {selection.selectedWideVideo ? '再選択' : '選択'}
               </Button>
               {selection.selectedWideVideo && (
-                <Paper variant="outlined" sx={{ p: 1, bgcolor: 'success.light' }}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 1, bgcolor: 'success.light' }}
+                >
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <CheckCircleIcon color="success" fontSize="small" />
                     <Typography variant="caption" noWrap>
@@ -434,7 +454,8 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
                     <Typography variant="caption" color="text.secondary">
                       {item.label}
                     </Typography>
-                    {typeof item.value === 'string' || typeof item.value === 'number' ? (
+                    {typeof item.value === 'string' ||
+                    typeof item.value === 'number' ? (
                       <Typography variant="body1">{item.value}</Typography>
                     ) : (
                       item.value

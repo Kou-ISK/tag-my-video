@@ -189,8 +189,8 @@ export const VideoController = ({
           baseTime = useSlider
             ? videoTime
             : base?.currentTime
-            ? base.currentTime() || videoTime
-            : videoTime;
+              ? base.currentTime() || videoTime
+              : videoTime;
         } catch {
           baseTime = videoTime;
         }

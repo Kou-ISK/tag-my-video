@@ -22,7 +22,9 @@ export interface WizardSelectionState {
   selectedWideVideo: string;
 }
 
-export interface WizardStepContext extends WizardFormState, WizardSelectionState {
+export interface WizardStepContext
+  extends WizardFormState,
+    WizardSelectionState {
   errors: Partial<Record<keyof WizardFormState, string>>;
   activeStep: number;
 }
