@@ -63,8 +63,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           position: 'relative',
           height: 32,
           flex: 1,
-          backgroundColor:
-            theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
+          backgroundColor: theme.custom.rails.laneBg,
           borderRadius: 1,
           border: 1,
           borderColor: 'divider',
@@ -75,6 +74,18 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           const width = Math.max(20, timeToPosition(item.endTime) - left);
           const isSelected = selectedIds.includes(item.id);
           const isHovered = hoveredItemId === item.id;
+
+          // バー背景色の決定
+          let barBgColor: string;
+          if (isSelected) {
+            barBgColor = theme.palette.secondary.main;
+          } else if (isTeam1) {
+            barBgColor = theme.custom.bars.team1;
+          } else {
+            barBgColor = theme.custom.bars.team2;
+          }
+
+          const barOpacity = isHovered ? 1 : isSelected ? 0.9 : 0.7;
 
           return (
             <Tooltip
@@ -114,12 +125,8 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   width: `${width}px`,
                   top: 4,
                   bottom: 4,
-                  backgroundColor: isSelected
-                    ? theme.palette.secondary.main
-                    : isTeam1
-                      ? theme.palette.team1.main
-                      : theme.palette.team2.main,
-                  opacity: isHovered ? 1 : isSelected ? 0.9 : 0.7,
+                  backgroundColor: barBgColor,
+                  opacity: barOpacity,
                   borderRadius: 1,
                   cursor: 'pointer',
                   display: 'flex',
@@ -127,7 +134,9 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   justifyContent: 'center',
                   px: 0.5,
                   border: isSelected ? 2 : 0,
-                  borderColor: 'secondary.dark',
+                  borderColor: isSelected
+                    ? theme.custom.bars.selectedBorder
+                    : 'transparent',
                   transition: 'all 0.2s',
                   '&:hover': {
                     transform: 'scaleY(1.2)',

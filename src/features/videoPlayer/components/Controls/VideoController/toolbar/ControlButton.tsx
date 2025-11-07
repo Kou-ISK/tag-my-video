@@ -27,12 +27,21 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
 }) => {
   const theme = useTheme();
   const isActive = !!active || flashing;
-  const baseBg = emphasize ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)';
-  const hoverBg = emphasize
-    ? 'rgba(255,255,255,0.28)'
-    : 'rgba(255,255,255,0.24)';
-  const activeBg = emphasize ? 'primary.main' : 'rgba(255,255,255,0.32)';
-  const activeHoverBg = emphasize ? 'primary.dark' : 'rgba(255,255,255,0.4)';
+
+  // 背景色の決定
+  const getBgColor = () => {
+    if (isActive) {
+      return emphasize ? 'primary.main' : theme.custom.glass.hoverStrong;
+    }
+    return theme.custom.glass.hover;
+  };
+
+  const getHoverBgColor = () => {
+    if (isActive) {
+      return emphasize ? 'primary.dark' : theme.custom.accents.hoverPink;
+    }
+    return theme.custom.glass.hoverStrong;
+  };
 
   return (
     <Tooltip title={title}>
@@ -46,11 +55,13 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
           disabled={disabled}
           sx={{
             ...theme.custom.controllerButton,
-            bgcolor: isActive ? activeBg : baseBg,
+            bgcolor: getBgColor(),
             '&:hover': {
-              bgcolor: isActive ? activeHoverBg : hoverBg,
+              bgcolor: getHoverBgColor(),
             },
-            boxShadow: flashing ? '0 0 0 2px rgba(255,255,255,0.4)' : undefined,
+            boxShadow: flashing
+              ? `0 0 0 2px ${theme.custom.bars.selectedBorder}`
+              : undefined,
           }}
           size="large"
         >

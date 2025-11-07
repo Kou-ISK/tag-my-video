@@ -100,7 +100,7 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
     <Box
       sx={{
         width: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.72)',
+        backgroundColor: (theme) => theme.custom.glass.panel,
         backdropFilter: 'blur(10px)',
         borderRadius: 2,
         pointerEvents: 'auto',
@@ -136,7 +136,7 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
           orientation="vertical"
           flexItem
           sx={{
-            borderColor: 'rgba(255,255,255,0.16)',
+            borderColor: 'divider',
             display: { xs: 'none', md: 'block' },
           }}
         />
@@ -161,7 +161,7 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
           orientation="vertical"
           flexItem
           sx={{
-            borderColor: 'rgba(255,255,255,0.16)',
+            borderColor: 'divider',
             display: { xs: 'none', md: 'block' },
           }}
         />

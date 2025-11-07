@@ -1,7 +1,9 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, ThemeOptions, alpha } from '@mui/material/styles';
 import type { SxProps } from '@mui/system';
 
-// カラーパレットの型拡張
+// ========================================
+// 型拡張: カスタムパレット＋セマンティックトークン
+// ========================================
 declare module '@mui/material/styles' {
   interface Palette {
     team1: Palette['primary'];
@@ -28,17 +30,51 @@ declare module '@mui/material/styles' {
     custom: {
       controllerButton: SxProps<Theme>;
       controllerPresetButton: SxProps<Theme>;
+      // ===== 新規追加: セマンティックトークン =====
+      rails: {
+        timelineBg: string;
+        laneBg: string;
+      };
+      bars: {
+        team1: string;
+        team2: string;
+        selectedBorder: string;
+      };
+      glass: {
+        panel: string;
+        hover: string;
+        hoverStrong: string;
+      };
+      accents: {
+        hoverPink: string;
+      };
     };
   }
   interface ThemeOptions {
     custom?: {
       controllerButton?: SxProps<Theme>;
       controllerPresetButton?: SxProps<Theme>;
+      rails?: {
+        timelineBg?: string;
+        laneBg?: string;
+      };
+      bars?: {
+        team1?: string;
+        team2?: string;
+        selectedBorder?: string;
+      };
+      glass?: {
+        panel?: string;
+        hover?: string;
+        hoverStrong?: string;
+      };
+      accents?: {
+        hoverPink?: string;
+      };
     };
   }
 }
 
-// Buttonコンポーネントのcolor propsに追加
 declare module '@mui/material/Button' {
   interface ButtonPropsColorOverrides {
     team1: true;
@@ -53,140 +89,164 @@ declare module '@mui/material/Chip' {
   }
 }
 
-export const appTheme = createTheme({
-  custom: {
-    controllerButton: {
-      color: '#ffffff',
-      borderRadius: 12,
-    },
-    controllerPresetButton: {
-      color: '#ffffff',
-      borderRadius: 12,
-      flexDirection: 'column',
-    },
+// ========================================
+// カラースキーム定義: Neon (一元化)
+// ========================================
+const NEON_SCHEME = {
+  background: { default: '#0D0D0D', paper: '#121212' },
+  text: {
+    primary: '#FFFFFF',
+    secondary: '#E0E0E0',
+    disabled: 'rgba(255,255,255,0.5)',
   },
-  palette: {
-    // チーム1: 赤系統
-    team1: {
-      main: '#d32f2f',
-      light: '#ff6659',
-      dark: '#9a0007',
-      contrastText: '#ffffff',
+  primary: { main: '#1E90FF', contrastText: '#FFFFFF' }, // Electric Blue
+  secondary: { main: '#00FF85', contrastText: '#000000' }, // Neon Green
+  accent: '#FF0099', // Vivid Pink (hover)
+  divider: 'rgba(255,255,255,0.12)',
+  team1: '#1E90FF',
+  team2: '#FF6F61', // Warm Accent
+};
+
+// ========================================
+// テーマビルダー: mode (dark/light) のみ対応
+// ========================================
+function buildTheme(mode: 'dark' | 'light'): ThemeOptions {
+  const S = NEON_SCHEME;
+
+  // Light mode用の微調整（将来対応）
+  const bgDefault = mode === 'dark' ? S.background.default : '#F5F5F5';
+  const bgPaper = mode === 'dark' ? S.background.paper : '#FFFFFF';
+  const textPrimary = mode === 'dark' ? S.text.primary : '#000000';
+  const textSecondary = mode === 'dark' ? S.text.secondary : '#666666';
+
+  return {
+    palette: {
+      mode,
+      background: {
+        default: bgDefault,
+        paper: bgPaper,
+      },
+      text: {
+        primary: textPrimary,
+        secondary: textSecondary,
+        disabled: S.text.disabled,
+      },
+      primary: S.primary,
+      secondary: S.secondary,
+      divider: S.divider,
+      // チームカラー
+      team1: {
+        main: S.team1,
+        light: alpha(S.team1, 0.7),
+        dark: alpha(S.team1, 0.9),
+        contrastText: '#FFFFFF',
+      },
+      team2: {
+        main: S.team2,
+        light: alpha(S.team2, 0.7),
+        dark: alpha(S.team2, 0.9),
+        contrastText: '#FFFFFF',
+      },
+      // モメンタムチャート専用色（既存維持）
+      momentum: {
+        try: '#ff5722',
+        positive: '#4caf50',
+        negative: '#9c27b0',
+        neutral: '#757575',
+      },
+      error: { main: '#d32f2f' },
+      warning: { main: '#ed6c02' },
+      info: { main: '#0288d1' },
+      success: { main: '#2e7d32' },
     },
-    // チーム2: 青系統
-    team2: {
-      main: '#1976d2',
-      light: '#63a4ff',
-      dark: '#004ba0',
-      contrastText: '#ffffff',
+    shape: { borderRadius: 12 },
+    spacing: 8,
+    typography: {
+      fontFamily: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'].join(
+        ',',
+      ),
+      h6: { fontWeight: 700 },
+      body2: { lineHeight: 1.6 },
+      button: { textTransform: 'none', fontWeight: 700 },
     },
-    // モメンタムチャート専用色
-    momentum: {
-      try: '#ff5722', // Try - オレンジレッド
-      positive: '#4caf50', // ポジティブ - グリーン
-      negative: '#9c27b0', // ネガティブ - パープル
-      neutral: '#757575', // デフォルト - グレー
-    },
-    // MUIデフォルトカラーの調整
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-    error: {
-      main: '#d32f2f',
-    },
-    warning: {
-      main: '#ed6c02',
-    },
-    info: {
-      main: '#0288d1',
-    },
-    success: {
-      main: '#2e7d32',
-    },
-  },
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Hiragino Kaku Gothic ProN"',
-      '"Hiragino Sans"',
-      '"Yu Gothic"',
-      'Meiryo',
-      'sans-serif',
-    ].join(','),
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '0.02em',
-    },
-    h6: {
-      fontWeight: 600,
-    },
-    subtitle1: {
-      fontWeight: 600,
-      fontSize: '1rem',
-    },
-    subtitle2: {
-      fontWeight: 500,
-      fontSize: '0.875rem',
-    },
-    body1: {
-      fontSize: '1rem',
-      lineHeight: 1.6,
-    },
-    body2: {
-      fontSize: '0.875rem',
-      lineHeight: 1.5,
-    },
-    button: {
-      textTransform: 'none', // ボタンテキストの大文字化を無効
-      fontWeight: 500,
-    },
-  },
-  spacing: 8, // 8px基準
-  shape: {
-    borderRadius: 8, // デフォルトの角丸
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          padding: '8px 16px',
-        },
-        sizeLarge: {
-          padding: '12px 24px',
-          fontSize: '1rem',
+    shadows: new Array(25).fill('none') as unknown as ThemeOptions['shadows'],
+    components: {
+      MuiPaper: {
+        styleOverrides: { root: { backgroundImage: 'none' } },
+      },
+      MuiButton: {
+        defaultProps: { disableElevation: true },
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+            paddingInline: 16,
+            paddingBlock: 10,
+          },
+          containedPrimary: {
+            boxShadow: '0 0 0 0 rgba(0,0,0,0)',
+            '&:hover': {
+              boxShadow: '0 0 16px 0 rgba(30,144,255,0.35)',
+            },
+          },
         },
       },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+            backdropFilter: 'blur(8px)',
+          },
         },
       },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          fontWeight: 500,
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: { borderRadius: 10, backdropFilter: 'blur(6px)' },
         },
       },
-    },
-    MuiTextField: {
-      defaultProps: {
-        variant: 'outlined',
+      MuiDivider: {
+        styleOverrides: { root: { borderColor: S.divider } },
       },
     },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          padding: '12px 16px',
-        },
+    custom: {
+      controllerButton: {
+        color: '#ffffff',
+        borderRadius: 12,
+      },
+      controllerPresetButton: {
+        color: '#ffffff',
+        borderRadius: 12,
+        flexDirection: 'column',
+      },
+      // ===== セマンティックトークン =====
+      rails: {
+        timelineBg: mode === 'dark' ? bgDefault : '#F5F5F5',
+        laneBg: mode === 'dark' ? '#0F0F0F' : '#FAFAFA',
+      },
+      bars: {
+        team1: S.team1,
+        team2: S.team2,
+        selectedBorder: 'rgba(255,255,255,0.4)',
+      },
+      glass: {
+        panel: 'rgba(0,0,0,0.72)',
+        hover: 'rgba(255,255,255,0.12)',
+        hoverStrong: 'rgba(255,255,255,0.24)',
+      },
+      accents: {
+        hoverPink: S.accent,
       },
     },
-  },
-});
+  };
+}
+
+// ========================================
+// エクスポート: getAppTheme 関数
+// ========================================
+export function getAppTheme(mode: 'dark' | 'light' = 'dark') {
+  return createTheme(buildTheme(mode));
+}
+
+// ========================================
+// 後方互換: appTheme（既存コードで使用中）
+// ========================================
+export const appTheme = getAppTheme('dark');

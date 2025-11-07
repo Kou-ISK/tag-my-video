@@ -40,9 +40,9 @@ export const SpeedPresetButton: React.FC<SpeedPresetButtonProps> = ({
           disabled={disabled}
           sx={{
             ...theme.custom.controllerPresetButton,
-            bgcolor: lit ? 'primary.main' : 'rgba(255,255,255,0.12)',
+            bgcolor: lit ? 'primary.main' : theme.custom.glass.hover,
             '&:hover': {
-              bgcolor: lit ? 'primary.dark' : 'rgba(255,255,255,0.24)',
+              bgcolor: lit ? 'primary.dark' : theme.custom.glass.hoverStrong,
             },
             color: 'white',
           }}
