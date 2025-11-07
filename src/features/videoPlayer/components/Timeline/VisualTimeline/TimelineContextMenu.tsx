@@ -1,0 +1,96 @@
+import React from 'react';
+import {
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+
+interface TimelineContextMenuProps {
+  anchorPosition: { top: number; left: number } | null;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onJumpTo: () => void;
+  onDuplicate: () => void;
+}
+
+export const TimelineContextMenu: React.FC<TimelineContextMenuProps> = ({
+  anchorPosition,
+  onClose,
+  onEdit,
+  onDelete,
+  onJumpTo,
+  onDuplicate,
+}) => {
+  const handleEdit = () => {
+    onEdit();
+    onClose();
+  };
+
+  const handleDelete = () => {
+    onDelete();
+    onClose();
+  };
+
+  const handleJumpTo = () => {
+    onJumpTo();
+    onClose();
+  };
+
+  const handleDuplicate = () => {
+    onDuplicate();
+    onClose();
+  };
+
+  return (
+    <Menu
+      open={Boolean(anchorPosition)}
+      onClose={onClose}
+      anchorReference="anchorPosition"
+      anchorPosition={anchorPosition || undefined}
+      slotProps={{
+        paper: {
+          sx: {
+            minWidth: 200,
+          },
+        },
+      }}
+    >
+      <MenuItem onClick={handleJumpTo}>
+        <ListItemIcon>
+          <PlayArrowIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText primary="この位置へジャンプ" />
+      </MenuItem>
+
+      <MenuItem onClick={handleEdit}>
+        <ListItemIcon>
+          <EditIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText primary="編集" />
+      </MenuItem>
+
+      <MenuItem onClick={handleDuplicate}>
+        <ListItemIcon>
+          <ContentCopyIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText primary="複製" />
+      </MenuItem>
+
+      <Divider />
+
+      <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+        <ListItemIcon>
+          <DeleteIcon fontSize="small" color="error" />
+        </ListItemIcon>
+        <ListItemText primary="削除" />
+      </MenuItem>
+    </Menu>
+  );
+};

@@ -11,6 +11,7 @@ import { TimelineHeader } from './TimelineHeader';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineLane } from './TimelineLane';
 import { TimelineEditDialog, TimelineEditDraft } from './TimelineEditDialog';
+import { TimelineContextMenu } from './TimelineContextMenu';
 
 interface VisualTimelineProps {
   timeline: TimelineData[];
@@ -42,9 +43,14 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<TimelineEditDraft | null>(
     null,
   );
+  const [contextMenu, setContextMenu] = useState<{
+    position: { top: number; left: number };
+    itemId: string;
+  } | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -145,21 +151,146 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     (event: React.MouseEvent, id: string) => {
       event.preventDefault();
       event.stopPropagation();
-      const item = timeline.find((entry) => entry.id === id);
-      if (!item) return;
-      setEditingDraft({
-        id: item.id,
-        actionName: item.actionName,
-        qualifier: item.qualifier || '',
-        actionType: item.actionType || '',
-        actionResult: item.actionResult || '',
-        startTime: item.startTime.toString(),
-        endTime: item.endTime.toString(),
-        originalStartTime: item.startTime,
-        originalEndTime: item.endTime,
+
+      // コンテキストメニューを表示
+      setContextMenu({
+        position: { top: event.clientY, left: event.clientX },
+        itemId: id,
       });
+
+      // 選択されていない場合は選択
+      if (!selectedIds.includes(id)) {
+        onSelectionChange([id]);
+      }
     },
-    [timeline],
+    [selectedIds, onSelectionChange],
+  );
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleContextMenuEdit = useCallback(() => {
+    if (!contextMenu) return;
+    const item = timeline.find((entry) => entry.id === contextMenu.itemId);
+    if (!item) return;
+
+    setEditingDraft({
+      id: item.id,
+      actionName: item.actionName,
+      qualifier: item.qualifier || '',
+      actionType: item.actionType || '',
+      actionResult: item.actionResult || '',
+      startTime: item.startTime.toString(),
+      endTime: item.endTime.toString(),
+      originalStartTime: item.startTime,
+      originalEndTime: item.endTime,
+    });
+    setContextMenu(null);
+  }, [contextMenu, timeline]);
+
+  const handleContextMenuDelete = useCallback(() => {
+    if (!contextMenu) return;
+    onDelete([contextMenu.itemId]);
+    setContextMenu(null);
+  }, [contextMenu, onDelete]);
+
+  const handleContextMenuJumpTo = useCallback(() => {
+    if (!contextMenu) return;
+    const item = timeline.find((entry) => entry.id === contextMenu.itemId);
+    if (!item) return;
+    onSeek(item.startTime);
+    setContextMenu(null);
+  }, [contextMenu, timeline, onSeek]);
+
+  const handleContextMenuDuplicate = useCallback(() => {
+    if (!contextMenu) return;
+    const item = timeline.find((entry) => entry.id === contextMenu.itemId);
+    if (!item) return;
+
+    // 複製機能は今後実装予定
+    console.log('Duplicate item:', item);
+    setContextMenu(null);
+  }, [contextMenu, timeline]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      // フォーカスされているアイテムがない場合は最初のアイテムをフォーカス
+      if (!focusedItemId && timeline.length > 0) {
+        if (
+          ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
+            event.key,
+          )
+        ) {
+          event.preventDefault();
+          setFocusedItemId(timeline[0].id);
+          onSelectionChange([timeline[0].id]);
+          return;
+        }
+      }
+
+      if (!focusedItemId) return;
+      const currentIndex = timeline.findIndex(
+        (item) => item.id === focusedItemId,
+      );
+      if (currentIndex === -1) return;
+
+      switch (event.key) {
+        case 'ArrowUp': {
+          event.preventDefault();
+          if (currentIndex > 0) {
+            const nextId = timeline[currentIndex - 1].id;
+            setFocusedItemId(nextId);
+            onSelectionChange([nextId]);
+          }
+          break;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          if (currentIndex < timeline.length - 1) {
+            const nextId = timeline[currentIndex + 1].id;
+            setFocusedItemId(nextId);
+            onSelectionChange([nextId]);
+          }
+          break;
+        }
+        case 'Enter': {
+          event.preventDefault();
+          const item = timeline[currentIndex];
+          setEditingDraft({
+            id: item.id,
+            actionName: item.actionName,
+            qualifier: item.qualifier || '',
+            actionType: item.actionType || '',
+            actionResult: item.actionResult || '',
+            startTime: item.startTime.toString(),
+            endTime: item.endTime.toString(),
+            originalStartTime: item.startTime,
+            originalEndTime: item.endTime,
+          });
+          break;
+        }
+        case 'Delete':
+        case 'Backspace': {
+          event.preventDefault();
+          onDelete([focusedItemId]);
+          // フォーカスを次のアイテムに移動
+          if (currentIndex < timeline.length - 1) {
+            setFocusedItemId(timeline[currentIndex + 1].id);
+            onSelectionChange([timeline[currentIndex + 1].id]);
+          } else if (currentIndex > 0) {
+            setFocusedItemId(timeline[currentIndex - 1].id);
+            onSelectionChange([timeline[currentIndex - 1].id]);
+          } else {
+            setFocusedItemId(null);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [focusedItemId, timeline, onSelectionChange, onDelete],
   );
 
   const handleCloseDialog = useCallback(() => {
@@ -241,6 +372,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         height: '100%',
         overflow: 'hidden',
       }}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
     >
       <TimelineHeader
         totalCount={timeline.length}
@@ -273,6 +406,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
             items={groupedByAction[actionName]}
             selectedIds={selectedIds}
             hoveredItemId={hoveredItemId}
+            focusedItemId={focusedItemId}
             onHoverChange={setHoveredItemId}
             onItemClick={handleItemClick}
             onItemContextMenu={handleItemContextMenu}
@@ -306,6 +440,15 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         onClose={handleCloseDialog}
         onDelete={handleDeleteSingle}
         onSave={handleSaveDialog}
+      />
+
+      <TimelineContextMenu
+        anchorPosition={contextMenu?.position || null}
+        onClose={handleCloseContextMenu}
+        onEdit={handleContextMenuEdit}
+        onDelete={handleContextMenuDelete}
+        onJumpTo={handleContextMenuJumpTo}
+        onDuplicate={handleContextMenuDuplicate}
       />
     </Box>
   );

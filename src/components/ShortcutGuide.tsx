@@ -47,12 +47,22 @@ const shortcuts: ShortcutItem[] = [
     category: '統計・分析',
     items: [
       { key: 'Command + Shift + A', action: '統計モーダルをトグル' },
-      { key: 'Command + Shift + 1', action: 'ポゼッションを表示' },
-      { key: 'Command + Shift + 2', action: 'アクション結果を表示' },
-      { key: 'Command + Shift + 3', action: 'アクション種別を表示' },
-      { key: 'Command + Shift + 4', action: 'モーメンタムを表示' },
-      { key: 'Command + Shift + 5', action: 'クロス集計を表示' },
+      { key: 'Command + Option + 1', action: 'ポゼッションを表示' },
+      { key: 'Command + Option + 2', action: 'アクション結果を表示' },
+      { key: 'Command + Option + 3', action: 'アクション種別を表示' },
+      { key: 'Command + Option + 4', action: 'モーメンタムを表示' },
+      { key: 'Command + Option + 5', action: 'クロス集計を表示' },
       { key: 'Command + /', action: 'ショートカット一覧を表示' },
+    ],
+  },
+  {
+    category: 'タイムライン編集',
+    items: [
+      { key: '↑/↓', action: 'タイムラインアイテムを移動' },
+      { key: 'Enter', action: '選択したアイテムを編集' },
+      { key: 'Delete/Backspace', action: '選択したアイテムを削除' },
+      { key: 'Command + Z', action: '元に戻す' },
+      { key: 'Command + Shift + Z', action: 'やり直し' },
     ],
   },
 ];

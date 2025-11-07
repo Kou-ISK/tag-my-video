@@ -8,6 +8,7 @@ interface TimelineLaneProps {
   items: TimelineData[];
   selectedIds: string[];
   hoveredItemId: string | null;
+  focusedItemId: string | null;
   onHoverChange: (id: string | null) => void;
   onItemClick: (event: React.MouseEvent, id: string) => void;
   onItemContextMenu: (event: React.MouseEvent, id: string) => void;
@@ -22,6 +23,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   items,
   selectedIds,
   hoveredItemId,
+  focusedItemId,
   onHoverChange,
   onItemClick,
   onItemContextMenu,
@@ -74,6 +76,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           const width = Math.max(20, timeToPosition(item.endTime) - left);
           const isSelected = selectedIds.includes(item.id);
           const isHovered = hoveredItemId === item.id;
+          const isFocused = focusedItemId === item.id;
 
           // バー背景色の決定
           let barBgColor: string;
@@ -85,7 +88,19 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
             barBgColor = theme.custom.bars.team2;
           }
 
-          const barOpacity = isHovered ? 1 : isSelected ? 0.9 : 0.7;
+          let barOpacity = 0.7;
+          if (isHovered) {
+            barOpacity = 1;
+          } else if (isSelected) {
+            barOpacity = 0.9;
+          }
+
+          let borderColor = 'transparent';
+          if (isFocused) {
+            borderColor = theme.palette.primary.main;
+          } else if (isSelected) {
+            borderColor = theme.custom.bars.selectedBorder;
+          }
 
           return (
             <Tooltip
@@ -133,10 +148,12 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   px: 0.5,
-                  border: isSelected ? 2 : 0,
-                  borderColor: isSelected
-                    ? theme.custom.bars.selectedBorder
-                    : 'transparent',
+                  border: isSelected || isFocused ? 2 : 0,
+                  borderColor,
+                  outline: isFocused
+                    ? `2px solid ${theme.palette.primary.main}`
+                    : 'none',
+                  outlineOffset: 2,
                   transition: 'all 0.2s',
                   '&:hover': {
                     transform: 'scaleY(1.2)',

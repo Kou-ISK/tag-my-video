@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeProvider, useMediaQuery, CssBaseline } from '@mui/material';
 import { getAppTheme } from './theme';
+import { NotificationProvider } from './contexts/NotificationProvider';
 
 /**
  * Root: システムのダークモード設定に完全追従
@@ -17,7 +18,9 @@ function Root() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
     </ThemeProvider>
   );
 }
