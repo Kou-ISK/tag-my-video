@@ -24,6 +24,10 @@ interface VisualTimelineProps {
   onUpdateActionType?: (id: string, actionType: string) => void;
   onUpdateActionResult?: (id: string, actionResult: string) => void;
   onUpdateTimeRange?: (id: string, startTime: number, endTime: number) => void;
+  onUpdateTimelineItem?: (
+    id: string,
+    updates: Partial<Omit<TimelineData, 'id'>>,
+  ) => void;
 }
 
 export const VisualTimeline: React.FC<VisualTimelineProps> = ({
@@ -38,6 +42,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
   onUpdateActionType,
   onUpdateActionResult,
   onUpdateTimeRange,
+  onUpdateTimelineItem,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -323,17 +328,49 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       : editingDraft.originalEndTime;
     const safeEnd = Math.max(safeStart, safeEndSource);
 
-    if (onUpdateQualifier) {
-      onUpdateQualifier(editingDraft.id, editingDraft.qualifier);
-    }
-    if (onUpdateActionType) {
-      onUpdateActionType(editingDraft.id, editingDraft.actionType);
-    }
-    if (onUpdateActionResult) {
-      onUpdateActionResult(editingDraft.id, editingDraft.actionResult);
-    }
-    if (onUpdateTimeRange) {
-      onUpdateTimeRange(editingDraft.id, safeStart, safeEnd);
+    console.debug('[VisualTimeline] Saving timeline edit:', {
+      id: editingDraft.id,
+      qualifier: editingDraft.qualifier,
+      actionType: editingDraft.actionType,
+      actionResult: editingDraft.actionResult,
+      startTime: safeStart,
+      endTime: safeEnd,
+    });
+
+    // onUpdateTimelineItemが利用可能な場合は、すべての更新を1回で行う
+    if (onUpdateTimelineItem) {
+      console.debug(
+        '[VisualTimeline] Using onUpdateTimelineItem for batch update',
+      );
+      onUpdateTimelineItem(editingDraft.id, {
+        qualifier: editingDraft.qualifier,
+        actionType: editingDraft.actionType,
+        actionResult: editingDraft.actionResult,
+        startTime: safeStart,
+        endTime: safeEnd,
+      });
+    } else {
+      // 後方互換性のため、個別の更新関数も残す
+      if (onUpdateQualifier) {
+        onUpdateQualifier(editingDraft.id, editingDraft.qualifier);
+      }
+      if (onUpdateActionType) {
+        console.debug(
+          '[VisualTimeline] Calling onUpdateActionType:',
+          editingDraft.actionType,
+        );
+        onUpdateActionType(editingDraft.id, editingDraft.actionType);
+      }
+      if (onUpdateActionResult) {
+        console.debug(
+          '[VisualTimeline] Calling onUpdateActionResult:',
+          editingDraft.actionResult,
+        );
+        onUpdateActionResult(editingDraft.id, editingDraft.actionResult);
+      }
+      if (onUpdateTimeRange) {
+        onUpdateTimeRange(editingDraft.id, safeStart, safeEnd);
+      }
     }
 
     setEditingDraft(null);
@@ -343,6 +380,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     onUpdateActionType,
     onUpdateActionResult,
     onUpdateTimeRange,
+    onUpdateTimelineItem,
   ]);
 
   const formatTime = useCallback((seconds: number) => {

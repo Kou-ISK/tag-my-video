@@ -14,6 +14,10 @@ export interface TimelineEditingHandlers {
   updateActionResult: (id: string, actionResult: string) => void;
   updateActionType: (id: string, actionType: string) => void;
   updateTimelineRange: (id: string, startTime: number, endTime: number) => void;
+  updateTimelineItem: (
+    id: string,
+    updates: Partial<Omit<TimelineData, 'id'>>,
+  ) => void;
   sortTimelineDatas: (column: string, sortDesc: boolean) => void;
 }
 
@@ -59,18 +63,40 @@ export const useTimelineEditing = (
 
   const updateActionResult = useCallback(
     (id: string, actionResult: string) => {
-      setTimeline((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, actionResult } : item)),
-      );
+      console.debug('[useTimelineEditing] updateActionResult called:', {
+        id,
+        actionResult,
+      });
+      setTimeline((prev) => {
+        const updated = prev.map((item) =>
+          item.id === id ? { ...item, actionResult } : item,
+        );
+        console.debug(
+          '[useTimelineEditing] Timeline after updateActionResult:',
+          updated.find((item) => item.id === id),
+        );
+        return updated;
+      });
     },
     [setTimeline],
   );
 
   const updateActionType = useCallback(
     (id: string, actionType: string) => {
-      setTimeline((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, actionType } : item)),
-      );
+      console.debug('[useTimelineEditing] updateActionType called:', {
+        id,
+        actionType,
+      });
+      setTimeline((prev) => {
+        const updated = prev.map((item) =>
+          item.id === id ? { ...item, actionType } : item,
+        );
+        console.debug(
+          '[useTimelineEditing] Timeline after updateActionType:',
+          updated.find((item) => item.id === id),
+        );
+        return updated;
+      });
     },
     [setTimeline],
   );
@@ -99,6 +125,26 @@ export const useTimelineEditing = (
     [setTimeline],
   );
 
+  const updateTimelineItem = useCallback(
+    (id: string, updates: Partial<Omit<TimelineData, 'id'>>) => {
+      console.debug('[useTimelineEditing] updateTimelineItem called:', {
+        id,
+        updates,
+      });
+      setTimeline((prev) => {
+        const updated = prev.map((item) =>
+          item.id === id ? { ...item, ...updates } : item,
+        );
+        console.debug(
+          '[useTimelineEditing] Timeline after updateTimelineItem:',
+          updated.find((item) => item.id === id),
+        );
+        return updated;
+      });
+    },
+    [setTimeline],
+  );
+
   const sortTimelineDatas = useCallback(
     (column: string, sortDesc: boolean) => {
       setTimeline((prev) => {
@@ -108,15 +154,15 @@ export const useTimelineEditing = (
             return a.startTime === b.startTime
               ? 0
               : a.startTime > b.startTime
-                ? direction
-                : -direction;
+              ? direction
+              : -direction;
           }
           if (column === 'endTime') {
             return a.endTime === b.endTime
               ? 0
               : a.endTime > b.endTime
-                ? direction
-                : -direction;
+              ? direction
+              : -direction;
           }
           if (column === 'actionName') {
             return (
@@ -140,6 +186,7 @@ export const useTimelineEditing = (
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     sortTimelineDatas,
   };
 };

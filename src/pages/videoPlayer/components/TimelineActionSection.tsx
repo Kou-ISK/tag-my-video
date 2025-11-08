@@ -24,6 +24,10 @@ interface TimelineActionSectionProps {
   updateActionType: (id: string, actionType: string) => void;
   updateActionResult: (id: string, actionResult: string) => void;
   updateTimelineRange: (id: string, startTime: number, endTime: number) => void;
+  updateTimelineItem: (
+    id: string,
+    updates: Partial<Omit<TimelineData, 'id'>>,
+  ) => void;
   handleCurrentTime: (
     event: React.SyntheticEvent | Event,
     newValue: number | number[],
@@ -45,6 +49,7 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
   updateActionType,
   updateActionResult,
   updateTimelineRange,
+  updateTimelineItem,
   handleCurrentTime,
 }) => (
   <Box
@@ -88,6 +93,7 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
         onUpdateActionType={updateActionType}
         onUpdateActionResult={updateActionResult}
         onUpdateTimeRange={updateTimelineRange}
+        onUpdateTimelineItem={updateTimelineItem}
       />
     </Paper>
 

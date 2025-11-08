@@ -51,6 +51,7 @@ export const useVideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     sortTimelineDatas,
   } = useTimelineEditing(setTimeline);
   const [videoList, setVideoList] = useState<string[]>([]); // 空の配列に修正
@@ -325,6 +326,7 @@ export const useVideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     getSelectedTimelineId,
     sortTimelineDatas,
     resyncAudio,

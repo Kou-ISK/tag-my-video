@@ -49,6 +49,7 @@ export const VideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     resyncAudio,
     resetSync,
     manualSyncFromPlayers,
@@ -130,6 +131,7 @@ export const VideoPlayerApp = () => {
             updateActionType={updateActionType}
             updateActionResult={updateActionResult}
             updateTimelineRange={updateTimelineRange}
+            updateTimelineItem={updateTimelineItem}
             handleCurrentTime={handleCurrentTime}
           />
         </Box>
