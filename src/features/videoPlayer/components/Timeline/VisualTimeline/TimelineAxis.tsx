@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -20,6 +20,34 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
   formatTime,
 }) => {
   const theme = useTheme();
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+
+  const handlePlayheadMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setIsDraggingPlayhead(true);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const syntheticEvent = {
+          clientX: rect.left + clickX,
+        } as React.MouseEvent<HTMLDivElement>;
+        onSeek(syntheticEvent);
+      };
+
+      const handleMouseUp = () => {
+        setIsDraggingPlayhead(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [containerRef, onSeek],
+  );
 
   return (
     <Box
@@ -78,6 +106,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
         ))}
 
         <Box
+          onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
             left: `${currentTimePosition}%`,
@@ -86,7 +115,10 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
             width: 2,
             backgroundColor: 'error.main',
             zIndex: 10,
-            pointerEvents: 'none',
+            cursor: isDraggingPlayhead ? 'grabbing' : 'grab',
+            '&:hover': {
+              width: 4,
+            },
           }}
         >
           <Box

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Box, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { TimelineData } from '../../../../../types/TimelineData';
@@ -16,6 +16,8 @@ interface TimelineLaneProps {
   currentTimePosition: number;
   formatTime: (seconds: number) => string;
   firstTeamName: string | undefined;
+  onSeek: (time: number) => void;
+  maxSec: number;
 }
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({
@@ -31,10 +33,39 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   currentTimePosition,
   formatTime,
   firstTeamName,
+  onSeek,
+  maxSec,
 }) => {
   const theme = useTheme();
   const teamName = actionName.split(' ')[0];
   const isTeam1 = teamName === firstTeamName;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+
+  const handlePlayheadMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setIsDraggingPlayhead(true);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const time = (clickX / rect.width) * maxSec;
+        onSeek(time);
+      };
+
+      const handleMouseUp = () => {
+        setIsDraggingPlayhead(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [maxSec, onSeek],
+  );
 
   return (
     <Box
@@ -61,6 +92,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
       </Typography>
 
       <Box
+        ref={containerRef}
         sx={{
           position: 'relative',
           height: 32,
@@ -180,6 +212,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
         })}
 
         <Box
+          onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
             left: `${currentTimePosition}%`,
@@ -188,7 +221,10 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
             width: 2,
             backgroundColor: 'error.main',
             zIndex: 10,
-            pointerEvents: 'none',
+            cursor: isDraggingPlayhead ? 'grabbing' : 'grab',
+            '&:hover': {
+              width: 4,
+            },
           }}
         />
       </Box>

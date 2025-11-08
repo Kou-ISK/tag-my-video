@@ -13,6 +13,7 @@ import { ErrorSnackbar } from './videoPlayer/components/ErrorSnackbar';
 import { SyncAnalysisBackdrop } from './videoPlayer/components/SyncAnalysisBackdrop';
 import { useSyncMenuHandlers } from './videoPlayer/hooks/useSyncMenuHandlers';
 import { useStatsMenuHandlers } from './videoPlayer/hooks/useStatsMenuHandlers';
+import { OnboardingTutorial } from '../components/OnboardingTutorial';
 
 export const VideoPlayerApp = () => {
   const {
@@ -158,6 +159,7 @@ export const VideoPlayerApp = () => {
         progress={syncProgress}
         stage={syncStage}
       />
+      <OnboardingTutorial />
     </Box>
   );
 };

@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { Box, Typography } from '@mui/material';
 import { TimelineData } from '../../../../../types/TimelineData';
-import { TimelineHeader } from './TimelineHeader';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineLane } from './TimelineLane';
 import { TimelineEditDialog, TimelineEditDraft } from './TimelineEditDialog';
@@ -355,7 +354,21 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
   const timeMarkers = useMemo(() => {
     const markers: number[] = [];
     if (maxSec <= 0) return markers;
-    const interval = Math.max(10, Math.ceil(maxSec / 50) * 10);
+
+    // 目盛りの間隔: 動画の長さに応じて調整（より広めに）
+    let interval: number;
+    if (maxSec <= 120) {
+      interval = 15;
+    } else if (maxSec <= 300) {
+      interval = 30;
+    } else if (maxSec <= 600) {
+      interval = 60;
+    } else if (maxSec <= 1800) {
+      interval = 120;
+    } else {
+      interval = 300;
+    }
+
     for (let i = 0; i <= maxSec; i += interval) {
       markers.push(i);
     }
@@ -375,18 +388,13 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <TimelineHeader
-        totalCount={timeline.length}
-        selectedCount={selectedIds.length}
-        onDeleteSelected={() => onDelete(selectedIds)}
-      />
-
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
           px: 2,
+          pt: 2,
           pb: 2,
         }}
       >
@@ -414,6 +422,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
             currentTimePosition={currentTimePosition}
             formatTime={formatTime}
             firstTeamName={firstTeamName}
+            onSeek={onSeek}
+            maxSec={maxSec}
           />
         ))}
 

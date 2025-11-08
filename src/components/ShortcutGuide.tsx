@@ -67,8 +67,26 @@ const shortcuts: ShortcutItem[] = [
   },
 ];
 
-export const ShortcutGuide: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface ShortcutGuideProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const ShortcutGuide: React.FC<ShortcutGuideProps> = ({
+  open: controlledOpen,
+  onOpenChange,
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // 制御モード（外部からopenを渡された場合）と非制御モードの両方に対応
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);

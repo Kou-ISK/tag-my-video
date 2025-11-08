@@ -11,6 +11,9 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AddIcon from '@mui/icons-material/Add';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { ExistingPackageLoader } from './VideoPathSelector/ExistingPackageLoader';
 import { CreatePackageWizard } from './VideoPathSelector/CreatePackageWizard';
 import { AudioSyncBackdrop } from './VideoPathSelector/AudioSyncBackdrop';
@@ -23,6 +26,7 @@ import { useAudioSync } from './VideoPathSelector/hooks/useAudioSync';
 import { useDragAndDrop } from './VideoPathSelector/hooks/useDragAndDrop';
 import { useRecentPackages } from './VideoPathSelector/hooks/useRecentPackages';
 import { useNotification } from '../../../../contexts/NotificationContext';
+import { ONBOARDING_STORAGE_KEY } from '../../../../components/OnboardingTutorial';
 
 export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
   setVideoList,
@@ -33,12 +37,20 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
   setSyncData,
 }) => {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
   const { performAudioSync, status: syncStatus } = useAudioSync({
     setSyncData,
   });
   const { recentPackages, addRecentPackage, removeRecentPackage } =
     useRecentPackages();
   const { notify } = useNotification();
+
+  // オンボーディング未完了時のみウェルカムヘッダーを表示
+  React.useEffect(() => {
+    const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    setShowWelcome(!completed);
+  }, []);
 
   const handlePackageLoaded = useCallback(
     ({
@@ -175,6 +187,112 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
   return (
     <Box sx={{ width: '100%', mx: 'auto', mt: 2, px: 2 }} {...handlers}>
       <Stack spacing={4}>
+        {/* ウェルカムヘッダー（初回のみ表示） */}
+        {showWelcome && (
+          <>
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography
+                variant="h3"
+                fontWeight="bold"
+                gutterBottom
+                sx={{
+                  background: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(45deg, #1E90FF 30%, #00FF85 90%)'
+                      : 'linear-gradient(45deg, #1E90FF 30%, #00CED1 90%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Tag My Video
+              </Typography>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                映像分析を効率化する、プロフェッショナルなタグ付けツール
+              </Typography>
+
+              {/* クイックスタートガイド */}
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={3}
+                justifyContent="center"
+                sx={{ mt: 4, mb: 2 }}
+              >
+                <Box sx={{ textAlign: 'center', flex: 1, maxWidth: 200 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      p: 2,
+                      borderRadius: '50%',
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.primary.main, 0.1),
+                      mb: 1,
+                    }}
+                  >
+                    <PlayCircleOutlineIcon
+                      sx={{ fontSize: 40, color: 'primary.main' }}
+                    />
+                  </Box>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    1. 映像を開く
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    パッケージを選択
+                  </Typography>
+                </Box>
+
+                <Box sx={{ textAlign: 'center', flex: 1, maxWidth: 200 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      p: 2,
+                      borderRadius: '50%',
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.secondary.main, 0.1),
+                      mb: 1,
+                    }}
+                  >
+                    <TimelineIcon
+                      sx={{ fontSize: 40, color: 'secondary.main' }}
+                    />
+                  </Box>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    2. タグ付け
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    プレーを記録
+                  </Typography>
+                </Box>
+
+                <Box sx={{ textAlign: 'center', flex: 1, maxWidth: 200 }}>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      p: 2,
+                      borderRadius: '50%',
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.primary.main, 0.1),
+                      mb: 1,
+                    }}
+                  >
+                    <BarChartIcon
+                      sx={{ fontSize: 40, color: 'primary.main' }}
+                    />
+                  </Box>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    3. 分析
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    統計を確認
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+
+            <Divider />
+          </>
+        )}
+
         {/* ドラッグ&ドロップゾーン */}
         <Paper
           elevation={dragState.isDragging ? 8 : 2}
