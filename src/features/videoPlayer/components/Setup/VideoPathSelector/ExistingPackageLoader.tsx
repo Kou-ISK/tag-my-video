@@ -3,6 +3,7 @@ import { Button } from '@mui/material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { VideoSyncData } from '../../../../../types/VideoSync';
 import { PackageLoadResult } from './types';
+import { useNotification } from '../../../../../contexts/NotificationContext';
 
 interface ExistingPackageLoaderProps {
   onPackageLoaded: (result: PackageLoadResult) => void;
@@ -12,41 +13,41 @@ interface ExistingPackageLoaderProps {
   ) => Promise<VideoSyncData>;
 }
 
-const ensureElectron = () => {
-  if (!window.electronAPI) {
-    alert('この機能はElectronアプリケーション内でのみ利用できます。');
-    return false;
-  }
-  return true;
-};
-
 export const ExistingPackageLoader: React.FC<ExistingPackageLoaderProps> = ({
   onPackageLoaded,
   performAudioSync,
 }) => {
+  const { error: showError } = useNotification();
+
   const handleSelectPackage = async () => {
-    if (!ensureElectron()) {
+    if (!globalThis.window.electronAPI) {
+      showError('この機能はElectronアプリケーション内でのみ利用できます。');
       return;
     }
 
-    const packagePath = await window.electronAPI?.openDirectory();
+    const packagePath = await globalThis.window.electronAPI?.openDirectory();
     if (!packagePath) {
       return;
     }
 
     const configFilePath = `${packagePath}/.metadata/config.json`;
 
-    if (window.electronAPI?.convertConfigToRelativePath) {
+    if (globalThis.window.electronAPI?.convertConfigToRelativePath) {
       try {
-        await window.electronAPI.convertConfigToRelativePath(packagePath);
+        await globalThis.window.electronAPI.convertConfigToRelativePath(
+          packagePath,
+        );
       } catch (error) {
         console.warn('config.json変換をスキップ:', error);
       }
     }
 
-    const exists = await window.electronAPI?.checkFileExists?.(configFilePath);
+    const exists =
+      await globalThis.window.electronAPI?.checkFileExists?.(configFilePath);
     if (!exists) {
-      alert('選択したパッケージ内に .metadata/config.json が見つかりません。');
+      showError(
+        '選択したパッケージ内に .metadata/config.json が見つかりません。',
+      );
       return;
     }
 
@@ -94,9 +95,12 @@ export const ExistingPackageLoader: React.FC<ExistingPackageLoaderProps> = ({
             tightAbsolute,
             wideAbsolute,
           );
-          if (resultingSyncData && window.electronAPI?.saveSyncData) {
+          if (
+            resultingSyncData &&
+            globalThis.window.electronAPI?.saveSyncData
+          ) {
             try {
-              await window.electronAPI.saveSyncData(
+              await globalThis.window.electronAPI.saveSyncData(
                 configFilePath,
                 resultingSyncData,
               );
@@ -118,13 +122,13 @@ export const ExistingPackageLoader: React.FC<ExistingPackageLoaderProps> = ({
       });
     } catch (error) {
       console.error('Config.json の読み込みに失敗しました:', error);
-      alert('パッケージの読み込み中にエラーが発生しました。');
+      showError('パッケージの読み込み中にエラーが発生しました。');
     }
   };
 
   return (
     <Button
-      sx={{ height: '120px', fontSize: '18px' }}
+      sx={{ height: '60px', fontSize: '16px', flex: 1 }}
       onClick={handleSelectPackage}
       variant="contained"
       size="large"

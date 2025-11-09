@@ -13,6 +13,7 @@ import { ErrorSnackbar } from './videoPlayer/components/ErrorSnackbar';
 import { SyncAnalysisBackdrop } from './videoPlayer/components/SyncAnalysisBackdrop';
 import { useSyncMenuHandlers } from './videoPlayer/hooks/useSyncMenuHandlers';
 import { useStatsMenuHandlers } from './videoPlayer/hooks/useStatsMenuHandlers';
+import { OnboardingTutorial } from '../components/OnboardingTutorial';
 
 export const VideoPlayerApp = () => {
   const {
@@ -48,6 +49,7 @@ export const VideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     resyncAudio,
     resetSync,
     manualSyncFromPlayers,
@@ -129,6 +131,7 @@ export const VideoPlayerApp = () => {
             updateActionType={updateActionType}
             updateActionResult={updateActionResult}
             updateTimelineRange={updateTimelineRange}
+            updateTimelineItem={updateTimelineItem}
             handleCurrentTime={handleCurrentTime}
           />
         </Box>
@@ -158,6 +161,7 @@ export const VideoPlayerApp = () => {
         progress={syncProgress}
         stage={syncStage}
       />
+      <OnboardingTutorial />
     </Box>
   );
 };

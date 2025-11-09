@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -7,7 +7,7 @@ interface TimelineAxisProps {
   maxSec: number;
   currentTimePosition: number;
   timeMarkers: number[];
-  onSeek: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onSeek: (time: number) => void; // マウスイベントではなく時間を直接受け取る
   formatTime: (seconds: number) => string;
 }
 
@@ -20,6 +20,44 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
   formatTime,
 }) => {
   const theme = useTheme();
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+
+  // マウスイベントから時間を計算してonSeekを呼び出す
+  const handleSeekFromMouseEvent = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const time = (clickX / rect.width) * maxSec;
+      onSeek(Math.max(0, Math.min(time, maxSec)));
+    },
+    [containerRef, maxSec, onSeek],
+  );
+
+  const handlePlayheadMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setIsDraggingPlayhead(true);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const time = (clickX / rect.width) * maxSec;
+        onSeek(Math.max(0, Math.min(time, maxSec)));
+      };
+
+      const handleMouseUp = () => {
+        setIsDraggingPlayhead(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [containerRef, maxSec, onSeek],
+  );
 
   return (
     <Box
@@ -34,7 +72,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
 
       <Box
         ref={containerRef}
-        onClick={onSeek}
+        onClick={handleSeekFromMouseEvent}
         sx={{
           position: 'relative',
           flex: 1,
@@ -78,6 +116,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
         ))}
 
         <Box
+          onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
             left: `${currentTimePosition}%`,
@@ -86,7 +125,10 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
             width: 2,
             backgroundColor: 'error.main',
             zIndex: 10,
-            pointerEvents: 'none',
+            cursor: isDraggingPlayhead ? 'grabbing' : 'grab',
+            '&:hover': {
+              width: 4,
+            },
           }}
         >
           <Box

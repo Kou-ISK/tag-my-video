@@ -20,9 +20,10 @@ export const NoSelectionPlaceholder: React.FC<NoSelectionPlaceholderProps> = (
     sx={{
       flex: 1,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
-      p: { xs: 2, md: 4 },
+      p: 0,
+      overflow: 'auto',
     }}
   >
     <VideoPathSelector {...props} />

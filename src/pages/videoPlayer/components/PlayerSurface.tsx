@@ -37,60 +37,62 @@ export const PlayerSurface: React.FC<PlayerSurfaceProps> = ({
   syncData,
   syncMode,
   playerForceUpdateKey,
-}) => (
-  <Box
-    sx={{
-      gridColumn: '1',
-      gridRow: '1',
-      position: 'relative',
-      '&:hover .video-controls-overlay': {
-        opacity: 1,
-      },
-    }}
-  >
+}) => {
+  return (
     <Box
       sx={{
+        gridColumn: '1',
+        gridRow: '1',
         position: 'relative',
-        width: '100%',
+        '&:hover .video-controls-overlay': {
+          opacity: 1,
+        },
       }}
     >
-      <VideoPlayer
-        key={videoList.join('|')}
-        videoList={videoList}
-        isVideoPlaying={isVideoPlaying}
-        videoPlayBackRate={videoPlayBackRate}
-        currentTime={currentTime}
-        setMaxSec={setMaxSec}
-        syncData={syncData}
-        syncMode={syncMode}
-        forceUpdateKey={playerForceUpdateKey}
-      />
-    </Box>
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        <VideoPlayer
+          key={videoList.join('|')}
+          videoList={videoList}
+          isVideoPlaying={isVideoPlaying}
+          videoPlayBackRate={videoPlayBackRate}
+          currentTime={currentTime}
+          setMaxSec={setMaxSec}
+          syncData={syncData}
+          syncMode={syncMode}
+          forceUpdateKey={playerForceUpdateKey}
+        />
+      </Box>
 
-    <Box
-      className="video-controls-overlay"
-      sx={{
-        position: 'absolute',
-        bottom: 16,
-        left: 16,
-        right: 16,
-        opacity: 0,
-        transition: 'opacity 0.3s',
-        zIndex: 1000,
-      }}
-    >
-      <VideoController
-        setIsVideoPlaying={setIsVideoPlaying}
-        isVideoPlaying={isVideoPlaying}
-        setVideoPlayBackRate={setVideoPlayBackRate}
-        videoPlayBackRate={videoPlayBackRate}
-        setCurrentTime={setCurrentTime}
-        currentTime={currentTime}
-        handleCurrentTime={handleCurrentTime}
-        maxSec={maxSec}
-        videoList={videoList}
-        syncData={syncData}
-      />
+      <Box
+        className="video-controls-overlay"
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          left: 16,
+          right: 16,
+          opacity: 0,
+          transition: 'opacity 0.3s',
+          zIndex: 1000,
+        }}
+      >
+        <VideoController
+          setIsVideoPlaying={setIsVideoPlaying}
+          isVideoPlaying={isVideoPlaying}
+          setVideoPlayBackRate={setVideoPlayBackRate}
+          videoPlayBackRate={videoPlayBackRate}
+          setCurrentTime={setCurrentTime}
+          currentTime={currentTime}
+          handleCurrentTime={handleCurrentTime}
+          maxSec={maxSec}
+          videoList={videoList}
+          syncData={syncData}
+        />
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};

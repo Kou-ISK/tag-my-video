@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Box, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { TimelineData } from '../../../../../types/TimelineData';
@@ -8,6 +8,7 @@ interface TimelineLaneProps {
   items: TimelineData[];
   selectedIds: string[];
   hoveredItemId: string | null;
+  focusedItemId: string | null;
   onHoverChange: (id: string | null) => void;
   onItemClick: (event: React.MouseEvent, id: string) => void;
   onItemContextMenu: (event: React.MouseEvent, id: string) => void;
@@ -15,6 +16,8 @@ interface TimelineLaneProps {
   currentTimePosition: number;
   formatTime: (seconds: number) => string;
   firstTeamName: string | undefined;
+  onSeek: (time: number) => void;
+  maxSec: number;
 }
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({
@@ -22,6 +25,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   items,
   selectedIds,
   hoveredItemId,
+  focusedItemId,
   onHoverChange,
   onItemClick,
   onItemContextMenu,
@@ -29,10 +33,39 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   currentTimePosition,
   formatTime,
   firstTeamName,
+  onSeek,
+  maxSec,
 }) => {
   const theme = useTheme();
   const teamName = actionName.split(' ')[0];
   const isTeam1 = teamName === firstTeamName;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+
+  const handlePlayheadMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setIsDraggingPlayhead(true);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const time = (clickX / rect.width) * maxSec;
+        onSeek(time);
+      };
+
+      const handleMouseUp = () => {
+        setIsDraggingPlayhead(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [maxSec, onSeek],
+  );
 
   return (
     <Box
@@ -59,12 +92,12 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
       </Typography>
 
       <Box
+        ref={containerRef}
         sx={{
           position: 'relative',
           height: 32,
           flex: 1,
-          backgroundColor:
-            theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
+          backgroundColor: theme.custom.rails.laneBg,
           borderRadius: 1,
           border: 1,
           borderColor: 'divider',
@@ -75,6 +108,31 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           const width = Math.max(20, timeToPosition(item.endTime) - left);
           const isSelected = selectedIds.includes(item.id);
           const isHovered = hoveredItemId === item.id;
+          const isFocused = focusedItemId === item.id;
+
+          // バー背景色の決定
+          let barBgColor: string;
+          if (isSelected) {
+            barBgColor = theme.palette.secondary.main;
+          } else if (isTeam1) {
+            barBgColor = theme.custom.bars.team1;
+          } else {
+            barBgColor = theme.custom.bars.team2;
+          }
+
+          let barOpacity = 0.7;
+          if (isHovered) {
+            barOpacity = 1;
+          } else if (isSelected) {
+            barOpacity = 0.9;
+          }
+
+          let borderColor = 'transparent';
+          if (isFocused) {
+            borderColor = theme.palette.primary.main;
+          } else if (isSelected) {
+            borderColor = theme.custom.bars.selectedBorder;
+          }
 
           return (
             <Tooltip
@@ -114,20 +172,20 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   width: `${width}px`,
                   top: 4,
                   bottom: 4,
-                  backgroundColor: isSelected
-                    ? theme.palette.secondary.main
-                    : isTeam1
-                      ? theme.palette.team1.main
-                      : theme.palette.team2.main,
-                  opacity: isHovered ? 1 : isSelected ? 0.9 : 0.7,
+                  backgroundColor: barBgColor,
+                  opacity: barOpacity,
                   borderRadius: 1,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   px: 0.5,
-                  border: isSelected ? 2 : 0,
-                  borderColor: 'secondary.dark',
+                  border: isSelected || isFocused ? 2 : 0,
+                  borderColor,
+                  outline: isFocused
+                    ? `2px solid ${theme.palette.primary.main}`
+                    : 'none',
+                  outlineOffset: 2,
                   transition: 'all 0.2s',
                   '&:hover': {
                     transform: 'scaleY(1.2)',
@@ -154,6 +212,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
         })}
 
         <Box
+          onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
             left: `${currentTimePosition}%`,
@@ -162,7 +221,10 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
             width: 2,
             backgroundColor: 'error.main',
             zIndex: 10,
-            pointerEvents: 'none',
+            cursor: isDraggingPlayhead ? 'grabbing' : 'grab',
+            '&:hover': {
+              width: 4,
+            },
           }}
         />
       </Box>

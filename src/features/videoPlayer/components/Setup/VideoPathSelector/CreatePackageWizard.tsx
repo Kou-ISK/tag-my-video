@@ -20,6 +20,7 @@ import VideoFileIcon from '@mui/icons-material/VideoFile';
 import { PackageDatas } from '../../../../../renderer';
 import { MetaData } from '../../../../../types/MetaData';
 import { VideoSyncData } from '../../../../../types/VideoSync';
+import { useNotification } from '../../../../../contexts/NotificationContext';
 import {
   PackageLoadResult,
   SyncStatus,
@@ -52,14 +53,6 @@ const INITIAL_SELECTION: WizardSelectionState = {
   selectedWideVideo: '',
 };
 
-const ensureElectron = () => {
-  if (!window.electronAPI) {
-    alert('この機能はElectronアプリケーション内でのみ利用できます。');
-    return false;
-  }
-  return true;
-};
-
 export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
   open,
   onClose,
@@ -72,6 +65,7 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
     useState<WizardSelectionState>(INITIAL_SELECTION);
   const [activeStep, setActiveStep] = useState(0);
   const [errors, setErrors] = useState<Partial<WizardFormState>>({});
+  const { error: showError } = useNotification();
 
   useEffect(() => {
     if (open) {
@@ -105,57 +99,37 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
   );
 
   const handleSelectDirectory = useCallback(async () => {
-    if (!ensureElectron()) return;
-    const directory = await window.electronAPI?.openDirectory();
+    if (!globalThis.window.electronAPI) {
+      showError('この機能はElectronアプリケーション内でのみ利用できます。');
+      return;
+    }
+    const directory = await globalThis.window.electronAPI?.openDirectory();
     if (directory) {
       setSelection((prev) => ({ ...prev, selectedDirectory: directory }));
     }
-  }, []);
+  }, [showError]);
 
-  const handleSelectVideo = useCallback(async (type: 'tight' | 'wide') => {
-    if (!ensureElectron()) return;
-    const path = await window.electronAPI?.openFile();
-    if (path) {
-      setSelection((prev) =>
-        type === 'tight'
-          ? { ...prev, selectedTightVideo: path }
-          : { ...prev, selectedWideVideo: path },
-      );
-    }
-  }, []);
-
-  const handleNext = useCallback(async () => {
-    if (!validateStep(activeStep)) {
-      return;
-    }
-
-    if (activeStep === 1) {
-      if (!selection.selectedDirectory) {
-        await handleSelectDirectory();
+  const handleSelectVideo = useCallback(
+    async (type: 'tight' | 'wide') => {
+      if (!globalThis.window.electronAPI) {
+        showError('この機能はElectronアプリケーション内でのみ利用できます。');
         return;
       }
-    }
-
-    if (activeStep === 2) {
-      if (!selection.selectedTightVideo) {
-        alert('寄り映像を選択してください');
-        return;
+      const path = await globalThis.window.electronAPI?.openFile();
+      if (path) {
+        setSelection((prev) =>
+          type === 'tight'
+            ? { ...prev, selectedTightVideo: path }
+            : { ...prev, selectedWideVideo: path },
+        );
       }
-    }
-
-    if (activeStep === STEPS.length - 1) {
-      await executeCreatePackage();
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
-  }, [activeStep, handleSelectDirectory, selection, validateStep]);
-
-  const handleBack = useCallback(() => {
-    setActiveStep((prev) => Math.max(0, prev - 1));
-  }, []);
+    },
+    [showError],
+  );
 
   const executeCreatePackage = useCallback(async () => {
-    if (!ensureElectron()) {
+    if (!globalThis.window.electronAPI) {
+      showError('この機能はElectronアプリケーション内でのみ利用できます。');
       return;
     }
 
@@ -181,13 +155,17 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
 
     try {
       const packageDatas: PackageDatas =
-        await window.electronAPI!.createPackage(
+        await globalThis.window.electronAPI?.createPackage(
           selection.selectedDirectory,
           form.packageName,
           selection.selectedTightVideo,
           selection.selectedWideVideo || null,
           metaDataConfig,
         );
+
+      if (!packageDatas) {
+        throw new Error('Failed to create package');
+      }
 
       let syncData: VideoSyncData | undefined;
       const videoList = packageDatas.wideViewPath
@@ -199,9 +177,9 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
           packageDatas.tightViewPath,
           packageDatas.wideViewPath,
         );
-        if (syncData && window.electronAPI?.saveSyncData) {
+        if (syncData && globalThis.window.electronAPI?.saveSyncData) {
           try {
-            await window.electronAPI.saveSyncData(
+            await globalThis.window.electronAPI.saveSyncData(
               packageDatas.metaDataConfigFilePath,
               syncData,
             );
@@ -223,7 +201,7 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
       onClose();
     } catch (error) {
       console.error('パッケージ作成に失敗しました:', error);
-      alert('パッケージの作成中にエラーが発生しました。');
+      showError('パッケージの作成中にエラーが発生しました。');
     }
   }, [
     form.packageName,
@@ -232,10 +210,46 @@ export const CreatePackageWizard: React.FC<CreatePackageWizardProps> = ({
     onClose,
     onPackageCreated,
     performAudioSync,
-    selection.selectedDirectory,
-    selection.selectedTightVideo,
-    selection.selectedWideVideo,
+    selection,
+    showError,
   ]);
+
+  const handleNext = useCallback(async () => {
+    if (!validateStep(activeStep)) {
+      return;
+    }
+
+    if (activeStep === 1) {
+      if (!selection.selectedDirectory) {
+        await handleSelectDirectory();
+        return;
+      }
+    }
+
+    if (activeStep === 2) {
+      if (!selection.selectedTightVideo) {
+        showError('寄り映像を選択してください');
+        return;
+      }
+    }
+
+    if (activeStep === STEPS.length - 1) {
+      await executeCreatePackage();
+    } else {
+      setActiveStep((prev) => prev + 1);
+    }
+  }, [
+    activeStep,
+    handleSelectDirectory,
+    selection,
+    validateStep,
+    showError,
+    executeCreatePackage,
+  ]);
+
+  const handleBack = useCallback(() => {
+    setActiveStep((prev) => Math.max(0, prev - 1));
+  }, []);
 
   const summaryItems = useMemo(
     () => [

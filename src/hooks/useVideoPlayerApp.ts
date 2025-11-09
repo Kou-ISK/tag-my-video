@@ -1,21 +1,49 @@
 import { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
+import { TimelineData } from '../types/TimelineData';
 import { VideoSyncData } from '../types/VideoSync';
 import { useTimelinePersistence } from './videoPlayer/useTimelinePersistence';
+import { useTimelineHistory } from './videoPlayer/useTimelineHistory';
 import { useTimelineSelection } from './videoPlayer/useTimelineSelection';
 import { useTimelineEditing } from './videoPlayer/useTimelineEditing';
 import { useVideoPlayerErrors } from './videoPlayer/useVideoPlayerErrors';
 import { useSyncActions } from './videoPlayer/useSyncActions';
+import { useNotification } from '../contexts/NotificationContext';
 
 export const useVideoPlayerApp = () => {
   const isDev = process.env.NODE_ENV === 'development';
-  const { timeline, setTimeline, timelineFilePath, setTimelineFilePath } =
-    useTimelinePersistence();
+  const {
+    timeline: persistedTimeline,
+    setTimeline: setPersistedTimeline,
+    timelineFilePath,
+    setTimelineFilePath,
+  } = useTimelinePersistence();
+
+  // タイムライン履歴管理を統合
+  const {
+    timeline,
+    canUndo,
+    canRedo,
+    setTimeline: setTimelineWithHistory,
+    undo: performUndo,
+    redo: performRedo,
+  } = useTimelineHistory(persistedTimeline);
+
+  const { info } = useNotification();
+
   const {
     selectedTimelineIdList,
     setSelectedTimelineIdList,
     getSelectedTimelineId,
   } = useTimelineSelection();
+
+  // setTimelineWrapper: useTimelineEditingに渡すラッパー
+  const setTimeline = (value: React.SetStateAction<TimelineData[]>) => {
+    const newTimeline = typeof value === 'function' ? value(timeline) : value;
+    setTimelineWithHistory(newTimeline);
+    setPersistedTimeline(newTimeline);
+  };
+
   const {
     addTimelineData,
     deleteTimelineDatas,
@@ -23,6 +51,7 @@ export const useVideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     sortTimelineDatas,
   } = useTimelineEditing(setTimeline);
   const [videoList, setVideoList] = useState<string[]>([]); // 空の配列に修正
@@ -228,9 +257,42 @@ export const useVideoPlayerApp = () => {
     })();
   }, [syncData, metaDataConfigFilePath]);
 
+  // Undo/Redoイベントハンドラー
+  useEffect(() => {
+    const handleUndo = () => {
+      const previousTimeline = performUndo();
+      if (previousTimeline) {
+        setPersistedTimeline(previousTimeline);
+        info('元に戻しました');
+      }
+    };
+
+    const handleRedo = () => {
+      const nextTimeline = performRedo();
+      if (nextTimeline) {
+        setPersistedTimeline(nextTimeline);
+        info('やり直しました');
+      }
+    };
+
+    if (globalThis.window.electronAPI) {
+      globalThis.window.electronAPI.on('timeline-undo', handleUndo);
+      globalThis.window.electronAPI.on('timeline-redo', handleRedo);
+
+      return () => {
+        if (globalThis.window.electronAPI) {
+          globalThis.window.electronAPI.off('timeline-undo', handleUndo);
+          globalThis.window.electronAPI.off('timeline-redo', handleRedo);
+        }
+      };
+    }
+  }, [performUndo, performRedo, setPersistedTimeline, info]);
+
   return {
     timeline,
     setTimeline,
+    canUndo,
+    canRedo,
     selectedTimelineIdList,
     setSelectedTimelineIdList,
     videoList,
@@ -264,6 +326,7 @@ export const useVideoPlayerApp = () => {
     updateActionResult,
     updateActionType,
     updateTimelineRange,
+    updateTimelineItem,
     getSelectedTimelineId,
     sortTimelineDatas,
     resyncAudio,

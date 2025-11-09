@@ -198,7 +198,7 @@ export const MomentumChart: React.FC<MomentumChartProps> = ({
           <ReferenceLine x={0} stroke={theme.palette.divider} strokeWidth={2} />
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+            cursor={{ fill: theme.palette.action.hover }}
           />
           <Bar dataKey="value" radius={[4, 4, 4, 4]}>
             {chartData.map((entry, index) => (

@@ -31,19 +31,27 @@ export const shortCutKeys = (mainWindow: BrowserWindow) => {
   globalShortcut.register('Command+Shift+A', () =>
     mainWindow.webContents.send('general-shortcut-event', 'analyze'),
   );
-  globalShortcut.register('Command+Shift+1', () =>
+  globalShortcut.register('Command+Option+1', () =>
     mainWindow.webContents.send('menu-show-stats', 'possession'),
   );
-  globalShortcut.register('Command+Shift+2', () =>
+  globalShortcut.register('Command+Option+2', () =>
     mainWindow.webContents.send('menu-show-stats', 'results'),
   );
-  globalShortcut.register('Command+Shift+3', () =>
+  globalShortcut.register('Command+Option+3', () =>
     mainWindow.webContents.send('menu-show-stats', 'types'),
   );
-  globalShortcut.register('Command+Shift+4', () =>
+  globalShortcut.register('Command+Option+4', () =>
     mainWindow.webContents.send('menu-show-stats', 'momentum'),
   );
-  globalShortcut.register('Command+Shift+5', () =>
+  globalShortcut.register('Command+Option+5', () =>
     mainWindow.webContents.send('menu-show-stats', 'matrix'),
+  );
+
+  globalShortcut.register('Command+Z', () =>
+    mainWindow.webContents.send('timeline-undo'),
+  );
+
+  globalShortcut.register('Command+Shift+Z', () =>
+    mainWindow.webContents.send('timeline-redo'),
   );
 };

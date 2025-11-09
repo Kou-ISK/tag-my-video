@@ -29,7 +29,7 @@ export const SyncAnalysisBackdrop: React.FC<SyncAnalysisBackdropProps> = ({
       zIndex: (theme) => theme.zIndex.modal + 1,
       color: '#fff',
       backdropFilter: 'blur(4px)',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backgroundColor: (theme) => theme.custom.glass.panel,
     }}
   >
     <Card

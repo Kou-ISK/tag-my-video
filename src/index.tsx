@@ -1,21 +1,36 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { appTheme } from './theme';
+import { ThemeProvider, useMediaQuery, CssBaseline } from '@mui/material';
+import { getAppTheme } from './theme';
+import { NotificationProvider } from './contexts/NotificationProvider';
+
+/**
+ * Root: システムのダークモード設定に完全追従
+ */
+function Root() {
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
+  const mode = prefersDark ? 'dark' : 'light';
+  const theme = useMemo(() => getAppTheme(mode), [mode]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+    </ThemeProvider>
+  );
+}
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
 );
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={appTheme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <Root />
   </React.StrictMode>,
 );
 
