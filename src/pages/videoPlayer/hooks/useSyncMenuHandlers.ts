@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 interface UseSyncMenuHandlersParams {
   onResyncAudio: () => void;
@@ -13,30 +13,38 @@ export const useSyncMenuHandlers = ({
   onManualSync,
   onSetSyncMode,
 }: UseSyncMenuHandlersParams) => {
+  // useCallbackで安定した関数参照を作成
+  const handleResync = useCallback(() => onResyncAudio(), [onResyncAudio]);
+  const handleReset = useCallback(() => onResetSync(), [onResetSync]);
+  const handleManual = useCallback(() => onManualSync(), [onManualSync]);
+  const handleSetMode = useCallback(
+    (mode: 'auto' | 'manual') => onSetSyncMode(mode),
+    [onSetSyncMode],
+  );
+
   useEffect(() => {
-    if (!window.electronAPI) {
+    if (!globalThis.window.electronAPI) {
       return;
     }
 
-    const onResync = () => onResyncAudio();
-    const onReset = () => onResetSync();
-    const onManual = () => onManualSync();
-    const onSetMode = (mode: 'auto' | 'manual') => onSetSyncMode(mode);
+    const api = globalThis.window.electronAPI;
 
-    window.electronAPI.onResyncAudio(onResync);
-    window.electronAPI.onResetSync(onReset);
-    window.electronAPI.onManualSync(onManual);
-    window.electronAPI.onSetSyncMode(onSetMode);
+    api.onResyncAudio(handleResync);
+    api.onResetSync(handleReset);
+    api.onManualSync(handleManual);
+    api.onSetSyncMode(handleSetMode);
+    console.log('[SYNC] 同期メニューイベントリスナー登録完了');
 
     return () => {
       try {
-        window.electronAPI?.offResyncAudio?.(onResync);
-        window.electronAPI?.offResetSync?.(onReset);
-        window.electronAPI?.offManualSync?.(onManual);
-        window.electronAPI?.offSetSyncMode?.(onSetMode);
+        api.offResyncAudio?.(handleResync);
+        api.offResetSync?.(handleReset);
+        api.offManualSync?.(handleManual);
+        api.offSetSyncMode?.(handleSetMode);
+        console.log('[SYNC] 同期メニューリスナー解除完了');
       } catch (error) {
         console.debug('メニューイベントの解除エラー', error);
       }
     };
-  }, [onResyncAudio, onResetSync, onManualSync, onSetSyncMode]);
+  }, [handleResync, handleReset, handleManual, handleSetMode]); // useCallbackで安定した参照
 };
