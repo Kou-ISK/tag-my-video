@@ -41,6 +41,12 @@ export interface IElectronAPI {
     config?: Record<string, unknown>;
     error?: string;
   }>;
+  // 設定管理API
+  loadSettings: () => Promise<unknown>;
+  saveSettings: (settings: unknown) => Promise<boolean>;
+  resetSettings: () => Promise<unknown>;
+  onOpenSettings: (callback: () => void) => void;
+  offOpenSettings: (callback: () => void) => void;
 }
 
 export interface PackageDatas {

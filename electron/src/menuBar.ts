@@ -188,6 +188,22 @@ export const menuBar = Menu.buildFromTemplate([
     ],
   },
   {
+    label: '設定',
+    submenu: [
+      {
+        label: '設定を開く',
+        accelerator: 'CmdOrCtrl+,',
+        click: (_menuItem, browserWindow) => {
+          if (browserWindow && 'webContents' in browserWindow) {
+            (browserWindow as BrowserWindow).webContents.send(
+              'menu-open-settings',
+            );
+          }
+        },
+      },
+    ],
+  },
+  {
     label: 'ウィンドウ',
     submenu: [
       { role: 'minimize', label: '最小化' },

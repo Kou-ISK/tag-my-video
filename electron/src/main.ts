@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Utils, setMainWindow } from './utils';
 import { shortCutKeys } from './shortCutKey';
 import { menuBar } from './menuBar';
+import { registerSettingsHandlers } from './settingsManager';
 
 // ローカル動画の自動再生を許可
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -30,6 +31,7 @@ const createWindow = () => {
   Menu.setApplicationMenu(menuBar);
 };
 Utils();
+registerSettingsHandlers();
 
 app.whenReady().then(() => {
   createWindow();

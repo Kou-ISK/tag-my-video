@@ -1,12 +1,7 @@
 import { Box, Typography, Grid } from '@mui/material';
 import { CodeButton } from './CodeButton';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import { useActionPreset } from '../../../../contexts/ActionPresetContext';
 
 interface CodePanelProps {
   metaDataConfigFilePath: string;
@@ -26,7 +21,7 @@ export const CodePanel = ({
   teamNames,
   setTeamNames,
 }: CodePanelProps) => {
-  const [actionList, setActionList] = useState<string[]>([]);
+  const { activeActions } = useActionPreset();
 
   useEffect(() => {
     if (!metaDataConfigFilePath) return;
@@ -41,10 +36,6 @@ export const CodePanel = ({
         if (data.team1Name && data.team2Name) {
           setTeamNames([data.team1Name, data.team2Name]);
         }
-
-        if (Array.isArray(data.actionList)) {
-          setActionList(data.actionList as string[]);
-        }
       })
       .catch((error) => console.error('Error loading JSON:', error));
 
@@ -52,6 +43,11 @@ export const CodePanel = ({
       isActive = false;
     };
   }, [metaDataConfigFilePath, setTeamNames]);
+
+  // ActionPresetContextから取得したアクションを使用
+  const actionList = useMemo(() => {
+    return activeActions.map((act) => act.action);
+  }, [activeActions]);
 
   // カテゴリでグループ化（表示には使用しない、順序保持のため）
   const groupedActions = useMemo(() => {
