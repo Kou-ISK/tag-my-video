@@ -154,15 +154,15 @@ export const useTimelineEditing = (
             return a.startTime === b.startTime
               ? 0
               : a.startTime > b.startTime
-              ? direction
-              : -direction;
+                ? direction
+                : -direction;
           }
           if (column === 'endTime') {
             return a.endTime === b.endTime
               ? 0
               : a.endTime > b.endTime
-              ? direction
-              : -direction;
+                ? direction
+                : -direction;
           }
           if (column === 'actionName') {
             return (
