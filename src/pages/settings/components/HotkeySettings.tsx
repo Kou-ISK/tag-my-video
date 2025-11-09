@@ -103,6 +103,8 @@ export const HotkeySettings = forwardRef<
   const initialHotkeys =
     settings.hotkeys.length > 0 ? settings.hotkeys : DEFAULT_HOTKEYS;
   const [hotkeys, setHotkeys] = useState<HotkeyConfig[]>(initialHotkeys);
+  const [savedHotkeys, setSavedHotkeys] =
+    useState<HotkeyConfig[]>(initialHotkeys);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [capturedKey, setCapturedKey] = useState('');
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
@@ -110,7 +112,7 @@ export const HotkeySettings = forwardRef<
 
   useImperativeHandle(ref, () => ({
     hasUnsavedChanges: () =>
-      JSON.stringify(hotkeys) !== JSON.stringify(initialHotkeys),
+      JSON.stringify(hotkeys) !== JSON.stringify(savedHotkeys),
   }));
 
   // キーボードイベントをキャプチャ
@@ -195,6 +197,9 @@ export const HotkeySettings = forwardRef<
 
     const success = await onSave(newSettings);
     if (success) {
+      // 保存成功時に savedHotkeys を更新
+      setSavedHotkeys(hotkeys);
+
       // ホットキーが更新されたことをメインプロセスに通知
       const api = globalThis.window.electronAPI;
       if (api && 'send' in api) {

@@ -26,10 +26,13 @@ export const GeneralSettings = forwardRef<
 >(({ settings, onSave }, ref) => {
   const { setThemeMode: setContextThemeMode } = useThemeMode();
   const [themeMode, setThemeMode] = useState<ThemeMode>(settings.themeMode);
+  const [savedThemeMode, setSavedThemeMode] = useState<ThemeMode>(
+    settings.themeMode,
+  );
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    hasUnsavedChanges: () => themeMode !== settings.themeMode,
+    hasUnsavedChanges: () => themeMode !== savedThemeMode,
   }));
 
   const handleSave = async () => {
@@ -40,6 +43,9 @@ export const GeneralSettings = forwardRef<
 
     const success = await onSave(newSettings);
     if (success) {
+      // 保存成功時に savedThemeMode を更新
+      setSavedThemeMode(themeMode);
+
       // Context にも反映してリアルタイムで切り替わる
       setContextThemeMode(themeMode);
       setSaveSuccess(true);
