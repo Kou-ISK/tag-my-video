@@ -114,61 +114,13 @@ export const menuBar = Menu.buildFromTemplate([
     label: '分析',
     submenu: [
       {
-        label: 'ポゼッションを表示',
-        accelerator: 'CmdOrCtrl+Shift+1',
+        label: '分析開始',
+        accelerator: 'CmdOrCtrl+Shift+A',
         click: (_menuItem, browserWindow) => {
           if (browserWindow && 'webContents' in browserWindow) {
             (browserWindow as BrowserWindow).webContents.send(
-              'menu-show-stats',
-              'possession',
-            );
-          }
-        },
-      },
-      {
-        label: 'アクション結果を表示',
-        accelerator: 'CmdOrCtrl+Shift+2',
-        click: (_menuItem, browserWindow) => {
-          if (browserWindow && 'webContents' in browserWindow) {
-            (browserWindow as BrowserWindow).webContents.send(
-              'menu-show-stats',
-              'results',
-            );
-          }
-        },
-      },
-      {
-        label: 'アクション種別を表示',
-        accelerator: 'CmdOrCtrl+Shift+3',
-        click: (_menuItem, browserWindow) => {
-          if (browserWindow && 'webContents' in browserWindow) {
-            (browserWindow as BrowserWindow).webContents.send(
-              'menu-show-stats',
-              'types',
-            );
-          }
-        },
-      },
-      {
-        label: 'モーメンタムを表示',
-        accelerator: 'CmdOrCtrl+Shift+4',
-        click: (_menuItem, browserWindow) => {
-          if (browserWindow && 'webContents' in browserWindow) {
-            (browserWindow as BrowserWindow).webContents.send(
-              'menu-show-stats',
-              'momentum',
-            );
-          }
-        },
-      },
-      {
-        label: 'クロス集計を表示',
-        accelerator: 'CmdOrCtrl+Shift+5',
-        click: (_menuItem, browserWindow) => {
-          if (browserWindow && 'webContents' in browserWindow) {
-            (browserWindow as BrowserWindow).webContents.send(
-              'menu-show-stats',
-              'matrix',
+              'general-shortcut-event',
+              'analyze',
             );
           }
         },

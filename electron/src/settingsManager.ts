@@ -18,9 +18,48 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeMode: 'system',
   activePresetId: 'default',
   actionPresets: [],
-  hotkeys: [],
+  hotkeys: [
+    { id: 'resync-audio', label: '音声同期を再実行', key: 'Command+Shift+S' },
+    { id: 'reset-sync', label: '同期をリセット', key: 'Command+Shift+R' },
+    { id: 'manual-sync', label: '今の位置で同期', key: 'Command+Shift+M' },
+    {
+      id: 'toggle-manual-mode',
+      label: '手動モード切替',
+      key: 'Command+Shift+T',
+    },
+    { id: 'analyze', label: '分析開始', key: 'Command+Shift+A' },
+    { id: 'undo', label: '元に戻す', key: 'Command+Z' },
+    { id: 'redo', label: 'やり直す', key: 'Command+Shift+Z' },
+    { id: 'skip-forward-small', label: '0.5秒進む', key: 'Right' },
+    { id: 'skip-forward-medium', label: '2秒進む', key: 'Shift+Right' },
+    { id: 'skip-forward-large', label: '4秒進む', key: 'Command+Right' },
+    { id: 'skip-forward-xlarge', label: '6秒進む', key: 'Option+Right' },
+    { id: 'skip-backward-medium', label: '5秒戻る', key: 'Left' },
+    { id: 'skip-backward-large', label: '10秒戻る', key: 'Shift+Left' },
+    { id: 'play-pause', label: '再生/一時停止', key: 'Up' },
+  ],
   language: 'ja',
 };
+
+/**
+ * 有効なホットキーIDのセット
+ */
+const VALID_HOTKEY_IDS = new Set([
+  'resync-audio',
+  'reset-sync',
+  'manual-sync',
+  'toggle-manual-mode',
+  'analyze',
+  'undo',
+  'redo',
+  'skip-forward-small',
+  'skip-forward-medium',
+  'skip-forward-large',
+  'skip-forward-xlarge',
+  'skip-backward-medium',
+  'skip-backward-large',
+  'play-pause',
+]);
 
 /**
  * 設定を読み込む
@@ -30,8 +69,25 @@ export const loadSettings = async (): Promise<AppSettings> => {
   try {
     const data = await fs.readFile(settingsPath, 'utf-8');
     const parsed = JSON.parse(data) as Partial<AppSettings>;
+
     // デフォルト設定とマージして不足項目を補完
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    const merged = { ...DEFAULT_SETTINGS, ...parsed };
+
+    // 古い/無効なホットキーをフィルタリング
+    if (merged.hotkeys && merged.hotkeys.length > 0) {
+      merged.hotkeys = merged.hotkeys.filter((hotkey) =>
+        VALID_HOTKEY_IDS.has(hotkey.id),
+      );
+
+      // フィルタリング後にホットキーが空の場合はデフォルトを使用
+      if (merged.hotkeys.length === 0) {
+        merged.hotkeys = DEFAULT_SETTINGS.hotkeys;
+      }
+    } else {
+      merged.hotkeys = DEFAULT_SETTINGS.hotkeys;
+    }
+
+    return merged;
   } catch (error) {
     // ファイルが存在しない、またはパースエラーの場合はデフォルト設定を返す
     console.warn('Settings file not found or invalid, using defaults:', error);

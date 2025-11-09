@@ -257,6 +257,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return false;
     }
   },
+  send: (channel: string) => {
+    ipcRenderer.send(channel);
+  },
   resetSettings: async () => {
     try {
       return await ipcRenderer.invoke('settings:reset');
@@ -269,7 +272,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     try {
       ipcRenderer.removeAllListeners('menu-open-settings');
     } catch (e) {
-      // ignore
+      console.warn('Failed to remove listeners:', e);
     }
     ipcRenderer.on(
       'menu-open-settings',

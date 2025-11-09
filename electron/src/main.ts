@@ -1,16 +1,16 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain } from 'electron';
 import * as path from 'path';
 import { Utils, setMainWindow } from './utils';
-import { shortCutKeys } from './shortCutKey';
+import { registerShortcuts } from './shortCutKey';
 import { menuBar } from './menuBar';
-import { registerSettingsHandlers } from './settingsManager';
+import { registerSettingsHandlers, loadSettings } from './settingsManager';
 
 // ローカル動画の自動再生を許可
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 const mainURL = `file:${__dirname}/../../index.html`;
 
-const createWindow = () => {
+const createWindow = async () => {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 1000,
@@ -27,8 +27,19 @@ const createWindow = () => {
   });
   setMainWindow(mainWindow);
   mainWindow.loadURL(mainURL);
-  shortCutKeys(mainWindow);
+
+  // 設定を読み込んでホットキーを登録
+  const settings = await loadSettings();
+  registerShortcuts(mainWindow, settings.hotkeys);
+
   Menu.setApplicationMenu(menuBar);
+
+  // ホットキー設定が更新されたら再登録
+  ipcMain.on('hotkeys-updated', () => {
+    loadSettings().then((updatedSettings) => {
+      registerShortcuts(mainWindow, updatedSettings.hotkeys);
+    });
+  });
 };
 Utils();
 registerSettingsHandlers();

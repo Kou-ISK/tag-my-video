@@ -1,4 +1,9 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from 'react';
 import {
   Box,
   Button,
@@ -7,9 +12,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  TextField,
   Alert,
   Chip,
+  Paper,
 } from '@mui/material';
 import type { AppSettings, HotkeyConfig } from '../../../types/Settings';
 import type { SettingsTabHandle } from '../../SettingsPage';
@@ -28,23 +33,6 @@ const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   { id: 'manual-sync', label: '今の位置で同期', key: 'Command+Shift+M' },
   { id: 'toggle-manual-mode', label: '手動モード切替', key: 'Command+Shift+T' },
   { id: 'analyze', label: '分析開始', key: 'Command+Shift+A' },
-  {
-    id: 'show-stats-possession',
-    label: 'ポゼッション統計表示',
-    key: 'Command+Option+1',
-  },
-  { id: 'show-stats-results', label: '結果統計表示', key: 'Command+Option+2' },
-  { id: 'show-stats-types', label: 'タイプ統計表示', key: 'Command+Option+3' },
-  {
-    id: 'show-stats-momentum',
-    label: 'モメンタム統計表示',
-    key: 'Command+Option+4',
-  },
-  {
-    id: 'show-stats-matrix',
-    label: 'マトリクス統計表示',
-    key: 'Command+Option+5',
-  },
   { id: 'undo', label: '元に戻す', key: 'Command+Z' },
   { id: 'redo', label: 'やり直す', key: 'Command+Shift+Z' },
   { id: 'skip-forward-small', label: '0.5秒進む', key: 'Right' },
@@ -56,6 +44,57 @@ const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   { id: 'play-pause', label: '再生/一時停止', key: 'Up' },
 ];
 
+/**
+ * システムホットキーやアプリ標準のホットキー（衝突しやすいもの）
+ */
+const FORBIDDEN_HOTKEYS = new Set([
+  'Command+Q', // アプリ終了
+  'Command+W', // ウィンドウを閉じる
+  'Command+N', // 新規ウィンドウ
+  'Command+T', // 新規タブ
+  'Command+C', // コピー
+  'Command+V', // ペースト
+  'Command+X', // カット
+  'Command+A', // 全選択
+  'Command+S', // 保存
+  'Command+O', // 開く
+  'Command+P', // 印刷
+  'Command+F', // 検索
+  'Command+H', // ウィンドウを隠す
+  'Command+M', // 最小化
+  'Command+Tab', // アプリ切り替え
+  'Command+Space', // Spotlight
+  'Control+Space', // 入力ソース切り替え
+]);
+
+/**
+ * キーボードイベントから表示用のキー文字列を生成
+ */
+const formatKeyCombo = (event: KeyboardEvent): string => {
+  const keys: string[] = [];
+
+  if (event.metaKey) keys.push('Command');
+  if (event.ctrlKey) keys.push('Control');
+  if (event.altKey) keys.push('Option');
+  if (event.shiftKey) keys.push('Shift');
+
+  // 修飾キー以外のキー
+  if (event.key && !['Meta', 'Control', 'Alt', 'Shift'].includes(event.key)) {
+    const keyName =
+      event.key.length === 1 ? event.key.toUpperCase() : event.key;
+    keys.push(keyName);
+  }
+
+  return keys.join('+');
+};
+
+/**
+ * ホットキーが禁止リストに含まれているかチェック
+ */
+const isForbiddenHotkey = (keyCombo: string): boolean => {
+  return FORBIDDEN_HOTKEYS.has(keyCombo);
+};
+
 export const HotkeySettings = forwardRef<
   SettingsTabHandle,
   HotkeySettingsProps
@@ -65,7 +104,8 @@ export const HotkeySettings = forwardRef<
     settings.hotkeys.length > 0 ? settings.hotkeys : DEFAULT_HOTKEYS;
   const [hotkeys, setHotkeys] = useState<HotkeyConfig[]>(initialHotkeys);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingKey, setEditingKey] = useState('');
+  const [capturedKey, setCapturedKey] = useState('');
+  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -73,22 +113,74 @@ export const HotkeySettings = forwardRef<
       JSON.stringify(hotkeys) !== JSON.stringify(initialHotkeys),
   }));
 
+  // キーボードイベントをキャプチャ
+  useEffect(() => {
+    if (editingId === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Escapeキーでキャンセル
+      if (event.key === 'Escape') {
+        handleEditCancel();
+        return;
+      }
+
+      // 修飾キーのみの場合は無視
+      if (['Meta', 'Control', 'Alt', 'Shift'].includes(event.key)) {
+        return;
+      }
+
+      const keyCombo = formatKeyCombo(event);
+      setCapturedKey(keyCombo);
+
+      // 衝突チェック
+      if (isForbiddenHotkey(keyCombo)) {
+        setConflictWarning(
+          `"${keyCombo}" はシステムで使用されているため設定できません`,
+        );
+      } else {
+        const duplicate = hotkeys.find(
+          (h) => h.key === keyCombo && h.id !== editingId,
+        );
+        if (duplicate) {
+          setConflictWarning(
+            `"${keyCombo}" は既に「${duplicate.label}」に割り当てられています`,
+          );
+        } else {
+          setConflictWarning(null);
+        }
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => {
+      globalThis.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [editingId, hotkeys]);
+
   const handleEditStart = (hotkey: HotkeyConfig) => {
     setEditingId(hotkey.id);
-    setEditingKey(hotkey.key);
+    setCapturedKey(hotkey.key);
+    setConflictWarning(null);
   };
 
-  const handleEditSave = (id: string) => {
+  const handleEditSave = () => {
+    if (!editingId || !capturedKey || conflictWarning) return;
+
     setHotkeys(
-      hotkeys.map((h) => (h.id === id ? { ...h, key: editingKey } : h)),
+      hotkeys.map((h) => (h.id === editingId ? { ...h, key: capturedKey } : h)),
     );
     setEditingId(null);
-    setEditingKey('');
+    setCapturedKey('');
+    setConflictWarning(null);
   };
 
   const handleEditCancel = () => {
     setEditingId(null);
-    setEditingKey('');
+    setCapturedKey('');
+    setConflictWarning(null);
   };
 
   const handleResetToDefaults = () => {
@@ -103,6 +195,12 @@ export const HotkeySettings = forwardRef<
 
     const success = await onSave(newSettings);
     if (success) {
+      // ホットキーが更新されたことをメインプロセスに通知
+      const api = globalThis.window.electronAPI;
+      if (api && 'send' in api) {
+        (api as { send: (channel: string) => void }).send('hotkeys-updated');
+      }
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
@@ -137,24 +235,51 @@ export const HotkeySettings = forwardRef<
               primary={hotkey.label}
               secondary={
                 editingId === hotkey.id ? (
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <TextField
-                      size="small"
-                      value={editingKey}
-                      onChange={(e) => setEditingKey(e.target.value)}
-                      placeholder="例: Command+Shift+S"
-                      sx={{ flexGrow: 1 }}
-                    />
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => handleEditSave(hotkey.id)}
+                  <Box sx={{ mt: 1 }}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        mb: 1,
+                        bgcolor: 'action.hover',
+                        border: '2px dashed',
+                        borderColor: conflictWarning
+                          ? 'error.main'
+                          : 'primary.main',
+                        textAlign: 'center',
+                      }}
                     >
-                      保存
-                    </Button>
-                    <Button size="small" onClick={handleEditCancel}>
-                      キャンセル
-                    </Button>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        キーを押してください（Escでキャンセル）
+                      </Typography>
+                      <Chip
+                        label={capturedKey || 'キー入力待ち...'}
+                        color={conflictWarning ? 'error' : 'primary'}
+                        sx={{ fontWeight: 'bold', fontSize: '1rem' }}
+                      />
+                    </Paper>
+                    {conflictWarning && (
+                      <Alert severity="error" sx={{ mb: 1 }}>
+                        {conflictWarning}
+                      </Alert>
+                    )}
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={handleEditSave}
+                        disabled={!capturedKey || !!conflictWarning}
+                        fullWidth
+                      >
+                        保存
+                      </Button>
+                      <Button size="small" onClick={handleEditCancel} fullWidth>
+                        キャンセル
+                      </Button>
+                    </Box>
                   </Box>
                 ) : (
                   <Box

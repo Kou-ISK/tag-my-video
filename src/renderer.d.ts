@@ -44,6 +44,7 @@ export interface IElectronAPI {
   // 設定管理API
   loadSettings: () => Promise<unknown>;
   saveSettings: (settings: unknown) => Promise<boolean>;
+  send: (channel: string) => void;
   resetSettings: () => Promise<unknown>;
   onOpenSettings: (callback: () => void) => void;
   offOpenSettings: (callback: () => void) => void;
