@@ -1,6 +1,6 @@
 {
   "name": "tag-my-video",
-  "version": "3.0.0",
+  "version": "0.1.0",
   "description": "Video tagging application for sports analysis",
   "private": true,
   "packageManager": "pnpm@9.1.0",
@@ -49,18 +49,6 @@
   "main": "build/electron/src/main.js",
   "homepage": "./",
   "author": "Kou-ISK",
-  "build": {
-    "extends": null,
-    "files": [
-      "build/**/*"
-    ],
-    "directories": {
-      "output": "dist/"
-    },
-    "appId": "com.example.tagMyVideo",
-    "productName": "Tag My Video",
-    "icon": "public/icon.png"
-  },
   "scripts": {
     "lint": "eslint src --fix",
     "fix": "pnpm run lint && pnpm run format",

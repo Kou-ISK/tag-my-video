@@ -13,6 +13,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 1000,
+    icon: path.join(__dirname, '../../public/icon.icns'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       // ローカル file:// リソースを許可（開発用）
