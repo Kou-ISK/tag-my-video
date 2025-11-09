@@ -21,8 +21,8 @@ export const useRecentPackages = () => {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as RecentPackage[];
-        // 日付でソート（新しい順）
-        const sorted = parsed.toSorted((a, b) => b.lastOpened - a.lastOpened);
+        // 日付でソート（新しい順） - ES2023のtoSorted()は互換性のためスプレッド+sort()に変更
+        const sorted = [...parsed].sort((a, b) => b.lastOpened - a.lastOpened);
         setRecentPackages(sorted.slice(0, MAX_RECENT_PACKAGES));
       }
     } catch (error) {

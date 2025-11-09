@@ -72,7 +72,7 @@ export const useHotkeyPlayback = ({
   const syncDataRef = useRef(syncData);
   const getExistingPlayerRef = useRef(getExistingPlayer);
 
-  // useEffectの外で常に最新の値を保持
+  // useEffectの外で常に最新の値を保持（空の依存配列により初回のみ実行）
   useEffect(() => {
     setVideoPlayBackRateRef.current = setVideoPlayBackRate;
     triggerFlashRef.current = triggerFlash;
@@ -81,7 +81,15 @@ export const useHotkeyPlayback = ({
     videoListRef.current = videoList;
     syncDataRef.current = syncData;
     getExistingPlayerRef.current = getExistingPlayer;
-  });
+  }, [
+    setVideoPlayBackRate,
+    triggerFlash,
+    setIsVideoPlaying,
+    setCurrentTime,
+    videoList,
+    syncData,
+    getExistingPlayer,
+  ]);
 
   useEffect(() => {
     const api = globalThis.window.electronAPI;

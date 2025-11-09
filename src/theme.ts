@@ -113,7 +113,7 @@ const NEON_SCHEME = {
 function buildTheme(mode: 'dark' | 'light'): ThemeOptions {
   const S = NEON_SCHEME;
 
-  // Light mode用の微調整（将来対応）
+  // Light mode用の調整（基本実装済み、必要に応じてさらにカスタマイズ可能）
   const bgDefault = mode === 'dark' ? S.background.default : '#F5F5F5';
   const bgPaper = mode === 'dark' ? S.background.paper : '#FFFFFF';
   const textPrimary = mode === 'dark' ? S.text.primary : '#000000';
@@ -169,7 +169,7 @@ function buildTheme(mode: 'dark' | 'light'): ThemeOptions {
       body2: { lineHeight: 1.6 },
       button: { textTransform: 'none', fontWeight: 700 },
     },
-    shadows: new Array(25).fill('none') as unknown as ThemeOptions['shadows'],
+    shadows: [...new Array(25)].map(() => 'none') as ThemeOptions['shadows'],
     components: {
       MuiPaper: {
         styleOverrides: { root: { backgroundImage: 'none' } },

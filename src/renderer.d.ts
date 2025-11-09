@@ -25,6 +25,8 @@ export interface IElectronAPI {
   offSetSyncMode: (callback: (mode: 'auto' | 'manual') => void) => void; // 追加
   // ファイル存在確認
   checkFileExists: (filePath: string) => Promise<boolean>;
+  // JSONファイル読み込み
+  readJsonFile: (filePath: string) => Promise<unknown>;
   saveSyncData: (
     configPath: string,
     syncData: {

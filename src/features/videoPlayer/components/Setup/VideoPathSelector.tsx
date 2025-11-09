@@ -14,6 +14,7 @@ import AddIcon from '@mui/icons-material/Add';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import type { VideoSyncData } from '../../../../types/VideoSync';
 import { ExistingPackageLoader } from './VideoPathSelector/ExistingPackageLoader';
 import { CreatePackageWizard } from './VideoPathSelector/CreatePackageWizard';
 import { AudioSyncBackdrop } from './VideoPathSelector/AudioSyncBackdrop';
@@ -71,20 +72,26 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
 
       // 履歴に追加（metaDataからチーム名を取得）
       if (packagePath && metaDataConfigFilePath) {
-        fetch(metaDataConfigFilePath)
-          .then((res) => res.json())
-          .then((config) => {
-            addRecentPackage({
-              path: packagePath,
-              name: packagePath.split('/').pop() || 'Unknown',
-              team1Name: config.team1Name || 'Team 1',
-              team2Name: config.team2Name || 'Team 2',
-              videoCount: videoList.length,
-            });
-          })
-          .catch((err) =>
-            console.error('Failed to update recent packages:', err),
-          );
+        if (globalThis.window.electronAPI?.readJsonFile) {
+          globalThis.window.electronAPI
+            .readJsonFile(metaDataConfigFilePath)
+            .then((config: unknown) => {
+              const typedConfig = config as {
+                team1Name?: string;
+                team2Name?: string;
+              };
+              addRecentPackage({
+                path: packagePath,
+                name: packagePath.split('/').pop() || 'Unknown',
+                team1Name: typedConfig.team1Name || 'Team 1',
+                team2Name: typedConfig.team2Name || 'Team 2',
+                videoCount: videoList.length,
+              });
+            })
+            .catch((err) =>
+              console.error('Failed to update recent packages:', err),
+            );
+        }
       }
     },
     [
@@ -132,16 +139,20 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
       }
 
       try {
-        const response = await fetch(configFilePath);
-        if (!response.ok) {
-          throw new Error('Failed to load config.json');
+        if (!globalThis.window.electronAPI?.readJsonFile) {
+          throw new Error('electronAPI.readJsonFile is not available');
         }
-        const config = await response.json();
+        const config =
+          await globalThis.window.electronAPI.readJsonFile(configFilePath);
 
-        const tightRelative = config.tightViewPath as string;
-        const wideRelative = (config.wideViewPath || undefined) as
-          | string
-          | undefined;
+        const typedConfig = config as {
+          tightViewPath: string;
+          wideViewPath?: string;
+          syncData?: VideoSyncData;
+        };
+
+        const tightRelative = typedConfig.tightViewPath;
+        const wideRelative = typedConfig.wideViewPath || undefined;
         const tightAbsolute = `${packagePath}/${tightRelative}`;
         const wideAbsolute = wideRelative
           ? `${packagePath}/${wideRelative}`
@@ -153,7 +164,7 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
 
         handlePackageLoaded({
           videoList,
-          syncData: config.syncData,
+          syncData: typedConfig.syncData,
           timelinePath: `${packagePath}/timeline.json`,
           metaDataConfigFilePath: configFilePath,
           packagePath,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -13,7 +13,7 @@ import { NotificationProvider } from './contexts/NotificationProvider';
 function Root() {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
   const mode = prefersDark ? 'dark' : 'light';
-  const theme = React.useMemo(() => getAppTheme(mode), [mode]);
+  const theme = useMemo(() => getAppTheme(mode), [mode]);
 
   return (
     <ThemeProvider theme={theme}>

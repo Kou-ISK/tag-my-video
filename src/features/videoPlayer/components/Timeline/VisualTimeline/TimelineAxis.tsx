@@ -7,7 +7,7 @@ interface TimelineAxisProps {
   maxSec: number;
   currentTimePosition: number;
   timeMarkers: number[];
-  onSeek: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onSeek: (time: number) => void; // マウスイベントではなく時間を直接受け取る
   formatTime: (seconds: number) => string;
 }
 
@@ -22,6 +22,18 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
   const theme = useTheme();
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
 
+  // マウスイベントから時間を計算してonSeekを呼び出す
+  const handleSeekFromMouseEvent = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const time = (clickX / rect.width) * maxSec;
+      onSeek(Math.max(0, Math.min(time, maxSec)));
+    },
+    [containerRef, maxSec, onSeek],
+  );
+
   const handlePlayheadMouseDown = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -31,10 +43,8 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
         const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-        const syntheticEvent = {
-          clientX: rect.left + clickX,
-        } as React.MouseEvent<HTMLDivElement>;
-        onSeek(syntheticEvent);
+        const time = (clickX / rect.width) * maxSec;
+        onSeek(Math.max(0, Math.min(time, maxSec)));
       };
 
       const handleMouseUp = () => {
@@ -46,7 +56,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [containerRef, onSeek],
+    [containerRef, maxSec, onSeek],
   );
 
   return (
@@ -62,7 +72,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
 
       <Box
         ref={containerRef}
-        onClick={onSeek}
+        onClick={handleSeekFromMouseEvent}
         sx={{
           position: 'relative',
           flex: 1,

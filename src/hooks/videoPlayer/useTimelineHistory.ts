@@ -30,21 +30,25 @@ export function useTimelineHistory(
 
   // スナップショットのスキップフラグ（外部からのsetで履歴を残さない場合用）
   const skipSnapshot = useRef(false);
+  // 前回のinitialTimelineを保持（無限ループを防ぐため）
+  const prevInitialTimelineJSON = useRef<string>(
+    JSON.stringify(initialTimeline),
+  );
 
   // 外部からのタイムライン更新を検知（ファイル読み込み時など）
   useEffect(() => {
     // initialTimelineが変更された場合、履歴をクリアして新しいタイムラインを設定
-    const currentJSON = JSON.stringify(state.present);
     const newJSON = JSON.stringify(initialTimeline);
 
-    if (currentJSON !== newJSON) {
+    if (prevInitialTimelineJSON.current !== newJSON) {
       setState({
         past: [],
         present: initialTimeline,
         future: [],
       });
+      prevInitialTimelineJSON.current = newJSON;
     }
-  }, [initialTimeline]); // state.presentは依存配列に含めない（無限ループ防止）
+  }, [initialTimeline]);
 
   const setTimeline = useCallback((newTimeline: TimelineData[]) => {
     if (skipSnapshot.current) {

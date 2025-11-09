@@ -98,25 +98,6 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     [containerWidth, maxSec],
   );
 
-  const positionToTime = useCallback(
-    (position: number) => {
-      if (containerWidth <= 0) return 0;
-      return (position / containerWidth) * maxSec;
-    },
-    [containerWidth, maxSec],
-  );
-
-  const handleTimelineClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const clickX = event.clientX - rect.left;
-      const time = positionToTime(clickX);
-      onSeek(time);
-    },
-    [onSeek, positionToTime],
-  );
-
   const handleItemClick = useCallback(
     (event: React.MouseEvent, id: string) => {
       event.stopPropagation();
@@ -441,7 +422,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
           maxSec={maxSec}
           currentTimePosition={currentTimePosition}
           timeMarkers={timeMarkers}
-          onSeek={handleTimelineClick}
+          onSeek={onSeek}
           formatTime={formatTime}
         />
 

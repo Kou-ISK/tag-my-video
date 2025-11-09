@@ -211,6 +211,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return false;
     }
   },
+  // JSONファイル読み込み
+  readJsonFile: async (filePath: string) => {
+    try {
+      return await ipcRenderer.invoke('read-json-file', filePath);
+    } catch (error) {
+      console.error('Error reading JSON file:', error);
+      throw error;
+    }
+  },
   setManualModeChecked: async (checked: boolean) => {
     try {
       return await ipcRenderer.invoke('set-manual-mode-checked', checked);

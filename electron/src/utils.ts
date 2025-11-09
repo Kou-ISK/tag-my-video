@@ -139,6 +139,17 @@ export const Utils = () => {
     }
   });
 
+  // JSONファイルを読み込み
+  ipcMain.handle('read-json-file', async (event, filePath: string) => {
+    try {
+      const data = await fs.promises.readFile(filePath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error(`JSONファイル読み込みエラー: ${filePath}`, error);
+      throw error;
+    }
+  });
+
   // 同期データを保存
   ipcMain.handle(
     'save-sync-data',
