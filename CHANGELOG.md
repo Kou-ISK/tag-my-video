@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🚀 Added
+
+#### CI/CDとリリース自動化
+
+- GitHub Actionsによる自動ビルドワークフローを追加
+  - macOS (DMG)、Windows (EXE)、Linux (AppImage) の自動ビルド
+  - タグプッシュ時の自動リリース作成
+  - 手動ビルドトリガーのサポート
+- Homebrew Cask対応のための設定を追加
+  - 予測可能なアーティファクト名の設定
+  - Caskテンプレートとドキュメント (`.github/HOMEBREW.md`)
+- リリース手順のドキュメント追加 (`.github/RELEASE.md`)
+
+#### 設定画面の機能強化
+
+- 未保存変更の検出と確認ダイアログを実装
+  - テーマ設定変更時の保存確認
+  - ホットキー設定変更時の保存確認
+  - タブ切り替え時・ダイアログ閉じる時の警告表示
+
+### 🔧 Changed
+
+- `electron-builder.json`にアーティファクト名の設定を追加
+- READMEにインストール方法のセクションを追加
+
 ## [3.0.0] - 2025-11-06
 
 ### 🚀 Major Updates
@@ -79,7 +106,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    ```
 
 2. **必須要件**:
-
    - Node.js 18.0.0 以上が必須
    - pnpm 9.0.0 以上が必須
    - グローバルに pnpm のインストールが必要: `npm install -g pnpm`
