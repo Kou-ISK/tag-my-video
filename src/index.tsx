@@ -3,25 +3,36 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ThemeProvider, useMediaQuery, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getAppTheme } from './theme';
 import { NotificationProvider } from './contexts/NotificationProvider';
+import { ThemeModeProvider, useThemeMode } from './contexts/ThemeModeContext';
+import { ActionPresetProvider } from './contexts/ActionPresetContext';
 
 /**
- * Root: システムのダークモード設定に完全追従
+ * Root: テーマモード設定に応じてテーマを切り替え
  */
-function Root() {
-  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
-  const mode = prefersDark ? 'dark' : 'light';
-  const theme = useMemo(() => getAppTheme(mode), [mode]);
+function ThemedApp() {
+  const { effectiveMode } = useThemeMode();
+  const theme = useMemo(() => getAppTheme(effectiveMode), [effectiveMode]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NotificationProvider>
-        <App />
+        <ActionPresetProvider>
+          <App />
+        </ActionPresetProvider>
       </NotificationProvider>
     </ThemeProvider>
+  );
+}
+
+function Root() {
+  return (
+    <ThemeModeProvider>
+      <ThemedApp />
+    </ThemeModeProvider>
   );
 }
 

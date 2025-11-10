@@ -5,8 +5,8 @@ import {
   Select,
   SelectChangeEvent,
 } from '@mui/material';
-import { ActionList } from '../../../../ActionList';
 import React from 'react';
+import { useActionPreset } from '../../../../contexts/ActionPresetContext';
 
 interface ActionResultSelectorProps {
   id: string;
@@ -20,9 +20,9 @@ export const ActionResultSelector = ({
   actionResult,
   updateActionResult,
 }: ActionResultSelectorProps) => {
-  const results = ActionList.find((value) =>
-    actionName.includes(value.action),
-  )?.results;
+  const { activeActions } = useActionPreset();
+  const results = activeActions.find((act) => actionName.includes(act.action))
+    ?.results;
   const handleChange = (event: SelectChangeEvent) => {
     updateActionResult(id, event.target.value);
   };

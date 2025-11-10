@@ -5,8 +5,8 @@ import {
   Select,
   SelectChangeEvent,
 } from '@mui/material';
-import { ActionList } from '../../../../ActionList';
 import React from 'react';
+import { useActionPreset } from '../../../../contexts/ActionPresetContext';
 
 interface ActionTypeSelectorProps {
   id: string;
@@ -20,9 +20,9 @@ export const ActionTypeSelector = ({
   actionType,
   updateActionType,
 }: ActionTypeSelectorProps) => {
-  const types = ActionList.find((value) =>
-    actionName.includes(value.action),
-  )?.types;
+  const { activeActions } = useActionPreset();
+  const types = activeActions.find((act) => actionName.includes(act.action))
+    ?.types;
   const handleChange = (event: SelectChangeEvent) => {
     updateActionType(id, event.target.value);
   };

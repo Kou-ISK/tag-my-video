@@ -240,4 +240,53 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return { success: false, error: String(e) };
     }
   },
+  // 設定管理API
+  loadSettings: async () => {
+    try {
+      return await ipcRenderer.invoke('settings:load');
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      throw error;
+    }
+  },
+  saveSettings: async (settings: unknown) => {
+    try {
+      return await ipcRenderer.invoke('settings:save', settings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      return false;
+    }
+  },
+  send: (channel: string) => {
+    ipcRenderer.send(channel);
+  },
+  resetSettings: async () => {
+    try {
+      return await ipcRenderer.invoke('settings:reset');
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      throw error;
+    }
+  },
+  onOpenSettings: (callback: () => void) => {
+    try {
+      ipcRenderer.removeAllListeners('menu-open-settings');
+    } catch (e) {
+      console.warn('Failed to remove listeners:', e);
+    }
+    ipcRenderer.on(
+      'menu-open-settings',
+      callback as unknown as (event: IpcRendererEvent) => void,
+    );
+  },
+  offOpenSettings: (callback: () => void) => {
+    try {
+      ipcRenderer.removeListener(
+        'menu-open-settings',
+        callback as unknown as (event: IpcRendererEvent) => void,
+      );
+    } catch {
+      /* noop */
+    }
+  },
 });

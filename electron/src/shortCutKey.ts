@@ -1,57 +1,86 @@
 import { BrowserWindow, globalShortcut } from 'electron';
+import type { HotkeyConfig } from '../../src/types/Settings';
 
-export const shortCutKeys = (mainWindow: BrowserWindow) => {
-  globalShortcut.register('Right', () =>
+/**
+ * ホットキーIDとイベントハンドラーのマッピング
+ */
+const hotkeyHandlers: Record<string, (mainWindow: BrowserWindow) => void> = {
+  'skip-forward-small': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', 0.5),
-  );
-
-  globalShortcut.register('Shift+Right', () =>
+  'skip-forward-medium': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', 2),
-  );
-
-  globalShortcut.register('Command+Right', () =>
+  'skip-forward-large': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', 4),
-  );
-
-  globalShortcut.register('Option+Right', () =>
+  'skip-forward-xlarge': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', 6),
-  );
-
-  globalShortcut.register('Up', () =>
+  'play-pause': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', 1),
-  );
-
-  globalShortcut.register('Left', () =>
+  'skip-backward-medium': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', -5),
-  );
-  globalShortcut.register('Shift+Left', () =>
+  'skip-backward-large': (mainWindow) =>
     mainWindow.webContents.send('video-shortcut-event', -10),
-  );
-
-  globalShortcut.register('Command+Shift+A', () =>
+  analyze: (mainWindow) =>
     mainWindow.webContents.send('general-shortcut-event', 'analyze'),
-  );
-  globalShortcut.register('Command+Option+1', () =>
-    mainWindow.webContents.send('menu-show-stats', 'possession'),
-  );
-  globalShortcut.register('Command+Option+2', () =>
-    mainWindow.webContents.send('menu-show-stats', 'results'),
-  );
-  globalShortcut.register('Command+Option+3', () =>
-    mainWindow.webContents.send('menu-show-stats', 'types'),
-  );
-  globalShortcut.register('Command+Option+4', () =>
-    mainWindow.webContents.send('menu-show-stats', 'momentum'),
-  );
-  globalShortcut.register('Command+Option+5', () =>
-    mainWindow.webContents.send('menu-show-stats', 'matrix'),
-  );
+  undo: (mainWindow) => mainWindow.webContents.send('timeline-undo'),
+  redo: (mainWindow) => mainWindow.webContents.send('timeline-redo'),
+  'resync-audio': (mainWindow) =>
+    mainWindow.webContents.send('sync-shortcut-event', 'resync'),
+  'reset-sync': (mainWindow) =>
+    mainWindow.webContents.send('sync-shortcut-event', 'reset'),
+  'manual-sync': (mainWindow) =>
+    mainWindow.webContents.send('sync-shortcut-event', 'manual'),
+  'toggle-manual-mode': (mainWindow) =>
+    mainWindow.webContents.send('sync-shortcut-event', 'toggle-manual'),
+};
 
-  globalShortcut.register('Command+Z', () =>
-    mainWindow.webContents.send('timeline-undo'),
-  );
+/**
+ * ホットキーを登録
+ */
+export const registerShortcuts = (
+  mainWindow: BrowserWindow,
+  hotkeys: HotkeyConfig[],
+) => {
+  // 既存のショートカットをすべて解除
+  globalShortcut.unregisterAll();
 
-  globalShortcut.register('Command+Shift+Z', () =>
-    mainWindow.webContents.send('timeline-redo'),
-  );
+  // 各ホットキーを登録
+  for (const hotkey of hotkeys) {
+    const handler = hotkeyHandlers[hotkey.id];
+    if (!handler) {
+      console.warn(`Unknown hotkey ID: ${hotkey.id}`);
+      continue;
+    }
+
+    try {
+      const success = globalShortcut.register(hotkey.key, () => {
+        handler(mainWindow);
+      });
+
+      if (!success) {
+        console.error(`Failed to register shortcut: ${hotkey.key}`);
+      }
+    } catch (error) {
+      console.error(`Error registering shortcut ${hotkey.key}:`, error);
+    }
+  }
+};
+
+/**
+ * 後方互換性のため残す（deprecated）
+ */
+export const shortCutKeys = (mainWindow: BrowserWindow) => {
+  const defaultHotkeys: HotkeyConfig[] = [
+    { id: 'skip-forward-small', label: '0.5秒進む', key: 'Right' },
+    { id: 'skip-forward-medium', label: '2秒進む', key: 'Shift+Right' },
+    { id: 'skip-forward-large', label: '4秒進む', key: 'Command+Right' },
+    { id: 'skip-forward-xlarge', label: '6秒進む', key: 'Option+Right' },
+    { id: 'play-pause', label: '再生/一時停止', key: 'Up' },
+    { id: 'skip-backward-medium', label: '5秒戻る', key: 'Left' },
+    { id: 'skip-backward-large', label: '10秒戻る', key: 'Shift+Left' },
+    { id: 'analyze', label: '分析開始', key: 'Command+Shift+A' },
+    { id: 'undo', label: '元に戻す', key: 'Command+Z' },
+    { id: 'redo', label: 'やり直す', key: 'Command+Shift+Z' },
+  ];
+
+  registerShortcuts(mainWindow, defaultHotkeys);
 };

@@ -12,7 +12,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { ActionList } from '../../../../../ActionList';
+import { useActionPreset } from '../../../../../contexts/ActionPresetContext';
 
 export interface TimelineEditDraft {
   id: string;
@@ -35,11 +35,6 @@ interface TimelineEditDialogProps {
   onSave: () => void;
 }
 
-const findActionDefinition = (actionName: string) => {
-  const baseAction = actionName.split(' ').slice(1).join(' ');
-  return ActionList.find((action) => action.action === baseAction);
-};
-
 export const TimelineEditDialog: React.FC<TimelineEditDialogProps> = ({
   draft,
   open,
@@ -48,6 +43,12 @@ export const TimelineEditDialog: React.FC<TimelineEditDialogProps> = ({
   onDelete,
   onSave,
 }) => {
+  const { activeActions } = useActionPreset();
+
+  const findActionDefinition = (actionName: string) => {
+    const baseAction = actionName.split(' ').slice(1).join(' ');
+    return activeActions.find((act) => act.action === baseAction);
+  };
   if (!draft) {
     return null;
   }
