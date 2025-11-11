@@ -25,6 +25,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import DownloadIcon from '@mui/icons-material/Download';
+import UploadIcon from '@mui/icons-material/Upload';
 import type {
   AppSettings,
   ActionPreset,
@@ -32,6 +34,11 @@ import type {
 } from '../../../types/Settings';
 import { useActionPreset } from '../../../contexts/ActionPresetContext';
 import type { SettingsTabHandle } from '../../SettingsPage';
+import {
+  downloadPresetsAsFile,
+  importPresetsFromFile,
+  resolvePresetIdConflicts,
+} from '../../../utils/presetImportExport';
 
 interface ActionPresetSettingsProps {
   settings: AppSettings;
@@ -56,6 +63,7 @@ export const ActionPresetSettings = forwardRef<
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<ActionPreset | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // フォーム用の一時状態（プリセット全体）
   const [formName, setFormName] = useState('');
@@ -172,6 +180,53 @@ export const ActionPresetSettings = forwardRef<
     setPresets(presets.filter((p) => p.id !== id));
   };
 
+  const handleExport = () => {
+    try {
+      downloadPresetsAsFile(presets);
+      setSaveSuccess(true);
+      setErrorMessage(null);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      setErrorMessage(
+        `エクスポートに失敗しました: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      setTimeout(() => setErrorMessage(null), 5000);
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await importPresetsFromFile(file);
+      if (!result.success || !result.presets) {
+        setErrorMessage(result.error || 'インポートに失敗しました');
+        setTimeout(() => setErrorMessage(null), 5000);
+        return;
+      }
+
+      // ID衝突を解決
+      const resolvedPresets = resolvePresetIdConflicts(presets, result.presets);
+      setPresets([...presets, ...resolvedPresets]);
+      setErrorMessage(null);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      setErrorMessage(
+        `インポートに失敗しました: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      setTimeout(() => setErrorMessage(null), 5000);
+    }
+
+    // inputをリセット（同じファイルを再度選択できるようにする）
+    event.target.value = '';
+  };
+
   const handleSave = async () => {
     const newSettings: AppSettings = {
       ...settings,
@@ -185,7 +240,11 @@ export const ActionPresetSettings = forwardRef<
       setContextActivePresetId(activeId);
       await reloadPresets();
       setSaveSuccess(true);
+      setErrorMessage(null);
       setTimeout(() => setSaveSuccess(false), 3000);
+    } else {
+      setErrorMessage('設定の保存に失敗しました');
+      setTimeout(() => setErrorMessage(null), 5000);
     }
   };
 
@@ -223,14 +282,28 @@ export const ActionPresetSettings = forwardRef<
         カスタムプリセット管理
       </Typography>
 
-      <Button
-        variant="outlined"
-        startIcon={<AddIcon />}
-        onClick={() => handleOpenDialog()}
-        sx={{ mb: 2 }}
-      >
-        プリセットを追加
-      </Button>
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenDialog()}
+        >
+          プリセットを追加
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={handleExport}
+          disabled={presets.length === 0}
+        >
+          エクスポート
+        </Button>
+        <Button variant="outlined" startIcon={<UploadIcon />} component="label">
+          インポート
+          {/* eslint-disable-next-line react/jsx-no-leaked-render */}
+          <input type="file" accept=".json" hidden onChange={handleImport} />
+        </Button>
+      </Stack>
 
       <List>
         {presets.map((preset) => (
@@ -276,6 +349,12 @@ export const ActionPresetSettings = forwardRef<
         >
           プリセットが登録されていません
         </Typography>
+      )}
+
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2, mt: 3 }}>
+          {errorMessage}
+        </Alert>
       )}
 
       {saveSuccess && (
