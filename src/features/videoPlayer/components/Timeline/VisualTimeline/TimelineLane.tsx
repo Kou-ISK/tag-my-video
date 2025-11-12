@@ -105,7 +105,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
       >
         {items.map((item) => {
           const left = timeToPosition(item.startTime);
-          const width = Math.max(20, timeToPosition(item.endTime) - left);
+          const width = Math.max(2, timeToPosition(item.endTime) - left);
           const isSelected = selectedIds.includes(item.id);
           const isHovered = hoveredItemId === item.id;
           const isFocused = focusedItemId === item.id;
@@ -215,7 +215,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
-            left: `${currentTimePosition}%`,
+            left: `${currentTimePosition}px`,
             top: 0,
             bottom: 0,
             width: 2,

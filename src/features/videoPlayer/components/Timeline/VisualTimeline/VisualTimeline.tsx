@@ -56,6 +56,9 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     itemId: string;
   } | null>(null);
 
+  // ズームスケール（1 = 等倍、2 = 2倍拡大）
+  const [zoomScale, setZoomScale] = useState(1);
+
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
@@ -68,35 +71,59 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // ホイールイベントでズーム
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      // Ctrl/Cmd + ホイールまたはピンチジェスチャーでズーム
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+
+        const delta = -event.deltaY;
+        const zoomFactor = 1 + delta * 0.001;
+
+        setZoomScale((prev) => {
+          const newScale = Math.max(0.5, Math.min(10, prev * zoomFactor));
+          return newScale;
+        });
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const groupedByAction = useMemo(() => {
     const groups: Record<string, TimelineData[]> = {};
-    timeline.forEach((item) => {
+    for (const item of timeline) {
       const actionName = item.actionName;
       if (!groups[actionName]) {
         groups[actionName] = [];
       }
       groups[actionName].push(item);
-    });
+    }
     return groups;
   }, [timeline]);
 
   const actionNames = useMemo(
-    () => Object.keys(groupedByAction).sort(),
+    () => Object.keys(groupedByAction).sort((a, b) => a.localeCompare(b)),
     [groupedByAction],
   );
-
-  const currentTimePosition = useMemo(() => {
-    if (maxSec <= 0) return 0;
-    return Math.min(100, Math.max(0, (currentTime / maxSec) * 100));
-  }, [currentTime, maxSec]);
 
   const timeToPosition = useCallback(
     (time: number) => {
       if (maxSec <= 0) return 0;
-      return (time / maxSec) * containerWidth;
+      return (time / maxSec) * containerWidth * zoomScale;
     },
-    [containerWidth, maxSec],
+    [containerWidth, maxSec, zoomScale],
   );
+
+  const currentTimePosition = useMemo(() => {
+    if (maxSec <= 0) return 0;
+    return timeToPosition(currentTime);
+  }, [currentTime, maxSec, timeToPosition]);
 
   const handleItemClick = useCallback(
     (event: React.MouseEvent, id: string) => {
@@ -403,63 +430,93 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        position: 'relative',
       }}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
+      {/* ズームインジケーター */}
+      {zoomScale !== 1 && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            bgcolor: 'background.paper',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1,
+            boxShadow: 1,
+          }}
+        >
+          <Typography variant="caption">
+            Zoom: {(zoomScale * 100).toFixed(0)}%
+          </Typography>
+        </Box>
+      )}
+
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
-          overflowX: 'hidden',
+          overflowX: zoomScale > 1 ? 'auto' : 'hidden',
           px: 2,
           pt: 2,
           pb: 2,
         }}
       >
-        <TimelineAxis
-          containerRef={containerRef}
-          maxSec={maxSec}
-          currentTimePosition={currentTimePosition}
-          timeMarkers={timeMarkers}
-          onSeek={onSeek}
-          formatTime={formatTime}
-        />
-
-        {actionNames.map((actionName) => (
-          <TimelineLane
-            key={actionName}
-            actionName={actionName}
-            items={groupedByAction[actionName]}
-            selectedIds={selectedIds}
-            hoveredItemId={hoveredItemId}
-            focusedItemId={focusedItemId}
-            onHoverChange={setHoveredItemId}
-            onItemClick={handleItemClick}
-            onItemContextMenu={handleItemContextMenu}
-            timeToPosition={timeToPosition}
-            currentTimePosition={currentTimePosition}
-            formatTime={formatTime}
-            firstTeamName={firstTeamName}
-            onSeek={onSeek}
+        <Box
+          sx={{
+            minWidth:
+              containerWidth > 0 ? `${containerWidth * zoomScale}px` : '100%',
+          }}
+        >
+          <TimelineAxis
+            containerRef={containerRef}
             maxSec={maxSec}
+            currentTimePosition={currentTimePosition}
+            timeMarkers={timeMarkers}
+            timeToPosition={timeToPosition}
+            onSeek={onSeek}
+            formatTime={formatTime}
           />
-        ))}
 
-        {timeline.length === 0 && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: 200,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              タイムラインが空です。アクションボタンでタグ付けを開始してください。
-            </Typography>
-          </Box>
-        )}
+          {actionNames.map((actionName) => (
+            <TimelineLane
+              key={actionName}
+              actionName={actionName}
+              items={groupedByAction[actionName]}
+              selectedIds={selectedIds}
+              hoveredItemId={hoveredItemId}
+              focusedItemId={focusedItemId}
+              onHoverChange={setHoveredItemId}
+              onItemClick={handleItemClick}
+              onItemContextMenu={handleItemContextMenu}
+              timeToPosition={timeToPosition}
+              currentTimePosition={currentTimePosition}
+              formatTime={formatTime}
+              firstTeamName={firstTeamName}
+              onSeek={onSeek}
+              maxSec={maxSec}
+            />
+          ))}
+
+          {timeline.length === 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 200,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                タイムラインが空です。アクションボタンでタグ付けを開始してください。
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <TimelineEditDialog

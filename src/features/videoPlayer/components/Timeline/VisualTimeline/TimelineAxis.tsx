@@ -7,6 +7,7 @@ interface TimelineAxisProps {
   maxSec: number;
   currentTimePosition: number;
   timeMarkers: number[];
+  timeToPosition: (time: number) => number;
   onSeek: (time: number) => void; // マウスイベントではなく時間を直接受け取る
   formatTime: (seconds: number) => string;
 }
@@ -16,6 +17,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
   maxSec,
   currentTimePosition,
   timeMarkers,
+  timeToPosition,
   onSeek,
   formatTime,
 }) => {
@@ -92,7 +94,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
             key={time}
             sx={{
               position: 'absolute',
-              left: `${(time / maxSec) * 100}%`,
+              left: `${timeToPosition(time)}px`,
               top: 0,
               bottom: 0,
               borderLeft: 1,
@@ -119,7 +121,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
           onMouseDown={handlePlayheadMouseDown}
           sx={{
             position: 'absolute',
-            left: `${currentTimePosition}%`,
+            left: `${currentTimePosition}px`,
             top: 0,
             bottom: 0,
             width: 2,
