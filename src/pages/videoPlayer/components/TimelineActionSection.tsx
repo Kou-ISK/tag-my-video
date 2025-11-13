@@ -90,7 +90,7 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
         gridColumn: '1',
         gridRow: '2',
         display: 'grid',
-        gridTemplateColumns: '1fr 360px',
+        gridTemplateColumns: '1fr 440px',
         minHeight: 0,
         gap: 1.5,
         p: 1.5,

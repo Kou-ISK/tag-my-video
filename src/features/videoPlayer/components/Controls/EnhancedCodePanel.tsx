@@ -1,7 +1,6 @@
 import React from 'react';
-import { Box, Typography, Grid, Button, Stack, Chip } from '@mui/material';
+import { Box, Typography, Grid, Button } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import ClearIcon from '@mui/icons-material/Clear';
 import { EnhancedCodeButton } from './EnhancedCodeButton';
 import { useCodePanel } from './hooks/useCodePanel';
 import { useActionPreset } from '../../../../contexts/ActionPresetContext';
@@ -35,11 +34,9 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
     selectedResult,
     selectedType,
     isRecording,
-    selectionSummary,
     handleSelectAction,
     handleSelectResult,
     handleSelectType,
-    resetSelection,
     handleSelectAndToggle,
   } = useCodePanel(activeActions, addTimelineData);
 
@@ -152,39 +149,9 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
                       overflowY: 'auto',
                     }}
                   >
-                    {/* Result選択 */}
-                    {action.results.length > 0 && (
-                      <Box sx={{ mb: action.types.length > 0 ? 1.5 : 0 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
-                        >
-                          Result
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gap: 0.5,
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                          }}
-                        >
-                          {action.results.map((result) => (
-                            <EnhancedCodeButton
-                              key={result}
-                              label={result}
-                              isSelected={selectedResult === result}
-                              onClick={() => handleSelectResult(result)}
-                              size="small"
-                              color="secondary"
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-
                     {/* Type選択 */}
                     {action.types.length > 0 && (
-                      <Box>
+                      <Box sx={{ mb: action.results.length > 0 ? 1.5 : 0 }}>
                         <Typography
                           variant="caption"
                           sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
@@ -211,6 +178,36 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
                         </Box>
                       </Box>
                     )}
+
+                    {/* Result選択 */}
+                    {action.results.length > 0 && (
+                      <Box>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
+                        >
+                          Result
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gap: 0.5,
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                          }}
+                        >
+                          {action.results.map((result) => (
+                            <EnhancedCodeButton
+                              key={result}
+                              label={result}
+                              isSelected={selectedResult === result}
+                              onClick={() => handleSelectResult(result)}
+                              size="small"
+                              color="secondary"
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 )}
               </Box>
@@ -228,32 +225,8 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        gap: 1,
       }}
     >
-      {/* 記録状態とクイックアクション */}
-      {(selectionSummary || isRecording) && (
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          {selectionSummary && (
-            <Chip
-              label={selectionSummary}
-              size="small"
-              color={isRecording ? 'error' : 'primary'}
-              onDelete={resetSelection}
-              deleteIcon={<ClearIcon />}
-            />
-          )}
-          {isRecording && (
-            <Chip
-              label="記録中..."
-              size="small"
-              color="error"
-              icon={<FiberManualRecordIcon />}
-            />
-          )}
-        </Stack>
-      )}
-
       {/* チーム別アクション選択 */}
       <Box
         sx={{
