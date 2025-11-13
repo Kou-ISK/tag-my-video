@@ -45,6 +45,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
   onUpdateTimelineItem,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
@@ -73,8 +74,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
 
   // ホイールイベントでズーム
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
 
     const handleWheel = (event: WheelEvent) => {
       // Ctrl/Cmd + ホイールまたはピンチジェスチャーでズーム
@@ -91,8 +92,8 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       }
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
+    return () => scrollContainer.removeEventListener('wheel', handleWheel);
   }, []);
 
   const groupedByAction = useMemo(() => {
@@ -457,6 +458,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
       )}
 
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           overflowY: 'auto',
