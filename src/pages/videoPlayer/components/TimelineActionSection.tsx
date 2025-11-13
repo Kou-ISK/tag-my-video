@@ -74,6 +74,16 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
     };
   }, [metaDataConfigFilePath, setTeamNames]);
 
+  // タイムラインから最初のチーム名を計算（タイムラインの色と一致させるため）
+  const firstTeamName = React.useMemo(() => {
+    if (timeline.length === 0) return teamNames[0];
+    // タイムラインのアクション名をソートして最初のチーム名を取得
+    const sortedActionNames = [
+      ...new Set(timeline.map((t) => t.actionName)),
+    ].sort((a, b) => a.localeCompare(b));
+    return sortedActionNames[0]?.split(' ')[0] || teamNames[0];
+  }, [timeline, teamNames]);
+
   return (
     <Box
       sx={{
@@ -133,6 +143,7 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
         <EnhancedCodePanel
           addTimelineData={addTimelineData}
           teamNames={teamNames}
+          firstTeamName={firstTeamName}
         />
       </Paper>
     </Box>

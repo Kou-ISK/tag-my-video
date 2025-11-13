@@ -1,21 +1,11 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  Button,
-  Stack,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
+import React from 'react';
+import { Box, Typography, Grid, Button, Stack, Chip } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import ClearIcon from '@mui/icons-material/Clear';
 import { EnhancedCodeButton } from './EnhancedCodeButton';
 import { useCodePanel } from './hooks/useCodePanel';
 import { useActionPreset } from '../../../../contexts/ActionPresetContext';
+import type { ActionDefinition } from '../../../../types/Settings';
 
 interface EnhancedCodePanelProps {
   addTimelineData: (
@@ -25,6 +15,7 @@ interface EnhancedCodePanelProps {
     qualifier: string,
   ) => void;
   teamNames: string[];
+  firstTeamName?: string; // タイムラインと色を一致させるための基準チーム名
 }
 
 /**
@@ -34,44 +25,62 @@ interface EnhancedCodePanelProps {
 export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
   addTimelineData,
   teamNames,
+  firstTeamName,
 }) => {
   const { activeActions } = useActionPreset();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   const {
     selectedTeam,
     selectedAction,
     selectedResult,
     selectedType,
-    availableResults,
-    availableTypes,
     isRecording,
-    canRecord,
     selectionSummary,
     handleSelectAction,
     handleSelectResult,
     handleSelectType,
     resetSelection,
-    toggleRecording,
+    handleSelectAndToggle,
   } = useCodePanel(activeActions, addTimelineData);
 
-  // Result/Type選択ダイアログを開く
-  const handleOpenDialog = () => {
-    if (
-      selectedAction &&
-      (availableResults.length > 0 || availableTypes.length > 0)
-    ) {
-      setDialogOpen(true);
+  // アクションボタンクリック時の処理
+  const handleActionClick = (teamName: string, action: ActionDefinition) => {
+    const isSameAction =
+      selectedTeam === teamName && selectedAction === action.action;
+
+    // 記録中の同じアクションをクリックした場合は記録終了
+    if (isRecording && isSameAction) {
+      handleSelectAndToggle(teamName, action.action);
+      return;
+    }
+
+    // Result/Typeがない場合は即座に記録開始/終了
+    if (action.results.length === 0 && action.types.length === 0) {
+      handleSelectAndToggle(teamName, action.action);
+      return;
+    }
+
+    // Result/Typeがある場合
+    if (isSameAction) {
+      // 既に選択済みで記録中でない場合は記録開始
+      // （Result/Typeを変更後、再度クリックして記録開始するケース）
+      handleSelectAndToggle(teamName, action.action);
+    } else {
+      // 初回選択時はインライン展開して即座に記録開始
+      handleSelectAction(teamName, action.action);
+      // 選択後すぐに記録開始
+      setTimeout(() => {
+        handleSelectAndToggle(teamName, action.action);
+      }, 50);
     }
   };
 
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-  };
-
   // チームごとのアクションボタンをレンダリング
-  const renderTeamActions = (teamName: string, teamIndex: number) => {
-    const color = teamIndex === 0 ? 'team1' : 'team2';
+  const renderTeamActions = (teamName: string) => {
+    // タイムラインと同じロジックでチーム色を決定
+    const referenceTeamName = firstTeamName || teamNames[0];
+    const isFirstTeam = teamName === referenceTeamName;
+    const color = isFirstTeam ? 'team1' : 'team2';
 
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -94,61 +103,119 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
             overflowY: 'auto',
           }}
         >
-          {activeActions.map((action) => (
-            <Button
-              key={action.action}
-              variant={
-                selectedAction === action.action && selectedTeam === teamName
-                  ? 'contained'
-                  : 'outlined'
-              }
-              color={color}
-              onClick={() => {
-                handleSelectAction(teamName, action.action);
-                // アクション選択後、Result/Typeがあればダイアログを自動で開く
-                setTimeout(() => {
-                  if (action.results.length > 0 || action.types.length > 0) {
-                    setDialogOpen(true);
+          {activeActions.map((action) => {
+            const isSelected =
+              selectedAction === action.action && selectedTeam === teamName;
+            const hasOptions =
+              action.results.length > 0 || action.types.length > 0;
+
+            return (
+              <Box key={action.action}>
+                {/* アクションボタン */}
+                <Button
+                  variant={isSelected ? 'contained' : 'outlined'}
+                  color={color}
+                  onClick={() => handleActionClick(teamName, action)}
+                  startIcon={
+                    isRecording && isSelected ? (
+                      <FiberManualRecordIcon
+                        sx={{ animation: 'pulse 1.5s ease-in-out infinite' }}
+                      />
+                    ) : undefined
                   }
-                }, 100);
-              }}
-              startIcon={
-                isRecording &&
-                selectedAction === action.action &&
-                selectedTeam === teamName ? (
-                  <FiberManualRecordIcon
-                    sx={{ animation: 'pulse 1.5s ease-in-out infinite' }}
-                  />
-                ) : undefined
-              }
-              sx={{
-                justifyContent: 'flex-start',
-                textAlign: 'left',
-                minHeight: 36,
-                fontSize: '0.8rem',
-                px: 1.5,
-                fontWeight:
-                  selectedAction === action.action && selectedTeam === teamName
-                    ? 'bold'
-                    : 'normal',
-                '@keyframes pulse': {
-                  '0%, 100%': { opacity: 1 },
-                  '50%': { opacity: 0.5 },
-                },
-              }}
-              onDoubleClick={() => {
-                if (
-                  selectedAction === action.action &&
-                  selectedTeam === teamName &&
-                  canRecord
-                ) {
-                  toggleRecording();
-                }
-              }}
-            >
-              {action.action}
-            </Button>
-          ))}
+                  sx={{
+                    width: '100%',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    minHeight: 36,
+                    fontSize: '0.8rem',
+                    px: 1.5,
+                    fontWeight: isSelected ? 'bold' : 'normal',
+                    '@keyframes pulse': {
+                      '0%, 100%': { opacity: 1 },
+                      '50%': { opacity: 0.5 },
+                    },
+                  }}
+                >
+                  {action.action}
+                </Button>
+
+                {/* Result/Type選択エリア（インライン展開） */}
+                {isSelected && hasOptions && (
+                  <Box
+                    sx={{
+                      mt: 0.5,
+                      p: 1,
+                      backgroundColor: 'action.hover',
+                      borderRadius: 1,
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {/* Result選択 */}
+                    {action.results.length > 0 && (
+                      <Box sx={{ mb: action.types.length > 0 ? 1.5 : 0 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
+                        >
+                          Result
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gap: 0.5,
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                          }}
+                        >
+                          {action.results.map((result) => (
+                            <EnhancedCodeButton
+                              key={result}
+                              label={result}
+                              isSelected={selectedResult === result}
+                              onClick={() => handleSelectResult(result)}
+                              size="small"
+                              color="secondary"
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* Type選択 */}
+                    {action.types.length > 0 && (
+                      <Box>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
+                        >
+                          Type
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gap: 0.5,
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                          }}
+                        >
+                          {action.types.map((type) => (
+                            <EnhancedCodeButton
+                              key={type}
+                              label={type}
+                              isSelected={selectedType === type}
+                              onClick={() => handleSelectType(type)}
+                              size="small"
+                              color="secondary"
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       </Box>
     );
@@ -164,129 +231,45 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
         gap: 1,
       }}
     >
-      {/* コンパクトな選択状態表示 */}
-      {selectionSummary && (
+      {/* 記録状態とクイックアクション */}
+      {(selectionSummary || isRecording) && (
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <Chip
-            label={selectionSummary}
-            size="small"
-            color="primary"
-            onClick={handleOpenDialog}
-            onDelete={resetSelection}
-            deleteIcon={<ClearIcon />}
-          />
+          {selectionSummary && (
+            <Chip
+              label={selectionSummary}
+              size="small"
+              color={isRecording ? 'error' : 'primary'}
+              onDelete={resetSelection}
+              deleteIcon={<ClearIcon />}
+            />
+          )}
+          {isRecording && (
+            <Chip
+              label="記録中..."
+              size="small"
+              color="error"
+              icon={<FiberManualRecordIcon />}
+            />
+          )}
         </Stack>
       )}
 
       {/* チーム別アクション選択 */}
       <Box
         sx={{
-          flexGrow: selectedAction ? 0 : 1,
-          minHeight: selectedAction ? 150 : 0,
+          flexGrow: 1,
+          overflow: 'hidden',
         }}
       >
         <Grid container spacing={1} sx={{ height: '100%' }}>
           <Grid item xs={6} sx={{ height: '100%' }}>
-            {teamNames[0] && renderTeamActions(teamNames[0], 0)}
+            {teamNames[0] && renderTeamActions(teamNames[0])}
           </Grid>
           <Grid item xs={6} sx={{ height: '100%' }}>
-            {teamNames[1] && renderTeamActions(teamNames[1], 1)}
+            {teamNames[1] && renderTeamActions(teamNames[1])}
           </Grid>
         </Grid>
       </Box>
-
-      {/* Result/Type選択ダイアログ */}
-      <Dialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            maxHeight: '80vh',
-          },
-        }}
-      >
-        <DialogTitle>
-          {selectedTeam} - {selectedAction}
-        </DialogTitle>
-        <DialogContent>
-          {/* Result選択 */}
-          {availableResults.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 'bold', mb: 1 }}
-              >
-                Result
-              </Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: 0.75,
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                }}
-              >
-                {availableResults.map((result) => (
-                  <EnhancedCodeButton
-                    key={result}
-                    label={result}
-                    isSelected={selectedResult === result}
-                    onClick={() => handleSelectResult(result)}
-                    size="small"
-                    color="secondary"
-                  />
-                ))}
-              </Box>
-            </Box>
-          )}
-
-          {/* Type選択 */}
-          {availableTypes.length > 0 && (
-            <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 'bold', mb: 1 }}
-              >
-                Type
-              </Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: 0.75,
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                }}
-              >
-                {availableTypes.map((type) => (
-                  <EnhancedCodeButton
-                    key={type}
-                    label={type}
-                    isSelected={selectedType === type}
-                    onClick={() => handleSelectType(type)}
-                    size="small"
-                    color="secondary"
-                  />
-                ))}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>閉じる</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              handleCloseDialog();
-              if (canRecord) {
-                toggleRecording();
-              }
-            }}
-            disabled={!canRecord}
-          >
-            記録開始
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

@@ -58,17 +58,12 @@ export const useCodePanel = (
   }, [currentActionDef]);
 
   // アクション選択（チーム情報も含む）
-  const handleSelectAction = useCallback(
-    (team: string, action: string) => {
-      setSelectedTeam(team);
-      setSelectedAction((prev) =>
-        prev === action && selectedTeam === team ? null : action,
-      );
-      setSelectedResult(null);
-      setSelectedType(null);
-    },
-    [selectedTeam],
-  );
+  const handleSelectAction = useCallback((team: string, action: string) => {
+    setSelectedTeam(team);
+    setSelectedAction(action);
+    setSelectedResult(null);
+    setSelectedType(null);
+  }, []);
 
   // Result選択
   const handleSelectResult = useCallback((result: string) => {
@@ -151,6 +146,44 @@ export const useCodePanel = (
     completeRecording,
   ]);
 
+  // アクション選択と記録トグルを同時に行う
+  const handleSelectAndToggle = useCallback(
+    (team: string, action: string) => {
+      const isSameSelection =
+        selectedTeam === team && selectedAction === action;
+
+      if (isSameSelection) {
+        // 同じアクションの場合は記録をトグル
+        if (isRecording) {
+          completeRecording();
+        } else {
+          startRecording();
+        }
+      } else {
+        // 異なるアクションの場合は選択を変更して記録開始
+        setSelectedTeam(team);
+        setSelectedAction(action);
+        setSelectedResult(null);
+        setSelectedType(null);
+
+        // 新しい選択で記録を開始
+        const time = getCurrentTime();
+        if (time !== null) {
+          setRecordingStartTime(time);
+          setIsRecording(true);
+        }
+      }
+    },
+    [
+      selectedTeam,
+      selectedAction,
+      isRecording,
+      getCurrentTime,
+      startRecording,
+      completeRecording,
+    ],
+  );
+
   // 記録可能かどうか（最低限Actionが選択されている）
   const canRecord = useMemo(() => {
     return selectedAction !== null;
@@ -187,5 +220,6 @@ export const useCodePanel = (
     handleSelectType,
     resetSelection,
     toggleRecording,
+    handleSelectAndToggle,
   };
 };
