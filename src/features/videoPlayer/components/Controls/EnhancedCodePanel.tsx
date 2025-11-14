@@ -12,6 +12,8 @@ interface EnhancedCodePanelProps {
     startTime: number,
     endTime: number,
     qualifier: string,
+    actionType?: string,
+    actionResult?: string,
   ) => void;
   teamNames: string[];
   firstTeamName?: string; // タイムラインと色を一致させるための基準チーム名
@@ -80,7 +82,7 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
     const color = isFirstTeam ? 'team1' : 'team2';
 
     return (
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box>
         <Typography
           variant="subtitle2"
           sx={{
@@ -96,15 +98,11 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 0.5,
-            flexGrow: 1,
-            overflowY: 'auto',
           }}
         >
           {activeActions.map((action) => {
             const isSelected =
               selectedAction === action.action && selectedTeam === teamName;
-            const hasOptions =
-              action.results.length > 0 || action.types.length > 0;
 
             return (
               <Box key={action.action}>
@@ -136,80 +134,6 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
                 >
                   {action.action}
                 </Button>
-
-                {/* Result/Type選択エリア（インライン展開） */}
-                {isSelected && hasOptions && (
-                  <Box
-                    sx={{
-                      mt: 0.5,
-                      p: 1,
-                      backgroundColor: 'action.hover',
-                      borderRadius: 1,
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                    }}
-                  >
-                    {/* Type選択 */}
-                    {action.types.length > 0 && (
-                      <Box sx={{ mb: action.results.length > 0 ? 1.5 : 0 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
-                        >
-                          Type
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gap: 0.5,
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                          }}
-                        >
-                          {action.types.map((type) => (
-                            <EnhancedCodeButton
-                              key={type}
-                              label={type}
-                              isSelected={selectedType === type}
-                              onClick={() => handleSelectType(type)}
-                              size="small"
-                              color="secondary"
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-
-                    {/* Result選択 */}
-                    {action.results.length > 0 && (
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
-                        >
-                          Result
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            gap: 0.5,
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                          }}
-                        >
-                          {action.results.map((result) => (
-                            <EnhancedCodeButton
-                              key={result}
-                              label={result}
-                              isSelected={selectedResult === result}
-                              onClick={() => handleSelectResult(result)}
-                              size="small"
-                              color="secondary"
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                )}
               </Box>
             );
           })}
@@ -218,31 +142,106 @@ export const EnhancedCodePanel: React.FC<EnhancedCodePanelProps> = ({
     );
   };
 
+  // 選択中のアクションを取得
+  const selectedActionDef = activeActions.find(
+    (action) => action.action === selectedAction,
+  );
+  const hasOptions =
+    selectedActionDef &&
+    (selectedActionDef.results.length > 0 ||
+      selectedActionDef.types.length > 0);
+
   return (
     <Box
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'auto',
       }}
     >
-      {/* チーム別アクション選択 */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflow: 'hidden',
-        }}
-      >
-        <Grid container spacing={1} sx={{ height: '100%' }}>
-          <Grid item xs={6} sx={{ height: '100%' }}>
-            {teamNames[0] && renderTeamActions(teamNames[0])}
-          </Grid>
-          <Grid item xs={6} sx={{ height: '100%' }}>
-            {teamNames[1] && renderTeamActions(teamNames[1])}
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          {teamNames[0] && renderTeamActions(teamNames[0])}
         </Grid>
-      </Box>
+        <Grid item xs={6}>
+          {teamNames[1] && renderTeamActions(teamNames[1])}
+        </Grid>
+      </Grid>
+
+      {/* Result/Type選択エリア（全幅で表示） */}
+      {hasOptions && selectedActionDef && (
+        <Box
+          sx={{
+            mt: 2,
+            p: 1.5,
+            backgroundColor: 'action.hover',
+            borderRadius: 1,
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          {/* Type選択 */}
+          {selectedActionDef.types.length > 0 && (
+            <Box sx={{ mb: selectedActionDef.results.length > 0 ? 1.5 : 0 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
+              >
+                Type
+              </Typography>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 0.5,
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                }}
+              >
+                {selectedActionDef.types.map((type) => (
+                  <EnhancedCodeButton
+                    key={type}
+                    label={type}
+                    isSelected={selectedType === type}
+                    onClick={() => handleSelectType(type)}
+                    size="small"
+                    color="secondary"
+                  />
+                ))}
+              </Box>
+            </Box>
+          )}
+
+          {/* Result選択 */}
+          {selectedActionDef.results.length > 0 && (
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 'bold', mb: 0.5, display: 'block' }}
+              >
+                Result
+              </Typography>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 0.5,
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                }}
+              >
+                {selectedActionDef.results.map((result) => (
+                  <EnhancedCodeButton
+                    key={result}
+                    label={result}
+                    isSelected={selectedResult === result}
+                    onClick={() => handleSelectResult(result)}
+                    size="small"
+                    color="secondary"
+                  />
+                ))}
+              </Box>
+            </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };

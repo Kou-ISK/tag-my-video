@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -23,6 +23,7 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
 }) => {
   const theme = useTheme();
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+  const rafIdRef = useRef<number | null>(null);
 
   // マウスイベントから時間を計算してonSeekを呼び出す
   const handleSeekFromMouseEvent = useCallback(
@@ -42,15 +43,32 @@ export const TimelineAxis: React.FC<TimelineAxisProps> = ({
       setIsDraggingPlayhead(true);
 
       const handleMouseMove = (e: MouseEvent) => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-        const time = (clickX / rect.width) * maxSec;
-        onSeek(Math.max(0, Math.min(time, maxSec)));
+        // requestAnimationFrameでスロットリング
+        if (rafIdRef.current !== null) {
+          return; // すでにフレーム処理がスケジュールされている
+        }
+
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+
+          if (!containerRef.current) return;
+          const rect = containerRef.current.getBoundingClientRect();
+          const clickX = Math.max(
+            0,
+            Math.min(e.clientX - rect.left, rect.width),
+          );
+          const time = (clickX / rect.width) * maxSec;
+          onSeek(Math.max(0, Math.min(time, maxSec)));
+        });
       };
 
       const handleMouseUp = () => {
         setIsDraggingPlayhead(false);
+        // クリーンアップ: 未完了のrequestAnimationFrameをキャンセル
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
       };

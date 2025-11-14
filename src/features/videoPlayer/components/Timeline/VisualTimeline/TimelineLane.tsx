@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { TimelineData } from '../../../../../types/TimelineData';
@@ -18,6 +18,7 @@ interface TimelineLaneProps {
   firstTeamName: string | undefined;
   onSeek: (time: number) => void;
   maxSec: number;
+  onUpdateTimeRange?: (id: string, startTime: number, endTime: number) => void;
 }
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({
@@ -35,12 +36,83 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   firstTeamName,
   onSeek,
   maxSec,
+  onUpdateTimeRange,
 }) => {
   const theme = useTheme();
   const teamName = actionName.split(' ')[0];
   const isTeam1 = teamName === firstTeamName;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+  const [isAltKeyPressed, setIsAltKeyPressed] = useState(false);
+
+  // Alt/Optionキーの状態を監視
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey) {
+        setIsAltKeyPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!e.altKey) {
+        setIsAltKeyPressed(false);
+      }
+    };
+
+    globalThis.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      globalThis.removeEventListener('keydown', handleKeyDown);
+      globalThis.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  const positionToTime = useCallback(
+    (positionPx: number): number => {
+      if (!containerRef.current) return 0;
+      const rect = containerRef.current.getBoundingClientRect();
+      return (positionPx / rect.width) * maxSec;
+    },
+    [maxSec],
+  );
+
+  const handleEdgeMouseDown = useCallback(
+    (event: React.MouseEvent, item: TimelineData, edge: 'start' | 'end') => {
+      // Option/Altキーが押されている場合のみエッジドラッグを開始
+      if (!event.altKey) return;
+
+      event.stopPropagation();
+      event.preventDefault();
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current || !onUpdateTimeRange) return;
+
+        const rect = containerRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const newTime = Math.max(0, Math.min(positionToTime(mouseX), maxSec));
+
+        if (edge === 'start') {
+          // 開始時刻を調整（終了時刻より前に限定）
+          const adjustedStart = Math.min(newTime, item.endTime - 0.1);
+          onUpdateTimeRange(item.id, adjustedStart, item.endTime);
+        } else {
+          // 終了時刻を調整（開始時刻より後に限定）
+          const adjustedEnd = Math.max(newTime, item.startTime + 0.1);
+          onUpdateTimeRange(item.id, item.startTime, adjustedEnd);
+        }
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [maxSec, onUpdateTimeRange, positionToTime],
+  );
 
   const handlePlayheadMouseDown = useCallback(
     (event: React.MouseEvent) => {
@@ -193,6 +265,26 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                   },
                 }}
               >
+                {/* 左エッジ（開始時刻調整） */}
+                <Box
+                  onMouseDown={(e) => handleEdgeMouseDown(e, item, 'start')}
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 8,
+                    cursor: isAltKeyPressed ? 'ew-resize' : 'pointer',
+                    zIndex: 15,
+                    '&:hover': {
+                      backgroundColor: isAltKeyPressed
+                        ? 'rgba(255,255,255,0.3)'
+                        : 'transparent',
+                    },
+                  }}
+                />
+
+                {/* 中央テキスト */}
                 <Typography
                   variant="caption"
                   sx={{
@@ -206,6 +298,25 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
                 >
                   {formatTime(item.startTime)}
                 </Typography>
+
+                {/* 右エッジ（終了時刻調整） */}
+                <Box
+                  onMouseDown={(e) => handleEdgeMouseDown(e, item, 'end')}
+                  sx={{
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 8,
+                    cursor: isAltKeyPressed ? 'ew-resize' : 'pointer',
+                    zIndex: 15,
+                    '&:hover': {
+                      backgroundColor: isAltKeyPressed
+                        ? 'rgba(255,255,255,0.3)'
+                        : 'transparent',
+                    },
+                  }}
+                />
               </Box>
             </Tooltip>
           );

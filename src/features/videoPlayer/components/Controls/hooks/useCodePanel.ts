@@ -12,6 +12,8 @@ export const useCodePanel = (
     startTime: number,
     endTime: number,
     qualifier: string,
+    actionType?: string,
+    actionResult?: string,
   ) => void,
 ) => {
   // 選択状態（チーム情報も含む）
@@ -108,13 +110,17 @@ export const useCodePanel = (
     // actionNameにチーム名を含める
     const fullActionName = `${selectedTeam} ${selectedAction}`;
 
-    // qualifierを構築（result, typeがあれば含める）
-    const qualifierParts: string[] = [];
-    if (selectedResult) qualifierParts.push(selectedResult);
-    if (selectedType) qualifierParts.push(selectedType);
-    const qualifier = qualifierParts.join(' / ');
+    // qualifierは空文字列（actionType/actionResultを個別に渡す）
+    const qualifier = '';
 
-    addTimelineData(fullActionName, begin, end, qualifier);
+    addTimelineData(
+      fullActionName,
+      begin,
+      end,
+      qualifier,
+      selectedType || undefined,
+      selectedResult || undefined,
+    );
 
     // リセット
     resetSelection();

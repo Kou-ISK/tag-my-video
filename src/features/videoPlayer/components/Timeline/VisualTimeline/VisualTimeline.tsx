@@ -86,7 +86,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
         const zoomFactor = 1 + delta * 0.001;
 
         setZoomScale((prev) => {
-          const newScale = Math.max(0.5, Math.min(10, prev * zoomFactor));
+          const newScale = Math.max(1, Math.min(10, prev * zoomFactor));
           return newScale;
         });
       }
@@ -501,6 +501,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
               firstTeamName={firstTeamName}
               onSeek={onSeek}
               maxSec={maxSec}
+              onUpdateTimeRange={onUpdateTimeRange}
             />
           ))}
 
