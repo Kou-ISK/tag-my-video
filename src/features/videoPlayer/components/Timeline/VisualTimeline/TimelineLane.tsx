@@ -13,6 +13,7 @@ interface TimelineLaneProps {
   onItemClick: (event: React.MouseEvent, id: string) => void;
   onItemContextMenu: (event: React.MouseEvent, id: string) => void;
   timeToPosition: (time: number) => number;
+  positionToTime: (positionPx: number) => number;
   currentTimePosition: number;
   formatTime: (seconds: number) => string;
   firstTeamName: string | undefined;
@@ -31,6 +32,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
   onItemClick,
   onItemContextMenu,
   timeToPosition,
+  positionToTime: positionToTimeFromParent,
   currentTimePosition,
   formatTime,
   firstTeamName,
@@ -68,15 +70,6 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
     };
   }, []);
 
-  const positionToTime = useCallback(
-    (positionPx: number): number => {
-      if (!containerRef.current) return 0;
-      const rect = containerRef.current.getBoundingClientRect();
-      return (positionPx / rect.width) * maxSec;
-    },
-    [maxSec],
-  );
-
   const handleEdgeMouseDown = useCallback(
     (event: React.MouseEvent, item: TimelineData, edge: 'start' | 'end') => {
       // Option/Altキーが押されている場合のみエッジドラッグを開始
@@ -90,7 +83,10 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
 
         const rect = containerRef.current.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
-        const newTime = Math.max(0, Math.min(positionToTime(mouseX), maxSec));
+        const newTime = Math.max(
+          0,
+          Math.min(positionToTimeFromParent(mouseX), maxSec),
+        );
 
         if (edge === 'start') {
           // 開始時刻を調整（終了時刻より前に限定）
@@ -115,7 +111,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [maxSec, onUpdateTimeRange, positionToTime],
+    [maxSec, onUpdateTimeRange, positionToTimeFromParent, onSeek],
   );
 
   const handlePlayheadMouseDown = useCallback(

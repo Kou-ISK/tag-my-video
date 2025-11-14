@@ -121,6 +121,14 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
     [containerWidth, maxSec, zoomScale],
   );
 
+  const positionToTime = useCallback(
+    (positionPx: number) => {
+      if (maxSec <= 0 || containerWidth <= 0 || zoomScale <= 0) return 0;
+      return (positionPx / (containerWidth * zoomScale)) * maxSec;
+    },
+    [containerWidth, maxSec, zoomScale],
+  );
+
   const currentTimePosition = useMemo(() => {
     if (maxSec <= 0) return 0;
     return timeToPosition(currentTime);
@@ -496,6 +504,7 @@ export const VisualTimeline: React.FC<VisualTimelineProps> = ({
               onItemClick={handleItemClick}
               onItemContextMenu={handleItemContextMenu}
               timeToPosition={timeToPosition}
+              positionToTime={positionToTime}
               currentTimePosition={currentTimePosition}
               formatTime={formatTime}
               firstTeamName={firstTeamName}
