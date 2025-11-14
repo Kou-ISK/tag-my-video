@@ -72,40 +72,52 @@ export function useTimelineHistory(
   }, []);
 
   const undo = useCallback((): TimelineData[] | null => {
-    if (state.past.length === 0) {
-      return null;
-    }
+    let result: TimelineData[] | null = null;
 
-    const previous = state.past.at(-1);
-    if (!previous) return null;
+    setState((prev) => {
+      if (prev.past.length === 0) {
+        return prev;
+      }
 
-    const newPast = state.past.slice(0, -1);
+      const previous = prev.past.at(-1);
+      if (!previous) return prev;
 
-    setState({
-      past: newPast,
-      present: previous,
-      future: [state.present, ...state.future],
+      const newPast = prev.past.slice(0, -1);
+
+      result = previous;
+
+      return {
+        past: newPast,
+        present: previous,
+        future: [prev.present, ...prev.future],
+      };
     });
 
-    return previous;
-  }, [state]);
+    return result;
+  }, []);
 
   const redo = useCallback((): TimelineData[] | null => {
-    if (state.future.length === 0) {
-      return null;
-    }
+    let result: TimelineData[] | null = null;
 
-    const next = state.future[0];
-    const newFuture = state.future.slice(1);
+    setState((prev) => {
+      if (prev.future.length === 0) {
+        return prev;
+      }
 
-    setState({
-      past: [...state.past, state.present],
-      present: next,
-      future: newFuture,
+      const next = prev.future[0];
+      const newFuture = prev.future.slice(1);
+
+      result = next;
+
+      return {
+        past: [...prev.past, prev.present],
+        present: next,
+        future: newFuture,
+      };
     });
 
-    return next;
-  }, [state]);
+    return result;
+  }, []);
 
   const clearHistory = useCallback(() => {
     setState((prev) => ({

@@ -8,6 +8,8 @@ export interface TimelineEditingHandlers {
     startTime: number,
     endTime: number,
     qualifier: string,
+    actionType?: string,
+    actionResult?: string,
   ) => void;
   deleteTimelineDatas: (idList: string[]) => void;
   updateQualifier: (id: string, qualifier: string) => void;
@@ -30,14 +32,16 @@ export const useTimelineEditing = (
       startTime: number,
       endTime: number,
       qualifier: string,
+      actionType?: string,
+      actionResult?: string,
     ) => {
       const newTimelineInstance: TimelineData = {
         id: ulid(),
         actionName,
         startTime,
         endTime,
-        actionResult: '',
-        actionType: '',
+        actionResult: actionResult || '',
+        actionType: actionType || '',
         qualifier,
       };
       setTimeline((prev) => [...prev, newTimelineInstance]);

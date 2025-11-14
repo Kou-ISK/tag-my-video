@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Paper } from '@mui/material';
 import { VisualTimeline } from '../../../features/videoPlayer/components/Timeline/VisualTimeline/VisualTimeline';
-import { CodePanel } from '../../../features/videoPlayer/components/Controls/CodePanel';
+import { EnhancedCodePanel } from '../../../features/videoPlayer/components/Controls/EnhancedCodePanel';
 import { TimelineData } from '../../../types/TimelineData';
 
 interface TimelineActionSectionProps {
@@ -51,67 +51,101 @@ export const TimelineActionSection: React.FC<TimelineActionSectionProps> = ({
   updateTimelineRange,
   updateTimelineItem,
   handleCurrentTime,
-}) => (
-  <Box
-    sx={{
-      gridColumn: '1',
-      gridRow: '2',
-      display: 'grid',
-      gridTemplateColumns: '1fr 360px',
-      minHeight: 0,
-      gap: 1.5,
-      p: 1.5,
-    }}
-  >
-    <Paper
-      variant="outlined"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        height: '100%',
-      }}
-    >
-      <VisualTimeline
-        timeline={timeline}
-        maxSec={maxSec}
-        currentTime={currentTime}
-        onSeek={(time: number) => {
-          const event = new Event('visual-timeline-seek');
-          handleCurrentTime(event, time);
-        }}
-        onDelete={deleteTimelineDatas}
-        selectedIds={selectedTimelineIdList}
-        onSelectionChange={(ids: string[]) => {
-          const updated = timeline.map((item) => ({
-            ...item,
-            isSelected: ids.includes(item.id),
-          }));
-          setTimeline(updated);
-        }}
-        onUpdateQualifier={updateQualifier}
-        onUpdateActionType={updateActionType}
-        onUpdateActionResult={updateActionResult}
-        onUpdateTimeRange={updateTimelineRange}
-        onUpdateTimelineItem={updateTimelineItem}
-      />
-    </Paper>
+}) => {
+  // metaDataConfigFilePathからチーム名を読み込む
+  useEffect(() => {
+    if (!metaDataConfigFilePath) return;
 
-    <Paper
-      variant="outlined"
+    let isActive = true;
+
+    fetch(metaDataConfigFilePath)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!isActive || !data) return;
+
+        if (data.team1Name && data.team2Name) {
+          setTeamNames([data.team1Name, data.team2Name]);
+        }
+      })
+      .catch((error) => console.error('Error loading JSON:', error));
+
+    return () => {
+      isActive = false;
+    };
+  }, [metaDataConfigFilePath, setTeamNames]);
+
+  // タイムラインから最初のチーム名を計算（タイムラインの色と一致させるため）
+  const firstTeamName = React.useMemo(() => {
+    if (timeline.length === 0) return teamNames[0];
+    // タイムラインのアクション名をソートして最初のチーム名を取得
+    const sortedActionNames = [
+      ...new Set(timeline.map((t) => t.actionName)),
+    ].sort((a, b) => a.localeCompare(b));
+    return sortedActionNames[0]?.split(' ')[0] || teamNames[0];
+  }, [timeline, teamNames]);
+
+  return (
+    <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        height: '100%',
+        gridColumn: '1',
+        gridRow: '2',
+        display: 'grid',
+        gridTemplateColumns: '1fr 440px',
+        minHeight: 0,
+        gap: 1.5,
+        p: 1.5,
       }}
     >
-      <CodePanel
-        metaDataConfigFilePath={metaDataConfigFilePath}
-        addTimelineData={addTimelineData}
-        teamNames={teamNames}
-        setTeamNames={setTeamNames}
-      />
-    </Paper>
-  </Box>
-);
+      <Paper
+        variant="outlined"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          height: '100%',
+        }}
+      >
+        <VisualTimeline
+          timeline={timeline}
+          maxSec={maxSec}
+          currentTime={currentTime}
+          onSeek={(time: number) => {
+            const event = new Event('visual-timeline-seek');
+            handleCurrentTime(event, time);
+          }}
+          onDelete={deleteTimelineDatas}
+          selectedIds={selectedTimelineIdList}
+          onSelectionChange={(ids: string[]) => {
+            const updated = timeline.map((item) => ({
+              ...item,
+              isSelected: ids.includes(item.id),
+            }));
+            setTimeline(updated);
+          }}
+          onUpdateQualifier={updateQualifier}
+          onUpdateActionType={updateActionType}
+          onUpdateActionResult={updateActionResult}
+          onUpdateTimeRange={updateTimelineRange}
+          onUpdateTimelineItem={updateTimelineItem}
+        />
+      </Paper>
+
+      <Paper
+        variant="outlined"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          height: '100%',
+          p: 1.5,
+        }}
+      >
+        <EnhancedCodePanel
+          addTimelineData={addTimelineData}
+          teamNames={teamNames}
+          firstTeamName={firstTeamName}
+        />
+      </Paper>
+    </Box>
+  );
+};
