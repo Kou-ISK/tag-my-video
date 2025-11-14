@@ -21,8 +21,9 @@ export const ActionResultSelector = ({
   updateActionResult,
 }: ActionResultSelectorProps) => {
   const { activeActions } = useActionPreset();
-  const results = activeActions.find((act) => actionName.includes(act.action))
-    ?.results;
+  const results = activeActions.find((act) =>
+    actionName.includes(act.action),
+  )?.results;
   const handleChange = (event: SelectChangeEvent) => {
     updateActionResult(id, event.target.value);
   };
