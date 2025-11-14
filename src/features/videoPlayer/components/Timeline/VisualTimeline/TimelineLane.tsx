@@ -96,10 +96,14 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({
           // 開始時刻を調整（終了時刻より前に限定）
           const adjustedStart = Math.min(newTime, item.endTime - 0.1);
           onUpdateTimeRange(item.id, adjustedStart, item.endTime);
+          // シークバーと映像を追従
+          onSeek(adjustedStart);
         } else {
           // 終了時刻を調整（開始時刻より後に限定）
           const adjustedEnd = Math.max(newTime, item.startTime + 0.1);
           onUpdateTimeRange(item.id, item.startTime, adjustedEnd);
+          // シークバーと映像を追従
+          onSeek(adjustedEnd);
         }
       };
 
