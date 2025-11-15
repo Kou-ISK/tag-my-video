@@ -4,6 +4,12 @@ on:
     push:
         tags:
             - "v*"
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version to release (e.g., 0.1.0)"
+                required: true
+                default: "0.1.0"
 
 jobs:
     release:
@@ -50,9 +56,14 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Get version from tag
+            - name: Get version from tag or input
               id: get_version
-              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+                  else
+                      echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+                  fi
 
             - name: Calculate SHA256 for arm64
               id: sha256_arm64
