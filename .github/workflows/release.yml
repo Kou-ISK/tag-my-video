@@ -56,14 +56,11 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Get version from tag or input
+            - name: Get version from package.json
               id: get_version
               run: |
-                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                      echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-                  else
-                      echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-                  fi
+                  VERSION=$(node -p "require('./package.json').version")
+                  echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
             - name: Calculate SHA256 for arm64
               id: sha256_arm64
