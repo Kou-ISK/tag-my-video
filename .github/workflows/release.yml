@@ -56,23 +56,45 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: List generated files
+              run: |
+                  echo "=== Contents of dist directory ==="
+                  ls -lah ./dist/
+                  echo "=== Looking for zip files ==="
+                  find ./dist -name "*.zip" -type f
+
             - name: Get version from package.json
               id: get_version
               run: |
                   VERSION=$(node -p "require('./package.json').version")
                   echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Detected version: $VERSION"
 
             - name: Calculate SHA256 for arm64
               id: sha256_arm64
               run: |
-                  SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip" | awk '{print $1}')
-                  echo "SHA256_ARM64=$SHA256" >> $GITHUB_OUTPUT
+                  echo "Looking for: ./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip"
+                  if [ -f "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip" ]; then
+                      SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip" | awk '{print $1}')
+                      echo "SHA256_ARM64=$SHA256" >> $GITHUB_OUTPUT
+                      echo "arm64 SHA256: $SHA256"
+                  else
+                      echo "ERROR: arm64 zip file not found!"
+                      exit 1
+                  fi
 
             - name: Calculate SHA256 for x64
               id: sha256_x64
               run: |
-                  SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip" | awk '{print $1}')
-                  echo "SHA256_X64=$SHA256" >> $GITHUB_OUTPUT
+                  echo "Looking for: ./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip"
+                  if [ -f "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip" ]; then
+                      SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip" | awk '{print $1}')
+                      echo "SHA256_X64=$SHA256" >> $GITHUB_OUTPUT
+                      echo "x64 SHA256: $SHA256"
+                  else
+                      echo "ERROR: x64 zip file not found!"
+                      exit 1
+                  fi
 
             - name: Create Release
               id: create_release
