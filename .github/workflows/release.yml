@@ -1,0 +1,124 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    release:
+        runs-on: macos-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 9
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - name: Setup pnpm cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Build React app
+              run: pnpm run build
+
+            - name: Build Electron TypeScript
+              run: pnpm exec tsc -p electron
+
+            - name: Package for macOS
+              run: pnpm run electron:package:mac
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Get version from tag
+              id: get_version
+              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+            - name: Calculate SHA256 for arm64
+              id: sha256_arm64
+              run: |
+                  SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip" | awk '{print $1}')
+                  echo "SHA256_ARM64=$SHA256" >> $GITHUB_OUTPUT
+
+            - name: Calculate SHA256 for x64
+              id: sha256_x64
+              run: |
+                  SHA256=$(shasum -a 256 "./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip" | awk '{print $1}')
+                  echo "SHA256_X64=$SHA256" >> $GITHUB_OUTPUT
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: |
+                      ./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-arm64.zip
+                      ./dist/Tag My Video-${{ steps.get_version.outputs.VERSION }}-x64.zip
+                  generate_release_notes: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Update Homebrew Tap
+              run: |
+                  # homebrew-tapリポジトリをクローン
+                  git clone https://${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/Kou-ISK/homebrew-tap.git
+                  cd homebrew-tap
+
+                  # Casksディレクトリを作成（初回のみ）
+                  mkdir -p Casks
+
+                  # Cask formulaを生成
+                  cat > Casks/tag-my-video.rb << 'EOF'
+                  cask "tag-my-video" do
+                    version "${{ steps.get_version.outputs.VERSION }}"
+                    sha256 arm:   "${{ steps.sha256_arm64.outputs.SHA256_ARM64 }}",
+                           intel: "${{ steps.sha256_x64.outputs.SHA256_X64 }}"
+
+                    url "https://github.com/Kou-ISK/tag-my-video/releases/download/v#{version}/Tag My Video-#{version}-#{Hardware::CPU.arch}.zip",
+                        verified: "github.com/Kou-ISK/tag-my-video/"
+                    name "Tag My Video"
+                    desc "Video tagging application for sports analysis"
+                    homepage "https://github.com/Kou-ISK/tag-my-video"
+
+                    livecheck do
+                      url :url
+                      strategy :github_latest
+                    end
+
+                    app "Tag My Video.app"
+
+                    zap trash: [
+                      "~/Library/Application Support/tag-my-video",
+                      "~/Library/Preferences/com.kouisk.tagmyvideo.plist",
+                      "~/Library/Saved Application State/com.kouisk.tagmyvideo.savedState",
+                    ]
+                  end
+                  EOF
+
+                  # Git設定とコミット
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add Casks/tag-my-video.rb
+                  git diff --staged --quiet || git commit -m "Update tag-my-video to v${{ steps.get_version.outputs.VERSION }}"
+                  git push
+              env:
+                  HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
