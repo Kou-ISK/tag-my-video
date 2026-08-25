@@ -2,6 +2,7 @@ import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import * as path from 'path';
 import type { Playlist } from '../../../src/types/playlist/core';
+import { normalizePlaylistDocument } from '../../../src/shared/playlist/playlistDocument';
 import { PLAYLIST_WINDOW_CHANNELS } from '../../../src/types/ipc/playlistWindow';
 import { runMediaProcess } from '../ipc/mediaProcessRunner';
 
@@ -45,17 +46,18 @@ export const savePlaylistToPath = async (
   event: Electron.IpcMainInvokeEvent,
   ffmpegPath: string,
 ): Promise<void> => {
+  const document = normalizePlaylistDocument(playlist);
   const isOverwrite = existsSync(path.join(targetPath, 'playlist.json'));
   await fs.mkdir(targetPath, { recursive: true });
 
-  let processedPlaylist = playlist;
+  let processedPlaylist = document;
 
-  if (playlist.type === 'embedded') {
+  if (document.type === 'embedded') {
     const videosDir = path.join(targetPath, 'videos');
     await fs.mkdir(videosDir, { recursive: true });
 
     const copiedVideos = new Map<string, string>();
-    const totalItems = playlist.items.length;
+    const totalItems = document.items.length;
     let processedCount = 0;
 
     const sendProgress = (current: number, total: number): void => {
@@ -69,7 +71,7 @@ export const savePlaylistToPath = async (
     };
 
     const processedItems = await Promise.all(
-      playlist.items.map(async (item) => {
+      document.items.map(async (item) => {
         const processVideo = async (
           sourcePath: string | undefined,
           isSecondary: boolean,
@@ -138,7 +140,7 @@ export const savePlaylistToPath = async (
       }),
     );
 
-    processedPlaylist = { ...playlist, items: processedItems };
+    processedPlaylist = { ...document, items: processedItems };
   }
 
   const playlistJsonPath = path.join(targetPath, 'playlist.json');
@@ -208,6 +210,8 @@ export const loadPlaylistFromPath = async (
       'プレイリストファイルの形式が不正です。必須フィールドが欠落しています。',
     );
   }
+
+  playlist = normalizePlaylistDocument(playlist);
 
   const resolvedItems = playlist.items.map((item) => {
     return {

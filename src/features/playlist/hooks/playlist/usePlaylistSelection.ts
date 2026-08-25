@@ -21,6 +21,9 @@ export const usePlaylistSelection = ({
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
     new Set(),
   );
+  const [selectionAnchorId, setSelectionAnchorId] = useState<string | null>(
+    null,
+  );
 
   const selectedCount = selectedItemIds.size;
 
@@ -49,8 +52,46 @@ export const usePlaylistSelection = ({
     });
   }, []);
 
+  const selectWithModifiers = useCallback(
+    (id: string, modifiers: { additive: boolean; range: boolean }): void => {
+      const itemIndex = items.findIndex((item) => item.id === id);
+      if (itemIndex < 0) return;
+      setCurrentIndex(itemIndex);
+      setIsPlaying(false);
+      setSelectedItemIds((previous) => {
+        if (modifiers.range && selectionAnchorId) {
+          const anchorIndex = items.findIndex(
+            (item) => item.id === selectionAnchorId,
+          );
+          if (anchorIndex >= 0) {
+            const start = Math.min(anchorIndex, itemIndex);
+            const end = Math.max(anchorIndex, itemIndex);
+            const next = modifiers.additive
+              ? new Set(previous)
+              : new Set<string>();
+            for (let index = start; index <= end; index += 1) {
+              const rangeItem = items[index];
+              if (rangeItem) next.add(rangeItem.id);
+            }
+            return next;
+          }
+        }
+        if (modifiers.additive) {
+          const next = new Set(previous);
+          if (next.has(id)) next.delete(id);
+          else next.add(id);
+          return next;
+        }
+        return new Set([id]);
+      });
+      setSelectionAnchorId(id);
+    },
+    [items, selectionAnchorId, setCurrentIndex, setIsPlaying],
+  );
+
   const clearSelection = useCallback(() => {
     setSelectedItemIds(new Set());
+    setSelectionAnchorId(null);
   }, []);
 
   const deleteSelected = useCallback(() => {
@@ -88,5 +129,6 @@ export const usePlaylistSelection = ({
     clearSelection,
     deleteSelected,
     setSelectedItemIds,
+    selectWithModifiers,
   };
 };

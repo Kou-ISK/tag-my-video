@@ -1,4 +1,4 @@
-import type { BuildDialogsSectionParams, BuildHeaderSectionParams, BuildItemSectionParams, BuildNowPlayingSectionParams, BuildVideoAreaSectionParams } from './playlistWindowSection.types';
+import type { BuildDialogsSectionParams, BuildHeaderSectionParams, BuildItemSectionParams, BuildNowPlayingSectionParams, BuildOrganizerSectionParams, BuildSorterSectionParams, BuildVideoAreaSectionParams } from './playlistWindowSection.types';
 
 export const buildPlaylistHeaderSection = ({
   playlistName,
@@ -11,6 +11,10 @@ export const buildPlaylistHeaderSection = ({
   onSaveClick,
   onLoadClick,
   onViewModeChange,
+  workspaceMode,
+  onWorkspaceModeChange,
+  inspectorVisible,
+  onInspectorToggle,
   setSaveDialogOpen,
   setExportDialogOpen,
 }: BuildHeaderSectionParams) => {
@@ -27,6 +31,10 @@ export const buildPlaylistHeaderSection = ({
     onLoadClick,
     onExportClick: () => setExportDialogOpen(true),
     onViewModeChange,
+    workspaceMode,
+    onWorkspaceModeChange,
+    inspectorVisible,
+    onInspectorToggle,
   };
 };
 
@@ -75,6 +83,7 @@ export const buildPlaylistVideoAreaSection = ({
   onToggleFullscreen,
   onVideoAreaHoverChange,
   onVideoAreaInteraction,
+  height,
 }: BuildVideoAreaSectionParams) => {
   return {
     currentVideoSource,
@@ -121,6 +130,7 @@ export const buildPlaylistVideoAreaSection = ({
     onToggleFullscreen,
     onVideoAreaHoverChange,
     onVideoAreaInteraction,
+    height,
     showControls: hasItems,
   };
 };
@@ -162,6 +172,38 @@ export const buildPlaylistNowPlayingSection = (params: BuildNowPlayingSectionPar
     annotation: params.currentAnnotation ?? undefined,
   };
 };
+
+export const buildPlaylistSorterSection = ({
+  items,
+  currentIndex,
+  selectedItemIds,
+  onSelectItem,
+  onPlayItem,
+  onDeleteSelected,
+}: BuildSorterSectionParams) => ({
+  items,
+  currentIndex,
+  selectedItemIds,
+  onSelectItem,
+  onPlayItem,
+  onDeleteSelected,
+});
+
+export const buildPlaylistOrganizerSection = ({
+  items,
+  rows,
+  currentIndex,
+  selectedItemIds,
+  onSelectItem,
+  onPlayItem,
+}: BuildOrganizerSectionParams) => ({
+  items,
+  rows,
+  currentIndex,
+  selectedItemIds,
+  onSelectItem,
+  onPlayItem,
+});
 
 export const buildPlaylistDialogsSection = ({
   saveDialogOpen,

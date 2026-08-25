@@ -12,6 +12,17 @@ export type DrawingToolType =
 export type AnnotationTarget = 'primary' | 'secondary';
 export type PlaylistLoopMode = 'none' | 'single' | 'all';
 
+/** Current version of the on-disk Playlist Document contract. */
+export const PLAYLIST_DOCUMENT_SCHEMA_VERSION = 2;
+
+export interface PlaylistRow {
+  id: string;
+  name: string;
+  color?: string;
+  enabled: boolean;
+  order: number;
+}
+
 export interface DrawingObject {
   id: string;
   type: DrawingToolType;
@@ -59,6 +70,10 @@ export interface PlaylistItem {
   videoSource2?: string;
   annotation?: ItemAnnotation;
   aiMeta?: PlaylistAiMeta;
+  /** Organizer row membership. Optional for source compatibility with v1 files. */
+  rowId?: string;
+  /** Zero-based order within the Organizer row. */
+  rowOrder?: number;
 }
 
 export interface Playlist {
@@ -70,6 +85,10 @@ export interface Playlist {
   sourcePackagePath?: string;
   createdAt: number;
   updatedAt: number;
+  /** Organizer rows. Missing on legacy flat documents and filled during load. */
+  rows?: PlaylistRow[];
+  /** Missing on legacy flat documents and filled during load. */
+  schemaVersion?: number;
 }
 
 export interface PlaylistState {

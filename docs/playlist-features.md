@@ -8,6 +8,7 @@ SporTagLyticsのプレイリスト機能は、タイムライン上の選択し�
 
 - [0008 Dedicated Sub-Window Runtime and Synchronization](adr/0008-dedicated-sub-window-runtime-and-synchronization.md)
 - [0010 FFmpeg Clip Export Execution Boundary](adr/0010-ffmpeg-clip-export-execution-boundary.md)
+- [0025 Playlist Document Presentation Order](adr/0025-playlist-document-presentation-order.md)
 
 **更新情報（2026年1月14日）**:
 
@@ -21,6 +22,22 @@ SporTagLyticsのプレイリスト機能は、タイムライン上の選択し�
 ## ファイル形式
 
 プレイリストは `.stpl` 拡張子のパッケージ形式で保存されます。
+
+### Playlist Document schema v2（Organizer基盤）
+
+`playlist.json` の現行形式は `schemaVersion: 2` です。`rows` が
+Organizer の semantic document state であり、各 item は `rowId` と
+`rowOrder` によって所属行と行内順序を持ちます。再生・書き出し・Organizer
+表示が利用する正規順序は、row の `order` → item の `rowOrder` です。
+
+旧形式（`rows` / `rowId` / `rowOrder` を持たない flat `items`）は読み込み時に
+既定行「クリップ」へ移行します。移行では item の既存配列順をそのまま保持し、
+`actionName` による暗黙のグループ化は行いません。正規化は冪等なので、同じ
+ファイルを複数回 load/save しても行や item が増殖しません。
+
+Sorter の列 sort、filter、列幅・表示状態、Organizer/Sorter の mode、Inspector
+幅などは window/view state であり、Playlist Documentには保存されません。
+これらの変更は Playlist の dirty state を変更しません。
 
 ### パッケージ構造
 

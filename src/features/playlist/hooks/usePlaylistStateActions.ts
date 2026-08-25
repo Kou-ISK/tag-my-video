@@ -7,6 +7,14 @@ import type {
 } from '../../../types/playlist/core';
 import type { TimelineData } from '../../../types/timeline/core';
 import type { PlaylistStateActions } from './playlistCallbacks';
+import {
+  createPlaylistRow,
+  moveItemsToRow as moveItemsToRowDomain,
+  normalizePlaylistDocument,
+  renamePlaylistRow,
+  reorderItemsWithinRow as reorderItemsWithinRowDomain,
+  reorderPlaylistRows,
+} from '../../../shared/playlist/playlistDocument';
 
 interface UsePlaylistStateActionsParams {
   setState: Dispatch<SetStateAction<PlaylistState>>;
@@ -18,7 +26,7 @@ export const usePlaylistStateActions = ({
   const createPlaylist = useCallback(
     (name: string, description?: string): Playlist => {
       const now = Date.now();
-      const newPlaylist: Playlist = {
+      const newPlaylist: Playlist = normalizePlaylistDocument({
         id: uuidv4(),
         name,
         description,
@@ -26,7 +34,7 @@ export const usePlaylistStateActions = ({
         items: [],
         createdAt: now,
         updatedAt: now,
-      };
+      });
       setState((prev) => ({
         ...prev,
         playlists: [...prev.playlists, newPlaylist],
@@ -93,7 +101,11 @@ export const usePlaylistStateActions = ({
         ...prev,
         playlists: prev.playlists.map((p) =>
           p.id === playlistId
-            ? { ...p, items: [...p.items, ...newItems], updatedAt: now }
+            ? normalizePlaylistDocument({
+                ...p,
+                items: [...p.items, ...newItems],
+                updatedAt: now,
+              })
             : p,
         ),
       }));
@@ -109,7 +121,11 @@ export const usePlaylistStateActions = ({
         ...prev,
         playlists: prev.playlists.map((p) =>
           p.id === playlistId
-            ? { ...p, items: [...p.items, ...items], updatedAt: now }
+            ? normalizePlaylistDocument({
+                ...p,
+                items: [...p.items, ...items],
+                updatedAt: now,
+              })
             : p,
         ),
       }));
@@ -123,11 +139,11 @@ export const usePlaylistStateActions = ({
         ...prev,
         playlists: prev.playlists.map((p) =>
           p.id === playlistId
-            ? {
+            ? normalizePlaylistDocument({
                 ...p,
                 items: p.items.filter((item) => item.id !== itemId),
                 updatedAt: Date.now(),
-              }
+              })
             : p,
         ),
         playingItemId:
@@ -143,10 +159,13 @@ export const usePlaylistStateActions = ({
         ...prev,
         playlists: prev.playlists.map((p) => {
           if (p.id !== playlistId) return p;
-          const newItems = [...p.items];
-          const [removed] = newItems.splice(fromIndex, 1);
-          newItems.splice(toIndex, 0, removed);
-          return { ...p, items: newItems, updatedAt: Date.now() };
+          const normalized = normalizePlaylistDocument(p);
+          const rowId = normalized.rows?.[0]?.id;
+          if (!rowId) return normalized;
+          return {
+            ...reorderItemsWithinRowDomain(normalized, rowId, fromIndex, toIndex),
+            updatedAt: Date.now(),
+          };
         }),
       }));
     },
@@ -167,6 +186,80 @@ export const usePlaylistStateActions = ({
                 updatedAt: Date.now(),
               }
             : p,
+        ),
+      }));
+    },
+    [setState],
+  );
+
+  const createRow = useCallback(
+    (playlistId: string, name: string, color?: string): void => {
+      setState((prev) => ({
+        ...prev,
+        playlists: prev.playlists.map((playlist) => {
+          if (playlist.id !== playlistId) return playlist;
+          const normalized = normalizePlaylistDocument(playlist);
+          const row = createPlaylistRow(normalized, name, {
+            enabled: true,
+            ...(color ? { color } : {}),
+          });
+          return { ...normalized, rows: [...(normalized.rows ?? []), row], updatedAt: Date.now() };
+        }),
+      }));
+    },
+    [setState],
+  );
+
+  const renameRow = useCallback(
+    (playlistId: string, rowId: string, name: string): void => {
+      setState((prev) => ({
+        ...prev,
+        playlists: prev.playlists.map((playlist) =>
+          playlist.id === playlistId
+            ? { ...renamePlaylistRow(playlist, rowId, name), updatedAt: Date.now() }
+            : playlist,
+        ),
+      }));
+    },
+    [setState],
+  );
+
+  const reorderRow = useCallback(
+    (playlistId: string, fromIndex: number, toIndex: number): void => {
+      setState((prev) => ({
+        ...prev,
+        playlists: prev.playlists.map((playlist) =>
+          playlist.id === playlistId
+            ? { ...reorderPlaylistRows(playlist, fromIndex, toIndex), updatedAt: Date.now() }
+            : playlist,
+        ),
+      }));
+    },
+    [setState],
+  );
+
+  const moveItemsToRow = useCallback(
+    (playlistId: string, itemIds: string[], rowId: string): void => {
+      setState((prev) => ({
+        ...prev,
+        playlists: prev.playlists.map((playlist) =>
+          playlist.id === playlistId
+            ? { ...moveItemsToRowDomain(playlist, itemIds, rowId), updatedAt: Date.now() }
+            : playlist,
+        ),
+      }));
+    },
+    [setState],
+  );
+
+  const reorderItemsWithinRow = useCallback(
+    (playlistId: string, rowId: string, fromIndex: number, toIndex: number): void => {
+      setState((prev) => ({
+        ...prev,
+        playlists: prev.playlists.map((playlist) =>
+          playlist.id === playlistId
+            ? { ...reorderItemsWithinRowDomain(playlist, rowId, fromIndex, toIndex), updatedAt: Date.now() }
+            : playlist,
         ),
       }));
     },
@@ -199,5 +292,10 @@ export const usePlaylistStateActions = ({
     updateItemNote,
     setLoopMode,
     setPlayingItem,
+    createRow,
+    renameRow,
+    reorderRow,
+    moveItemsToRow,
+    reorderItemsWithinRow,
   };
 };

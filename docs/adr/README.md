@@ -30,6 +30,7 @@ ADR は長期的な設計判断を残すための記録です。実装規約の�
 | [0022](0022-verified-local-rugby-event-detection.md)               | Verified local rugby event detection               | Superseded | 2026-08-15 |
 | [0023](0023-external-rugby-event-model-rd-boundary.md)             | External rugby event model R&D boundary            | Accepted   | 2026-08-18 |
 | [0024](0024-experimental-event-detection-production-lane.md)       | Experimental event detection production lane       | Accepted   | 2026-08-19 |
+| [0025](0025-playlist-document-presentation-order.md)               | Playlist document presentation order               | Accepted   | 2026-08-25 |
 
 ## Status Values
 

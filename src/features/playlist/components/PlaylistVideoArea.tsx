@@ -70,6 +70,7 @@ type PlaylistVideoAreaProps = {
   onVideoAreaHoverChange: (hovered: boolean) => void;
   onVideoAreaInteraction: () => void;
   showControls: boolean;
+  height?: string | number;
 };
 
 export const PlaylistVideoArea = ({
@@ -118,6 +119,7 @@ export const PlaylistVideoArea = ({
   onVideoAreaHoverChange,
   onVideoAreaInteraction,
   showControls,
+  height = '100%',
 }: PlaylistVideoAreaProps) => {
   return (
     <Box
@@ -125,9 +127,9 @@ export const PlaylistVideoArea = ({
       onMouseLeave={() => onVideoAreaHoverChange(false)}
       onMouseMove={onVideoAreaInteraction}
       sx={{
-        flex: '0 0 auto',
-        height: '50%',
-        minHeight: 250,
+        flex: '1 1 auto',
+        height,
+        minHeight: 0,
         bgcolor: '#000',
         position: 'relative',
       }}

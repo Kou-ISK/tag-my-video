@@ -87,7 +87,6 @@ export const PlaylistVideoControlsOverlay = ({
         right: 0,
         p: 1,
         bgcolor: 'rgba(0,0,0,0.75)',
-        backdropFilter: 'blur(4px)',
         opacity: visible ? 1 : 0,
         transition: 'opacity 0.35s ease',
         pointerEvents: visible ? 'auto' : 'none',
@@ -99,6 +98,7 @@ export const PlaylistVideoControlsOverlay = ({
         value={currentTime}
         min={sliderMin}
         max={sliderMax}
+        step={0.1}
         onChange={onSeek}
         onChangeCommitted={onSeekCommitted}
         sx={{
@@ -106,6 +106,19 @@ export const PlaylistVideoControlsOverlay = ({
           height: 4,
           '& .MuiSlider-thumb': { width: 10, height: 10 },
           '& .MuiSlider-track': { bgcolor: 'primary.main' },
+          // Drawing timestamps are intentionally quiet reference markers.
+          '& .MuiSlider-mark': {
+            width: 2,
+            height: 8,
+            marginTop: -2,
+            borderRadius: 1,
+            bgcolor: 'info.light',
+            opacity: 0.65,
+          },
+          '& .MuiSlider-markActive': {
+            bgcolor: 'info.main',
+            opacity: 0.85,
+          },
         }}
         marks={marks}
       />

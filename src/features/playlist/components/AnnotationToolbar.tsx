@@ -80,7 +80,6 @@ export const AnnotationToolbar = ({
           left: position.x,
           p: 0.5,
           bgcolor: 'rgba(0,0,0,0.82)',
-          backdropFilter: 'blur(6px)',
           display: 'grid',
           gridTemplateColumns: '1fr',
           gap: 0.4,

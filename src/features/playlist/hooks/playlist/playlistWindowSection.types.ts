@@ -2,8 +2,10 @@ import type {
   DrawingObject,
   ItemAnnotation,
   PlaylistItem,
+  PlaylistRow,
   PlaylistType,
 } from '../../../../types/playlist/core';
+import type { PlaylistWorkspaceMode } from '../../../../types/playlist/window';
 import type {
   ClipExportAngleOption as AngleOption,
   ClipExportMode as ExportMode,
@@ -28,6 +30,10 @@ export interface BuildHeaderSectionParams {
   onSaveClick: () => void;
   onLoadClick: () => void;
   onViewModeChange: (mode: PlaylistViewMode) => void;
+  workspaceMode: PlaylistWorkspaceMode;
+  onWorkspaceModeChange: (mode: PlaylistWorkspaceMode) => void;
+  inspectorVisible: boolean;
+  onInspectorToggle: () => void;
   setSaveDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setExportDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -90,6 +96,7 @@ export interface BuildVideoAreaSectionParams {
   onToggleFullscreen: () => void;
   onVideoAreaHoverChange: (hovered: boolean) => void;
   onVideoAreaInteraction: () => void;
+  height?: string | number;
 }
 
 export interface BuildItemSectionParams {
@@ -147,4 +154,28 @@ export interface BuildNowPlayingSectionParams {
   currentIndex: number;
   totalCount: number;
   currentAnnotation: ItemAnnotation | null;
+}
+
+export interface BuildSorterSectionParams {
+  items: PlaylistItem[];
+  currentIndex: number;
+  selectedItemIds: Set<string>;
+  onSelectItem: (
+    id: string,
+    modifiers: { additive: boolean; range: boolean },
+  ) => void;
+  onPlayItem: (id: string) => void;
+  onDeleteSelected: () => void;
+}
+
+export interface BuildOrganizerSectionParams {
+  items: PlaylistItem[];
+  rows: PlaylistRow[];
+  currentIndex: number;
+  selectedItemIds: Set<string>;
+  onSelectItem: (
+    id: string,
+    modifiers: { additive: boolean; range: boolean },
+  ) => void;
+  onPlayItem: (id: string) => void;
 }
