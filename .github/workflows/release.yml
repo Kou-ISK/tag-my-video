@@ -54,6 +54,8 @@ jobs:
           pnpm exec tsc -p electron/tsconfig.json
           pnpm run lint
           pnpm run check:architecture
+          # Vitest + MUI module transforms can exceed the macOS runner default.
+          ulimit -n 10240
           pnpm run test:ci
           pnpm run check:adr
 
