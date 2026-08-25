@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import type {
   ItemAnnotation,
   PlaylistItem,
+  PlaylistRow,
   PlaylistType,
 } from '../../../../types/playlist/core';
 import {
@@ -15,6 +16,7 @@ interface UsePlaylistLoaderParams {
   setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
   setPlaylistName: React.Dispatch<React.SetStateAction<string>>;
   setPlaylistType: React.Dispatch<React.SetStateAction<PlaylistType>>;
+  setPlaylistRows: React.Dispatch<React.SetStateAction<PlaylistRow[]>>;
   setPackagePath: React.Dispatch<React.SetStateAction<string | null>>;
   setLoadedFilePath: React.Dispatch<React.SetStateAction<string | null>>;
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
@@ -37,6 +39,7 @@ export const usePlaylistLoader = ({
   setHasUnsavedChanges,
   setPlaylistName,
   setPlaylistType,
+  setPlaylistRows,
   setPackagePath,
   setLoadedFilePath,
   setIsDirty,
@@ -59,6 +62,7 @@ export const usePlaylistLoader = ({
       setHasUnsavedChanges(snapshot.hasUnsavedChanges);
       setPlaylistName(snapshot.playlistName);
       setPlaylistType(snapshot.playlistType);
+      setPlaylistRows(snapshot.rows ?? []);
       setPackagePath(snapshot.packagePath);
       setLoadedFilePath(snapshot.loadedFilePath);
       setIsDirty(snapshot.isDirty);
@@ -77,6 +81,7 @@ export const usePlaylistLoader = ({
       setPackagePath,
       setPlaylistName,
       setPlaylistType,
+      setPlaylistRows,
       setVideoSources,
       setViewMode,
     ],

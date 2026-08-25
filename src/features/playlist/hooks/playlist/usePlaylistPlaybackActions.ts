@@ -26,6 +26,7 @@ interface UsePlaylistPlaybackActionsParams extends Pick<
   | 'setIsFullscreen'
   | 'minFreezeDuration'
 > {
+  setCurrentTime?: React.Dispatch<React.SetStateAction<number>>;
   lastFreezeTimestampRef: React.MutableRefObject<number | null>;
   freezeTimeoutRef: React.MutableRefObject<ReturnType<
     typeof setTimeout
@@ -62,6 +63,7 @@ export const usePlaylistPlaybackActions = ({
   minFreezeDuration,
   lastFreezeTimestampRef,
   freezeTimeoutRef,
+  setCurrentTime,
 }: UsePlaylistPlaybackActionsParams): PlaylistPlaybackActions => {
   const clearFreezeTimer = useCallback((): void => {
     if (freezeTimeoutRef.current) {
@@ -140,6 +142,7 @@ export const usePlaylistPlaybackActions = ({
             videoRef2.current.currentTime = item.startTime;
           }
           setCurrentIndex(index);
+          setCurrentTime?.(item.startTime);
           setIsFrozen(false);
           setIsPlaying(true);
         }
@@ -158,6 +161,7 @@ export const usePlaylistPlaybackActions = ({
       currentVideoSource2,
       items,
       setCurrentIndex,
+      setCurrentTime,
       setIsFrozen,
       setIsPlaying,
       videoRef,
@@ -239,6 +243,7 @@ export const usePlaylistPlaybackActions = ({
         videoRef2.current.currentTime = clampedTime;
       }
       lastFreezeTimestampRef.current = null;
+      setCurrentTime?.(clampedTime);
       clearFreezeTimer();
       setIsFrozen(false);
       blurFocusTargets(event);
@@ -249,6 +254,7 @@ export const usePlaylistPlaybackActions = ({
       currentVideoSource2,
       lastFreezeTimestampRef,
       setIsFrozen,
+      setCurrentTime,
       videoRef,
       videoRef2,
     ],

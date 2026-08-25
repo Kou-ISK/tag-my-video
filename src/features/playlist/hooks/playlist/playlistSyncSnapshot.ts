@@ -2,8 +2,10 @@ import type {
   ItemAnnotation,
   PlaylistItem,
   PlaylistType,
+  PlaylistRow,
 } from '../../../../types/playlist/core';
 import type { PlaylistSyncData } from '../../../../types/playlist/window';
+import { getPresentationItems } from '../../../../shared/playlist/playlistDocument';
 import {
   resolveViewModeForItems,
   resolveViewModeForSources,
@@ -11,6 +13,7 @@ import {
 
 export interface PlaylistSyncSnapshot {
   items: PlaylistItem[];
+  rows?: PlaylistRow[];
   playlistName: string;
   hasUnsavedChanges: boolean;
   itemAnnotations: Record<string, ItemAnnotation>;
@@ -43,17 +46,23 @@ export const buildPlaylistSyncSnapshot = (
     return null;
   }
 
+  const hasDocumentStructure =
+    activePlaylist.rows !== undefined || activePlaylist.schemaVersion !== undefined;
+  const items = hasDocumentStructure
+    ? getPresentationItems(activePlaylist)
+    : activePlaylist.items;
   const videoSources = data.videoSources ?? [];
   const viewMode =
     videoSources.length > 0
       ? resolveViewModeForSources(videoSources)
-      : resolveViewModeForItems(activePlaylist.items, data.state.playingItemId);
+      : resolveViewModeForItems(items, data.state.playingItemId);
 
   return {
-    items: activePlaylist.items,
+    items,
+    ...(hasDocumentStructure ? { rows: activePlaylist.rows } : {}),
     playlistName: activePlaylist.name,
     hasUnsavedChanges: false,
-    itemAnnotations: extractItemAnnotations(activePlaylist.items),
+    itemAnnotations: extractItemAnnotations(items),
     playlistType: activePlaylist.type,
     packagePath: data.packagePath ?? activePlaylist.sourcePackagePath ?? null,
     videoSources,

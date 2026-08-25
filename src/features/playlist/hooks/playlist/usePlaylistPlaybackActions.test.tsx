@@ -26,6 +26,7 @@ const createParams = () => {
     currentItem: item,
     currentIndex: 0,
     setCurrentIndex: vi.fn(),
+    setCurrentTime: vi.fn(),
     isPlaying: false,
     setIsPlaying: vi.fn(),
     isFrozen: false,
@@ -58,9 +59,11 @@ describe('usePlaylistPlaybackActions', () => {
     act(() => result.current.handleSeek(new Event('seek'), 30));
     expect(params.videoRef.current.currentTime).toBe(20);
     expect(params.videoRef2.current.currentTime).toBe(20);
+    expect(params.setCurrentTime).toHaveBeenCalledWith(20);
 
     act(() => result.current.handleSeek(new Event('seek'), 2));
     expect(params.videoRef.current.currentTime).toBe(10);
+    expect(params.setCurrentTime).toHaveBeenLastCalledWith(10);
   });
 
   it('resumes automatically after the configured freeze duration', () => {

@@ -37,7 +37,6 @@ export const PlaylistDrawingTargetToggle = ({
           alignItems: 'center',
           gap: 0.5,
           bgcolor: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
         }}
         elevation={3}
       >

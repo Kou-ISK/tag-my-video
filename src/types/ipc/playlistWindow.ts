@@ -4,6 +4,7 @@ import type {
   Playlist,
   PlaylistFileLoadResult,
   PlaylistItem,
+  PlaylistRow,
   PlaylistSaveProgressPayload,
   PlaylistState,
 } from '../playlist/core';
@@ -133,6 +134,17 @@ const isPlaylistAiMeta = (
   );
 };
 
+const isPlaylistRow = (value: unknown): value is PlaylistRow => {
+  if (!isPlainObject(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.name) &&
+    isBoolean(value.enabled) &&
+    isFiniteNumber(value.order) &&
+    isOptional(value.color, isString)
+  );
+};
+
 export const isPlaylistItem = (value: unknown): value is PlaylistItem => {
   if (!isPlainObject(value)) {
     return false;
@@ -153,7 +165,9 @@ export const isPlaylistItem = (value: unknown): value is PlaylistItem => {
     isOptional(value.videoSource, isString) &&
     isOptional(value.videoSource2, isString) &&
     isOptional(value.annotation, isItemAnnotation) &&
-    isOptional(value.aiMeta, isPlaylistAiMeta)
+    isOptional(value.aiMeta, isPlaylistAiMeta) &&
+    isOptional(value.rowId, isString) &&
+    isOptional(value.rowOrder, isFiniteNumber)
   );
 };
 
@@ -171,7 +185,11 @@ export const isPlaylist = (value: unknown): value is Playlist => {
     isFiniteNumber(value.createdAt) &&
     isFiniteNumber(value.updatedAt) &&
     isOptional(value.description, isString) &&
-    isOptional(value.sourcePackagePath, isString)
+    isOptional(value.sourcePackagePath, isString) &&
+    isOptional(value.rows, (candidate): candidate is PlaylistRow[] =>
+      isArrayOf(candidate, isPlaylistRow),
+    ) &&
+    isOptional(value.schemaVersion, isFiniteNumber)
   );
 };
 

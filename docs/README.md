@@ -22,7 +22,7 @@
 - [ユーザーガイド](user-guide.md): パッケージ作成、タグ付け、分析、プレイリスト、エクスポート。
 - [Privacy and Data Handling](privacy-and-data-handling.md): ローカル保存、外部送信、AI 分析時のデータ境界。
 - [Homebrew quickstart](homebrew-quickstart.md): Homebrew Cask での導入。
-- [プレイリスト機能](playlist-features.md): プレイリスト画面と関連操作（関連 ADR: [0008](adr/0008-dedicated-sub-window-runtime-and-synchronization.md), [0010](adr/0010-ffmpeg-clip-export-execution-boundary.md)）。
+- [プレイリスト機能](playlist-features.md): プレイリスト画面と関連操作（関連 ADR: [0008](adr/0008-dedicated-sub-window-runtime-and-synchronization.md), [0010](adr/0010-ffmpeg-clip-export-execution-boundary.md), [0025](adr/0025-playlist-document-presentation-order.md)）。
 
 ## Developer Documentation
 

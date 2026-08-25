@@ -9,7 +9,6 @@ import {
   Stack,
   Tooltip,
   Typography,
-  Chip as MuiChip,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -86,15 +85,16 @@ export const PlaylistSortableItem = ({
         px: 1,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        borderLeft: isActive ? '3px solid #00FF85' : '3px solid transparent',
+        borderLeft: isActive
+          ? `3px solid ${theme.palette.primary.main}`
+          : '3px solid transparent',
         bgcolor: isActive
           ? alpha(theme.palette.primary.main, 0.15)
           : 'transparent',
-        transition: 'all 0.2s ease',
         '&:hover': {
           bgcolor: isActive
             ? alpha(theme.palette.primary.main, 0.2)
-            : alpha('#fff', 0.05),
+            : theme.palette.action.hover,
         },
         '&.Mui-selected': {
           bgcolor: alpha(theme.palette.primary.main, 0.15),
@@ -153,27 +153,38 @@ export const PlaylistSortableItem = ({
               {item.actionName}
             </Typography>
             {item.note && (
-              <MuiChip
-                label={item.note}
-                size="small"
-                color="warning"
-                onClick={(event: React.MouseEvent) => {
+              <Typography
+                component="span"
+                role="button"
+                tabIndex={0}
+                variant="caption"
+                onClick={(event: React.MouseEvent<HTMLSpanElement>) => {
                   event.stopPropagation();
                   onEditNote(item.id);
                 }}
+                onKeyDown={(event: React.KeyboardEvent<HTMLSpanElement>) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onEditNote(item.id);
+                  }
+                }}
                 sx={{
                   maxWidth: 150,
-                  fontSize: '0.65rem',
-                  height: 18,
                   ml: 0.5,
+                  px: 0.5,
+                  overflow: 'hidden',
+                  color: 'text.secondary',
                   cursor: 'pointer',
-                  '& .MuiChip-label': {
-                    px: 0.75,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  font: 'inherit',
+                  textAlign: 'left',
+                  '&:hover': { color: 'text.primary' },
                 }}
-              />
+              >
+                {item.note}
+              </Typography>
             )}
             {hasAnnotation && (
               <Tooltip

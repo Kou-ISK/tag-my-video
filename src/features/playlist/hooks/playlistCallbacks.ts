@@ -22,6 +22,16 @@ export interface PlaylistStateActions {
     fromIndex: number,
     toIndex: number,
   ) => void;
+  createRow: (playlistId: string, name: string, color?: string) => void;
+  renameRow: (playlistId: string, rowId: string, name: string) => void;
+  reorderRow: (playlistId: string, fromIndex: number, toIndex: number) => void;
+  moveItemsToRow: (playlistId: string, itemIds: string[], rowId: string) => void;
+  reorderItemsWithinRow: (
+    playlistId: string,
+    rowId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => void;
   updateItemNote: (playlistId: string, itemId: string, note: string) => void;
   setLoopMode: (mode: 'none' | 'single' | 'all') => void;
   setPlayingItem: (itemId: string | null) => void;

@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { getPresentationItems, normalizePlaylistDocument } from '../../../../shared/playlist/playlistDocument';
 import type {
   ItemAnnotation,
   PlaylistItem,
+  PlaylistRow,
   PlaylistType,
 } from '../../../../types/playlist/core';
 import { registerPlaylistIpcHandlers } from './playlistIpcGateway';
@@ -15,6 +17,8 @@ interface UsePlaylistIpcSyncParams {
     React.SetStateAction<Record<string, ItemAnnotation>>
   >;
   setPlaylistType: React.Dispatch<React.SetStateAction<PlaylistType>>;
+  setPlaylistRows: React.Dispatch<React.SetStateAction<PlaylistRow[]>>;
+  playlistRows: PlaylistRow[];
   setPackagePath: React.Dispatch<React.SetStateAction<string | null>>;
   setVideoSources: React.Dispatch<React.SetStateAction<string[]>>;
   setViewMode: React.Dispatch<
@@ -32,6 +36,8 @@ export const usePlaylistIpcSync = ({
   setHasUnsavedChanges,
   setItemAnnotations,
   setPlaylistType,
+  setPlaylistRows,
+  playlistRows,
   setPackagePath,
   setVideoSources,
   setViewMode,
@@ -52,6 +58,7 @@ export const usePlaylistIpcSync = ({
       setHasUnsavedChanges(snapshot.hasUnsavedChanges);
       setItemAnnotations(snapshot.itemAnnotations);
       setPlaylistType(snapshot.playlistType);
+      setPlaylistRows(snapshot.rows ?? []);
       setPackagePath(snapshot.packagePath);
       setVideoSources(snapshot.videoSources);
       setViewMode(snapshot.viewMode);
@@ -65,7 +72,18 @@ export const usePlaylistIpcSync = ({
     };
 
     const handleAddItem = (item: PlaylistItem): void => {
-      setItemsWithHistory((prev: PlaylistItem[]) => [...prev, item]);
+      setItemsWithHistory((prev: PlaylistItem[]) => {
+        const normalized = normalizePlaylistDocument({
+          id: 'playlist-window',
+          name: 'Playlist Window',
+          type: 'embedded',
+          rows: playlistRows,
+          items: [...prev, item],
+          createdAt: 0,
+          updatedAt: 0,
+        });
+        return getPresentationItems(normalized);
+      });
       setHasUnsavedChanges(true);
       setIsDirty(true);
     };
@@ -102,6 +120,8 @@ export const usePlaylistIpcSync = ({
     setPackagePath,
     setPlaylistName,
     setPlaylistType,
+    setPlaylistRows,
+    playlistRows,
     setSaveProgress,
     setVideoSources,
     setViewMode,
