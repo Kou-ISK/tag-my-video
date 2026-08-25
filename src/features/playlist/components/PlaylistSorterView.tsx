@@ -18,7 +18,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { FilterList, ViewColumn } from '@mui/icons-material';
+import FilterList from '@mui/icons-material/FilterList';
+import ViewColumn from '@mui/icons-material/ViewColumn';
 import type { PlaylistItem } from '../../../types/playlist/core';
 
 export type SorterColumnId =
