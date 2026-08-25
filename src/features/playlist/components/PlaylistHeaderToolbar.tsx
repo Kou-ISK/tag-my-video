@@ -14,15 +14,13 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import {
-  FolderOpen,
-  MoreVert,
-  Outbox,
-  PlaylistPlay,
-  Save,
-  Visibility,
-  VisibilityOff,
-} from '@mui/icons-material';
+import FolderOpen from '@mui/icons-material/FolderOpen';
+import MoreVert from '@mui/icons-material/MoreVert';
+import Outbox from '@mui/icons-material/Outbox';
+import PlaylistPlay from '@mui/icons-material/PlaylistPlay';
+import Save from '@mui/icons-material/Save';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import type { PlaylistWorkspaceMode } from '../../../types/playlist/window';
 
 type ViewMode = 'angle1' | 'angle2' | 'dual';
