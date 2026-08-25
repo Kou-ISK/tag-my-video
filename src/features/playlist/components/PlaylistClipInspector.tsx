@@ -9,7 +9,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Edit, PlayArrow } from '@mui/icons-material';
+import Edit from '@mui/icons-material/Edit';
+import PlayArrow from '@mui/icons-material/PlayArrow';
 import { useTheme } from '@mui/material/styles';
 import type { ItemAnnotation, PlaylistItem } from '../../../types/playlist/core';
 
