@@ -528,6 +528,13 @@ MyPlaylist.stpl/              # パッケージディレクトリ（Finderでは
 
 ### プレイリストウィンドウ
 
+**Workspace**:
+
+- 上部の **Organizer / Sorter** で、同じプレイリストを presentation 構造または metadata 表として切り替えます。切替、Inspector、splitter、Sorter の検索・sort は保存済みの再生順を変更しません。
+- **Organizer** は row ごとに clip を横方向へ並べます。クリックで選択、`Cmd/Ctrl`+クリックで追加選択、`Shift`+クリックで範囲選択、ダブルクリックで再生します。selected と playing は別の表示です。
+- **Sorter** は比較・検索用の高密度 table です。列見出しの sort は一時的な表示順です。sort を解除すると presentation order に戻り、export / playback の順序も変わりません。
+- Review Area と Workspace の境界はドラッグできます。右上の Inspector では選択中 clip の開始・長さ・labels・note・freeze / drawing・映像情報を確認できます。
+
 **再生機能**:
 
 - 連続再生

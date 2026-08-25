@@ -6,6 +6,7 @@ import {
   type SetStateAction,
 } from 'react';
 import type { PlaylistItem, PlaylistState } from '../../../types/playlist/core';
+import { getPresentationItems } from '../../../shared/playlist/playlistDocument';
 import type {
   PlaylistCommand,
   PlaylistSyncData,
@@ -124,7 +125,11 @@ export const usePlaylistWindowBridge = ({
           break;
         case 'play-item': {
           const item = state.playlists
-            .flatMap((p) => p.items)
+            .flatMap((p) =>
+              p.rows || p.schemaVersion
+                ? getPresentationItems(p)
+                : p.items,
+            )
             .find((playlistItem) => playlistItem.id === command.itemId);
           if (item) {
             setPlayingItem(item.id);

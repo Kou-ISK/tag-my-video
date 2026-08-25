@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   IconButton,
+  Box,
   Menu,
   MenuItem,
   Paper,
@@ -9,6 +10,8 @@ import {
   Typography,
   ListItemIcon,
   Divider,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import {
@@ -17,7 +20,10 @@ import {
   Outbox,
   PlaylistPlay,
   Save,
+  Visibility,
+  VisibilityOff,
 } from '@mui/icons-material';
+import type { PlaylistWorkspaceMode } from '../../../types/playlist/window';
 
 type ViewMode = 'angle1' | 'angle2' | 'dual';
 
@@ -34,6 +40,10 @@ type PlaylistHeaderToolbarProps = {
   onLoadClick: () => void;
   onExportClick: () => void;
   onViewModeChange: (mode: ViewMode) => void;
+  workspaceMode: PlaylistWorkspaceMode;
+  onWorkspaceModeChange: (mode: PlaylistWorkspaceMode) => void;
+  inspectorVisible: boolean;
+  onInspectorToggle: () => void;
 };
 
 export const PlaylistHeaderToolbar = ({
@@ -49,6 +59,10 @@ export const PlaylistHeaderToolbar = ({
   onLoadClick,
   onExportClick,
   onViewModeChange,
+  workspaceMode,
+  onWorkspaceModeChange,
+  inspectorVisible,
+  onInspectorToggle,
 }: PlaylistHeaderToolbarProps) => {
   const theme = useTheme();
 
@@ -57,19 +71,50 @@ export const PlaylistHeaderToolbar = ({
       elevation={0}
       sx={{
         bgcolor: theme.palette.background.paper,
-        backdropFilter: 'blur(8px)',
         borderBottom: '1px solid',
         borderColor: theme.palette.divider,
         px: 1.5,
-        py: 0.75,
+        py: 0.5,
       }}
     >
       <Stack direction="row" alignItems="center" spacing={1}>
         <PlaylistPlay sx={{ color: theme.palette.primary.main }} />
         <Typography variant="subtitle2" sx={{ flex: 1 }}>
           {playlistName}
-          {hasUnsavedChanges ? ' *' : ''}
         </Typography>
+
+        {hasUnsavedChanges ? (
+          <Tooltip title="未保存の変更">
+            <Box
+              component="span"
+              aria-label="未保存の変更"
+              sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'warning.main' }}
+            />
+          </Tooltip>
+        ) : null}
+
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={workspaceMode}
+          onChange={(_, value: PlaylistWorkspaceMode | null) => {
+            if (value) onWorkspaceModeChange(value);
+          }}
+          aria-label="Playlist workspace view"
+        >
+          <ToggleButton value="organizer" aria-label="Organizer">
+            Organizer
+          </ToggleButton>
+          <ToggleButton value="sorter" aria-label="Sorter">
+            Sorter
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <Tooltip title={inspectorVisible ? 'Inspectorを閉じる' : 'Inspectorを開く'}>
+          <IconButton size="small" onClick={onInspectorToggle} aria-label="Inspector">
+            {inspectorVisible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+          </IconButton>
+        </Tooltip>
 
         <Tooltip
           title={`保存 (Cmd+S)${hasUnsavedChanges ? ' - 未保存の変更あり' : ''}`}
@@ -79,14 +124,8 @@ export const PlaylistHeaderToolbar = ({
             onClick={onSaveClick}
             sx={{
               color: hasUnsavedChanges ? 'warning.main' : 'text.secondary',
-              boxShadow: hasUnsavedChanges
-                ? '0 0 8px rgba(255, 111, 97, 0.6)'
-                : 'none',
-              transition: 'all 0.3s ease',
               '&:hover': {
-                bgcolor: hasUnsavedChanges
-                  ? alpha(theme.palette.warning.main, 0.1)
-                  : alpha(theme.palette.action.hover, 0.08),
+                bgcolor: alpha(theme.palette.action.hover, 0.08),
               },
             }}
           >

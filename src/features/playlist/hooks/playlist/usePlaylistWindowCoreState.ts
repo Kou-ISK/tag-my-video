@@ -2,9 +2,11 @@ import { useRef, useState } from 'react';
 import type {
   AnnotationTarget,
   ItemAnnotation,
+  PlaylistRow,
   PlaylistType,
 } from '../../../../types/playlist/core';
 import type { AnnotationCanvasRef } from '../../components/AnnotationCanvas';
+import type { PlaylistWorkspaceMode } from '../../../../types/playlist/window';
 import { usePlaylistSaveDialogState } from './usePlaylistSaveDialogState';
 
 export const usePlaylistWindowCoreState = () => {
@@ -24,6 +26,7 @@ export const usePlaylistWindowCoreState = () => {
   );
   const [playlistName, setPlaylistName] = useState('プレイリスト');
   const [playlistType, setPlaylistType] = useState<PlaylistType>('embedded');
+  const [playlistRows, setPlaylistRows] = useState<PlaylistRow[]>([]);
   const [packagePath, setPackagePath] = useState<string | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [itemAnnotations, setItemAnnotations] = useState<
@@ -35,6 +38,12 @@ export const usePlaylistWindowCoreState = () => {
   const [isVideoAreaHovered, setIsVideoAreaHovered] = useState(false);
   const [videoAreaInteractionId, setVideoAreaInteractionId] = useState(0);
   const [isFrozen, setIsFrozen] = useState(false);
+  // Window-only state: these values never participate in Playlist dirty state.
+  const [workspaceMode, setWorkspaceMode] =
+    useState<PlaylistWorkspaceMode>('organizer');
+  const [workspaceRatio, setWorkspaceRatio] = useState(0.5);
+  const [inspectorVisible, setInspectorVisible] = useState(true);
+  const [inspectorWidth, setInspectorWidth] = useState(280);
 
   const {
     saveDialogOpen,
@@ -114,6 +123,8 @@ export const usePlaylistWindowCoreState = () => {
     setPlaylistName,
     playlistType,
     setPlaylistType,
+    playlistRows,
+    setPlaylistRows,
     packagePath,
     setPackagePath,
     isDrawingMode,
@@ -130,6 +141,14 @@ export const usePlaylistWindowCoreState = () => {
     setVideoAreaInteractionId,
     isFrozen,
     setIsFrozen,
+    workspaceMode,
+    setWorkspaceMode,
+    workspaceRatio,
+    setWorkspaceRatio,
+    inspectorVisible,
+    setInspectorVisible,
+    inspectorWidth,
+    setInspectorWidth,
     saveDialogOpen,
     setSaveDialogOpen,
     closeAfterSave,

@@ -19,6 +19,7 @@ export const usePlaylistPlayback = (params: UsePlaylistPlaybackParams) => {
     currentItem: params.currentItem,
     currentIndex: params.currentIndex,
     setCurrentIndex: params.setCurrentIndex,
+    setCurrentTime: params.setCurrentTime,
     isPlaying: params.isPlaying,
     setIsPlaying: params.setIsPlaying,
     isFrozen: params.isFrozen,

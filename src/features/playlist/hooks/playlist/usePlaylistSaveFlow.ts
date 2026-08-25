@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type {
   ItemAnnotation,
   PlaylistItem,
+  PlaylistRow,
   PlaylistType,
 } from '../../../../types/playlist/core';
 import {
@@ -19,6 +20,7 @@ interface UsePlaylistSaveFlowParams {
   itemAnnotations: Record<string, ItemAnnotation>;
   playlistName: string;
   playlistType: PlaylistType;
+  playlistRows: PlaylistRow[];
   setPlaylistName: React.Dispatch<React.SetStateAction<string>>;
   setPlaylistType: React.Dispatch<React.SetStateAction<PlaylistType>>;
   setLoadedFilePath: React.Dispatch<React.SetStateAction<string | null>>;
@@ -46,6 +48,7 @@ export const usePlaylistSaveFlow = ({
   itemAnnotations,
   playlistName,
   playlistType,
+  playlistRows,
   setPlaylistName,
   setPlaylistType,
   setLoadedFilePath,
@@ -63,8 +66,10 @@ export const usePlaylistSaveFlow = ({
         itemAnnotations,
         name,
         type,
+        rows: playlistRows,
+        normalizeDocument: true,
       }),
-    [itemAnnotations, items, packagePath, videoSources],
+    [itemAnnotations, items, packagePath, playlistRows, videoSources],
   );
 
   const handleSavePlaylist = useCallback(

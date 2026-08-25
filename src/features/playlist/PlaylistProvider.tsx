@@ -12,6 +12,10 @@ import type {
   PlaylistItem,
   PlaylistState,
 } from '../../types/playlist/core';
+import {
+  DEFAULT_PLAYLIST_WINDOW_VIEW_STATE,
+  type PlaylistWindowViewState,
+} from '../../types/playlist/window';
 import type { TimelineData } from '../../types/timeline/core';
 import { usePlaylistStateActions } from './hooks/usePlaylistStateActions';
 import { usePlaylistWindowBridge } from './hooks/usePlaylistWindowBridge';
@@ -38,6 +42,16 @@ interface PlaylistContextValue {
     fromIndex: number,
     toIndex: number,
   ) => void;
+  createRow: (playlistId: string, name: string, color?: string) => void;
+  renameRow: (playlistId: string, rowId: string, name: string) => void;
+  reorderRow: (playlistId: string, fromIndex: number, toIndex: number) => void;
+  moveItemsToRow: (playlistId: string, itemIds: string[], rowId: string) => void;
+  reorderItemsWithinRow: (
+    playlistId: string,
+    rowId: string,
+    fromIndex: number,
+    toIndex: number,
+  ) => void;
   updateItemNote: (playlistId: string, itemId: string, note: string) => void;
   setLoopMode: (mode: 'none' | 'single' | 'all') => void;
   setPlayingItem: (itemId: string | null) => void;
@@ -59,6 +73,10 @@ interface PlaylistContextValue {
   ) => Promise<void>;
   registerSeekCallback: (callback: SeekCallback) => void;
   registerPlayItemCallback: (callback: PlayItemCallback) => void;
+  viewState: PlaylistWindowViewState;
+  updateViewState: (
+    update: Partial<PlaylistWindowViewState>,
+  ) => void;
 }
 
 const PlaylistContext = createContext<PlaylistContextValue | null>(null);
@@ -77,6 +95,9 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
     loopMode: 'none',
   });
   const [isWindowOpen, setIsWindowOpen] = useState(false);
+  const [viewState, setViewState] = useState<PlaylistWindowViewState>(
+    DEFAULT_PLAYLIST_WINDOW_VIEW_STATE,
+  );
 
   const seekCallbackRef = useRef<SeekCallback | null>(null);
   const playItemCallbackRef = useRef<PlayItemCallback | null>(null);
@@ -106,7 +127,19 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
     updateItemNote,
     setLoopMode,
     setPlayingItem,
+    createRow,
+    renameRow,
+    reorderRow,
+    moveItemsToRow,
+    reorderItemsWithinRow,
   } = usePlaylistStateActions({ setState });
+
+  const updateViewState = useCallback(
+    (update: Partial<PlaylistWindowViewState>): void => {
+      setViewState((previous) => ({ ...previous, ...update }));
+    },
+    [],
+  );
 
   const { openPlaylistWindow, addItemsToAllWindows, syncToWindow } =
     usePlaylistWindowBridge({
@@ -153,6 +186,13 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({
     addTimelineItemsToAllWindows,
     registerSeekCallback,
     registerPlayItemCallback,
+    createRow,
+    renameRow,
+    reorderRow,
+    moveItemsToRow,
+    reorderItemsWithinRow,
+    viewState,
+    updateViewState,
   };
 
   return (

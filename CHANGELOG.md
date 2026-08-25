@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-25
+
+### Added
+
+- Playlist Document schema v2: Organizer rows and deterministic presentation order, with backward-compatible migration for existing `.stpl` files.
+- Playlist Window workspace shell with Organizer/Sorter switching, a resizable review area, Clip Inspector, and a non-destructive metadata Sorter.
+
 ## [0.10.3] - 2026-08-22
 
 ### Fixed

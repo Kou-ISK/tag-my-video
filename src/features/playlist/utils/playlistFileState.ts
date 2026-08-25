@@ -2,8 +2,13 @@ import type {
   ItemAnnotation,
   Playlist,
   PlaylistItem,
+  PlaylistRow,
   PlaylistType,
 } from '../../../types/playlist/core';
+import {
+  getPresentationItems,
+  normalizePlaylistDocument,
+} from '../../../shared/playlist/playlistDocument';
 import { resolveViewModeForSources } from './viewMode';
 
 interface BuildPlaylistPayloadParams {
@@ -13,12 +18,15 @@ interface BuildPlaylistPayloadParams {
   itemAnnotations: Record<string, ItemAnnotation>;
   name: string;
   type: PlaylistType;
+  rows?: PlaylistRow[];
+  normalizeDocument?: boolean;
   createId?: () => string;
   now?: () => number;
 }
 
 export interface LoadedPlaylistSnapshot {
   items: PlaylistItem[];
+  rows?: PlaylistRow[];
   hasUnsavedChanges: boolean;
   playlistName: string;
   playlistType: PlaylistType;
@@ -61,11 +69,13 @@ export const buildPlaylistPayload = ({
   itemAnnotations,
   name,
   type,
+  rows,
+  normalizeDocument = false,
   createId = () => crypto.randomUUID(),
   now = () => Date.now(),
 }: BuildPlaylistPayloadParams): Playlist => {
   const timestamp = now();
-  return {
+  const payload: Playlist = {
     id: createId(),
     name,
     type,
@@ -78,25 +88,37 @@ export const buildPlaylistPayload = ({
     sourcePackagePath: packagePath ?? undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
+    ...(rows ? { rows } : {}),
   };
+  if (normalizeDocument || rows || items.some((item) => item.rowId !== undefined)) {
+    return normalizePlaylistDocument(payload);
+  }
+  return payload;
 };
 
 export const buildLoadedPlaylistSnapshot = (
   playlist: Playlist,
   loadedFilePath: string,
 ): LoadedPlaylistSnapshot => {
-  const videoSources = resolvePlaylistVideoSources(playlist.items);
+  const hasDocumentStructure =
+    playlist.rows !== undefined || playlist.schemaVersion !== undefined;
+  const normalized = normalizePlaylistDocument(playlist);
+  const presentationItems = hasDocumentStructure
+    ? getPresentationItems(normalized)
+    : playlist.items;
+  const videoSources = resolvePlaylistVideoSources(presentationItems);
   return {
-    items: playlist.items,
+    items: presentationItems,
+    ...(hasDocumentStructure ? { rows: normalized.rows } : {}),
     hasUnsavedChanges: false,
     playlistName: playlist.name,
     playlistType: playlist.type || 'embedded',
     packagePath: playlist.sourcePackagePath || null,
     loadedFilePath,
     isDirty: false,
-    itemAnnotations: extractPlaylistAnnotations(playlist.items),
+    itemAnnotations: extractPlaylistAnnotations(presentationItems),
     videoSources,
     viewMode: resolveViewModeForSources(videoSources),
-    currentIndex: playlist.items.length > 0 ? 0 : -1,
+    currentIndex: presentationItems.length > 0 ? 0 : -1,
   };
 };

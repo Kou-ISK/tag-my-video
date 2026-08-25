@@ -4,9 +4,12 @@ import { useTheme } from '@mui/material/styles';
 import type { PlaylistWindowController } from '../hooks/playlist/usePlaylistWindowController';
 import { PlaylistHeaderToolbar } from './PlaylistHeaderToolbar';
 import { PlaylistItemSection } from './PlaylistItemSection';
-import { PlaylistNowPlayingInfo } from './PlaylistNowPlayingInfo';
 import { PlaylistVideoArea } from './PlaylistVideoArea';
 import { PlaylistWindowDialogs } from './PlaylistWindowDialogs';
+import { PlaylistClipInspector } from './PlaylistClipInspector';
+import { PlaylistWorkspaceSplitter } from './PlaylistWorkspaceSplitter';
+import { PlaylistSorterView } from './PlaylistSorterView';
+import { PlaylistOrganizerView } from './PlaylistOrganizerView';
 
 type PlaylistWindowViewProps = {
   controller: PlaylistWindowController;
@@ -31,13 +34,46 @@ export const PlaylistWindowView = ({
     >
       <PlaylistHeaderToolbar {...controller.header} />
 
-      <PlaylistVideoArea {...controller.videoArea} />
+      <Box
+        data-testid="playlist-review-area"
+        sx={{
+          display: 'flex',
+          minHeight: 220,
+          flex: `0 0 ${controller.shell.workspaceRatio * 100}%`,
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ minWidth: 0, flex: 1, display: 'flex' }}>
+          <PlaylistVideoArea {...controller.videoArea} />
+        </Box>
+        {controller.shell.inspectorVisible ? (
+          <PlaylistClipInspector {...controller.inspector} />
+        ) : null}
+      </Box>
 
-      <PlaylistItemSection {...controller.itemSection} />
+      <PlaylistWorkspaceSplitter
+        onRatioChange={controller.shell.onWorkspaceRatioChange}
+      />
 
-      {controller.nowPlaying ? (
-        <PlaylistNowPlayingInfo {...controller.nowPlaying} />
-      ) : null}
+      <Box
+        component="section"
+        data-testid="playlist-workspace"
+        aria-label={`${controller.shell.workspaceMode} workspace`}
+        sx={{
+          minHeight: 160,
+          flex: 1,
+          overflow: 'auto',
+          bgcolor: theme.palette.background.default,
+        }}
+      >
+        {controller.shell.workspaceMode === 'sorter' ? (
+          <PlaylistSorterView {...controller.sorter} />
+        ) : controller.shell.workspaceMode === 'organizer' ? (
+          <PlaylistOrganizerView {...controller.organizer} />
+        ) : (
+          <PlaylistItemSection {...controller.itemSection} />
+        )}
+      </Box>
 
       <PlaylistWindowDialogs {...controller.dialogs} />
     </Box>

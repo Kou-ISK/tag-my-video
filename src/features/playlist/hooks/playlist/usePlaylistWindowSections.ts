@@ -3,6 +3,8 @@ import {
   buildPlaylistHeaderSection,
   buildPlaylistItemSection,
   buildPlaylistNowPlayingSection,
+  buildPlaylistOrganizerSection,
+  buildPlaylistSorterSection,
   buildPlaylistVideoAreaSection,
 } from './playlistWindowControllerSections';
 import type { usePlaylistAnnotations } from './usePlaylistAnnotations';
@@ -71,6 +73,10 @@ export const usePlaylistWindowSections = ({
     onSaveClick: menuActions.handleSaveClick,
     onLoadClick: menuActions.handleLoadPlaylist,
     onViewModeChange: core.setViewMode,
+    workspaceMode: core.workspaceMode,
+    onWorkspaceModeChange: core.setWorkspaceMode,
+    inspectorVisible: core.inspectorVisible,
+    onInspectorToggle: () => core.setInspectorVisible((visible) => !visible),
     setSaveDialogOpen: core.setSaveDialogOpen,
     setExportDialogOpen: exportState.setExportDialogOpen,
   });
@@ -121,6 +127,7 @@ export const usePlaylistWindowSections = ({
     onVideoAreaHoverChange: core.setIsVideoAreaHovered,
     onVideoAreaInteraction: () =>
       core.setVideoAreaInteractionId((previous) => previous + 1),
+    height: '100%',
   });
 
   const itemSection = buildPlaylistItemSection({
@@ -141,6 +148,24 @@ export const usePlaylistWindowSections = ({
     currentIndex: core.currentIndex,
     totalCount: history.items.length,
     currentAnnotation: annotations.currentAnnotation,
+  });
+
+  const sorter = buildPlaylistSorterSection({
+    items: history.items,
+    currentIndex: core.currentIndex,
+    selectedItemIds: selection.selectedItemIds,
+    onSelectItem: selection.selectWithModifiers,
+    onPlayItem: playback.handlePlayItem,
+    onDeleteSelected: selection.deleteSelected,
+  });
+
+  const organizer = buildPlaylistOrganizerSection({
+    items: history.items,
+    rows: core.playlistRows,
+    currentIndex: core.currentIndex,
+    selectedItemIds: selection.selectedItemIds,
+    onSelectItem: selection.selectWithModifiers,
+    onPlayItem: playback.handlePlayItem,
   });
 
   const dialogs = buildPlaylistDialogsSection({
@@ -171,7 +196,10 @@ export const usePlaylistWindowSections = ({
     noteDialogOpen: notes.noteDialogOpen,
     onCloseNoteDialog: dialogHandlers.handleCloseNoteDialog,
     onSaveNote: notes.handleSaveNote,
-    initialNote: currentItemState.editingItem?.memo || '',
+    initialNote:
+      currentItemState.editingItem?.note ??
+      currentItemState.editingItem?.memo ??
+      '',
     itemName: currentItemState.editingItem?.actionName || '',
     saveProgress: core.saveProgress,
   });
@@ -181,6 +209,22 @@ export const usePlaylistWindowSections = ({
     videoArea,
     itemSection,
     nowPlaying,
+    sorter,
+    organizer,
+    inspector: {
+      item: currentItemState.currentItem,
+      annotation: annotations.currentAnnotation,
+      width: core.inspectorWidth,
+      onEditNote: notes.handleEditNote,
+      onPlay: (itemId: string) => playback.handlePlayItem(itemId),
+    },
+    shell: {
+      workspaceMode: core.workspaceMode,
+      workspaceRatio: core.workspaceRatio,
+      onWorkspaceRatioChange: core.setWorkspaceRatio,
+      inspectorVisible: core.inspectorVisible,
+      inspectorWidth: core.inspectorWidth,
+    },
     dialogs,
   };
 };

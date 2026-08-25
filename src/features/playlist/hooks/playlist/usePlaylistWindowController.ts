@@ -5,7 +5,7 @@ import { usePlaylistWindowRuntime } from './usePlaylistWindowRuntime';
 export const usePlaylistWindowController = () => {
   const { success, error: showError } = useNotification();
   const runtime = usePlaylistWindowRuntime();
-  const { header, videoArea, itemSection, nowPlaying, dialogs } =
+  const { header, videoArea, itemSection, nowPlaying, sorter, organizer, inspector, shell, dialogs } =
     usePlaylistWindowPresentation({
       runtime,
       onSuccess: success,
@@ -18,6 +18,10 @@ export const usePlaylistWindowController = () => {
     videoArea,
     itemSection,
     nowPlaying,
+    sorter,
+    organizer,
+    inspector,
+    shell,
     dialogs,
   };
 };
