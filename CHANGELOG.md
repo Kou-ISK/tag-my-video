@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-08-26
+
+### Changed
+
+- `.stpl`, `.stpkg`, `.stcw`, `.stad` のカスタムファイルアイコンを新デザインへ更新（macOS `.icns` / Windows `.ico`）。
+
 ## [0.11.0] - 2026-08-25
 
 ### Added
@@ -97,7 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 学習データ、Coding元情報、checkpoint、研究run artifactをSporTagLyticsの公開repositoryと配布物から分離し、製品runtimeに不要な研究メタデータを持ち込まない境界を明確化
 
 ### Documentation
-
 - 自動イベント検出のverified model runtime、Model Pack契約、外部R&D境界、品質判定方針をADRと開発ドキュメントへ反映
 
 ## [0.8.4] - 2026-08-15
@@ -398,7 +403,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 非推奨のnotarize.teamId設定を削除（electron-builder 25.x対応）
 
 ### Changed
-
 - 古いresources/ディレクトリを削除
 
 ## [0.2.2] - 2026-01-08
