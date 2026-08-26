@@ -103,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 学習データ、Coding元情報、checkpoint、研究run artifactをSporTagLyticsの公開repositoryと配布物から分離し、製品runtimeに不要な研究メタデータを持ち込まない境界を明確化
 
 ### Documentation
+
 - 自動イベント検出のverified model runtime、Model Pack契約、外部R&D境界、品質判定方針をADRと開発ドキュメントへ反映
 
 ## [0.8.4] - 2026-08-15
@@ -403,6 +404,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 非推奨のnotarize.teamId設定を削除（electron-builder 25.x対応）
 
 ### Changed
+
 - 古いresources/ディレクトリを削除
 
 ## [0.2.2] - 2026-01-08
@@ -434,8 +436,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - プレイリスト専用ウィンドウの実装
   - 連続/ループ再生機能
-  - フリーズフレーム機能
-  - 簡易描画機能（矩形/円/線/矢印/テキスト）
+  - フリーズフレーム機能（矩形/円/線/矢印/テキスト）
   - デュアルビュー切替
   - メモ編集
 - クリップ書き出し機能（1ファイル/インスタンスごと/アクションごと）
