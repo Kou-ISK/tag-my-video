@@ -7,12 +7,12 @@ import {
   Button,
   Stack,
   MobileStepper,
-  IconButton,
   Paper,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { IconAction } from './ui';
 
 export interface TutorialStep {
   title: string;
@@ -47,15 +47,15 @@ export const OnboardingTutorialView: React.FC<OnboardingTutorialViewProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 2,
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(145deg, #1a1a2e 0%, #16213e 100%)'
-              : 'linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%)',
+          borderRadius: (theme) => theme.shape.borderRadius,
+          bgcolor: (theme) => theme.custom.tokens.surface.work,
+          border: (theme) => `1px solid ${theme.custom.tokens.border.subtle}`,
         },
       }}
     >
-      <IconButton
+      <IconAction
+        icon={<CloseIcon />}
+        label="チュートリアルを閉じる"
         onClick={onSkip}
         sx={{
           position: 'absolute',
@@ -63,9 +63,7 @@ export const OnboardingTutorialView: React.FC<OnboardingTutorialViewProps> = ({
           top: 8,
           color: 'text.secondary',
         }}
-      >
-        <CloseIcon />
-      </IconButton>
+      />
 
       <DialogContent sx={{ pt: 6, pb: 3 }}>
         <Stack spacing={3} alignItems="center">
@@ -76,17 +74,10 @@ export const OnboardingTutorialView: React.FC<OnboardingTutorialViewProps> = ({
               alignItems: 'center',
               width: 120,
               height: 120,
-              borderRadius: '50%',
               bgcolor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(30, 144, 255, 0.1)'
-                  : 'rgba(30, 144, 255, 0.05)',
-              border: (theme) =>
-                `2px solid ${
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(30, 144, 255, 0.3)'
-                    : 'rgba(30, 144, 255, 0.2)'
-                }`,
+                theme.custom.tokens.interactive.hover,
+              borderRadius: '50%',
+              border: (theme) => `2px solid ${theme.custom.tokens.border.focus}`,
             }}
           >
             {currentStep.icon}
@@ -116,14 +107,8 @@ export const OnboardingTutorialView: React.FC<OnboardingTutorialViewProps> = ({
               sx={{
                 width: '100%',
                 p: 2,
-                bgcolor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(0, 255, 133, 0.05)'
-                    : 'rgba(0, 255, 133, 0.03)',
-                borderColor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(0, 255, 133, 0.2)'
-                    : 'rgba(0, 255, 133, 0.15)',
+                bgcolor: (theme) => theme.custom.tokens.surface.selected,
+                borderColor: (theme) => theme.custom.tokens.border.subtle,
               }}
             >
               <Typography

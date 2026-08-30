@@ -3,8 +3,6 @@ import {
   Box,
   Divider,
   IconButton,
-  Paper,
-  Portal,
   Slider,
   Stack,
   ToggleButton,
@@ -26,6 +24,7 @@ import {
   OpenWith,
 } from '@mui/icons-material';
 import type { DrawingToolType } from '../../../types/playlist/core';
+import { FloatingToolPanel, IconAction } from '../../../components/ui';
 
 type AnnotationToolbarProps = {
   isActive: boolean;
@@ -71,23 +70,16 @@ export const AnnotationToolbar = ({
   if (!isActive) return null;
 
   return (
-    <Portal>
-      <Paper
-        ref={toolbarRef}
+    <FloatingToolPanel
+        panelRef={toolbarRef}
+        position={position}
+        isDragging={isDragging}
+        label="描画ツール"
         sx={{
-          position: 'fixed',
-          top: position.y,
-          left: position.x,
           p: 0.5,
-          bgcolor: 'rgba(0,0,0,0.82)',
           display: 'grid',
           gridTemplateColumns: '1fr',
           gap: 0.4,
-          boxShadow: 6,
-          borderRadius: 2,
-          zIndex: 2000,
-          cursor: isDragging ? 'grabbing' : 'default',
-          userSelect: 'none',
           width: 'fit-content',
           overflow: 'hidden',
         }}
@@ -99,21 +91,18 @@ export const AnnotationToolbar = ({
           onMouseDown={onDragStart}
           sx={{
             cursor: 'grab',
-            color: 'grey.300',
-            fontSize: 10,
+            color: 'text.secondary',
             pb: 0.25,
           }}
         >
           <DragIndicator fontSize="small" />
-          <Typography variant="caption">移動</Typography>
+          <Typography variant="labelCompact">移動</Typography>
         </Stack>
 
         {tool === 'select' && (
           <Typography
-            variant="caption"
+            variant="labelCompact"
             sx={{
-              fontSize: 9.5,
-              color: 'grey.400',
               lineHeight: 1.1,
               px: 0.25,
             }}
@@ -135,7 +124,11 @@ export const AnnotationToolbar = ({
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
             gap: 0.25,
-            '& .MuiToggleButton-root': { minWidth: 28, height: 28, p: 0 },
+            '& .MuiToggleButton-root': (theme) => ({
+              minWidth: theme.custom.density.compact.interactiveTarget,
+              height: theme.custom.density.compact.controlHeight,
+              p: 0,
+            }),
           }}
         >
           <ToggleButton value="pen">
@@ -175,7 +168,7 @@ export const AnnotationToolbar = ({
           </ToggleButton>
         </ToggleButtonGroup>
 
-        <Divider sx={{ borderColor: 'grey.700' }} />
+        <Divider />
 
         <Box
           sx={{
@@ -193,18 +186,21 @@ export const AnnotationToolbar = ({
                 width: 16,
                 height: 16,
                 bgcolor: paletteColor,
-                border:
-                  color === paletteColor ? '2px solid white' : '1px solid #666',
-                '&:hover': { bgcolor: paletteColor },
-              }}
-            />
+                  border: (theme) =>
+                    color === paletteColor
+                      ? `2px solid ${theme.custom.tokens.border.focus}`
+                      : `1px solid ${theme.custom.tokens.border.strong}`,
+                  '&:hover': { bgcolor: paletteColor },
+                }}
+                aria-label={`色 ${paletteColor}`}
+              />
           ))}
         </Box>
 
-        <Divider sx={{ borderColor: 'grey.700' }} />
+        <Divider />
 
         <Stack spacing={0.25} sx={{ px: 0.5 }}>
-          <Typography variant="caption" sx={{ fontSize: 10 }}>
+          <Typography variant="labelCompact">
             太さ
           </Typography>
           <Slider
@@ -217,27 +213,30 @@ export const AnnotationToolbar = ({
           />
         </Stack>
 
-        <Divider sx={{ borderColor: 'grey.700' }} />
+        <Divider />
 
         <Stack direction="row" spacing={0.25}>
-          <Tooltip title="元に戻す">
-            <IconButton size="small" onClick={onUndo} disabled={!canUndo}>
-              <Undo fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="全てクリア">
-            <IconButton size="small" onClick={onClear}>
-              <Clear fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <IconAction
+            icon={<Undo fontSize="small" />}
+            label="元に戻す"
+            onClick={onUndo}
+            disabled={!canUndo}
+            size="small"
+          />
+          <IconAction
+            icon={<Clear fontSize="small" />}
+            label="全てクリア"
+            onClick={onClear}
+            size="small"
+          />
         </Stack>
 
-        <Divider sx={{ borderColor: 'grey.700' }} />
+        <Divider />
 
         <Stack spacing={0.25} sx={{ px: 0.5 }}>
           <Stack direction="row" spacing={0.5} alignItems="center">
             <PauseCircle fontSize="small" sx={{ color: 'warning.main' }} />
-            <Typography variant="caption" sx={{ fontSize: 10 }}>
+            <Typography variant="labelCompact">
               停止 {freezeDuration}秒
             </Typography>
           </Stack>
@@ -251,7 +250,6 @@ export const AnnotationToolbar = ({
             sx={{ width: '100%' }}
           />
         </Stack>
-      </Paper>
-    </Portal>
+    </FloatingToolPanel>
   );
 };

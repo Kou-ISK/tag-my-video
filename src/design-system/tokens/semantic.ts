@@ -1,0 +1,124 @@
+import { primitiveColors } from './primitive';
+
+export type DesignSystemMode = 'dark' | 'light';
+
+export interface SemanticTokens {
+  surface: {
+    canvas: string;
+    work: string;
+    raised: string;
+    overlay: string;
+    selected: string;
+    hover: string;
+  };
+  content: {
+    primary: string;
+    secondary: string;
+    disabled: string;
+    inverse: string;
+  };
+  border: {
+    subtle: string;
+    strong: string;
+    focus: string;
+  };
+  interactive: {
+    primary: string;
+    hover: string;
+    pressed: string;
+    selected: string;
+    disabled: string;
+  };
+  status: {
+    success: string;
+    warning: string;
+    error: string;
+    info: string;
+  };
+  data: {
+    team1: string;
+    team2: string;
+    positive: string;
+    negative: string;
+  };
+}
+
+const rgba = (hex: string, opacity: number): string => {
+  const normalized = hex.replace('#', '');
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${red},${green},${blue},${opacity})`;
+};
+
+export const createSemanticTokens = (
+  mode: DesignSystemMode,
+): SemanticTokens => {
+  const dark = mode === 'dark';
+  const contentPrimary = dark ? primitiveColors.white : primitiveColors.black;
+  const contentSecondary = dark
+    ? '#E0E0E0'
+    : primitiveColors.neutral600;
+  const contentDisabled = dark
+    ? rgba(primitiveColors.white, 0.5)
+    : rgba(primitiveColors.black, 0.38);
+  const borderSubtle = dark
+    ? rgba(primitiveColors.white, 0.12)
+    : rgba(primitiveColors.black, 0.12);
+  const borderStrong = dark
+    ? rgba(primitiveColors.white, 0.24)
+    : rgba(primitiveColors.black, 0.24);
+  const hover = dark
+    ? rgba(primitiveColors.white, 0.08)
+    : rgba(primitiveColors.black, 0.05);
+  const selected = dark
+    ? rgba(primitiveColors.neonBlue, 0.16)
+    : rgba(primitiveColors.neonBlue, 0.12);
+
+  return {
+    surface: {
+      canvas: dark ? primitiveColors.nearBlack : primitiveColors.neutral100,
+      work: dark ? primitiveColors.charcoal : primitiveColors.white,
+      raised: dark ? primitiveColors.charcoalRaised : primitiveColors.neutral50,
+      overlay: dark
+        ? rgba(primitiveColors.black, 0.82)
+        : rgba(primitiveColors.white, 0.96),
+      selected,
+      hover,
+    },
+    content: {
+      primary: contentPrimary,
+      secondary: contentSecondary,
+      disabled: contentDisabled,
+      inverse: dark ? primitiveColors.black : primitiveColors.white,
+    },
+    border: {
+      subtle: borderSubtle,
+      strong: borderStrong,
+      focus: primitiveColors.neonBlue,
+    },
+    interactive: {
+      primary: primitiveColors.neonBlue,
+      hover: dark
+        ? rgba(primitiveColors.neonBlue, 0.22)
+        : rgba(primitiveColors.neonBlue, 0.14),
+      pressed: dark
+        ? rgba(primitiveColors.neonBlue, 0.32)
+        : rgba(primitiveColors.neonBlue, 0.22),
+      selected,
+      disabled: contentDisabled,
+    },
+    status: {
+      success: primitiveColors.success,
+      warning: primitiveColors.warning,
+      error: primitiveColors.error,
+      info: primitiveColors.info,
+    },
+    data: {
+      team1: primitiveColors.neonBlue,
+      team2: primitiveColors.warmCoral,
+      positive: primitiveColors.success,
+      negative: primitiveColors.error,
+    },
+  };
+};

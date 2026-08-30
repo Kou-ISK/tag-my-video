@@ -23,6 +23,8 @@ SporTagLytics の現行アーキテクチャ概要です。詳細規約は `AGEN
 - Electron、URL、永続化、OS file dialog などの外部依存は Gateway / Controller / Hook に閉じ込める
 - Storybook 対象は描画専用 `View` と `src/components/ui`。View は `window.electronAPI` を直接使用しない
 - Atomic Design はアプリ全体のフォルダ規約ではなく、shared UI 設計時のメンタルモデルとしてのみ利用
+- `src/design-system/` はfoundation / semantic tokenとMUI Themeの正本、`src/components/ui/` はprops-only shared patternの配置先
+- UI変更は `check:design-system` とStorybook a11y/buildで検証する
 
 ## Electron 構成
 
@@ -48,6 +50,8 @@ Window runtime:
 - `electron/src/timelineWindow.ts`
 - `electron/src/settingsWindow.ts`
 - `electron/src/exportProgressWindow.ts`
+
+Packageを扱うWindowは `electron/src/packageSessionRegistry.ts` のPackage Sessionに所属する。Main Window、Timeline、Analysis、Coding Panel、Playlistはpackage単位で所有・IPC送信先を分離する。Settings、Help、Export Progressはapplication-globalとして扱う。OSからの `.stpkg` openはMain Processのキューで処理し、既存Sessionをfocusするか、空Sessionの再利用または新規Main Windowを選ぶ。
 
 ### Preload
 
@@ -89,7 +93,7 @@ IPC contract の正本は `src/types/ipc/` です。Main process は sender wind
 
 Video.js player、再生時計、Timeline document、Undo/Redo履歴はメイン動画windowを唯一のauthorityとします。
 
-Timelineはsingletonの専用BrowserWindowです。
+TimelineはPackage Sessionごとに1つの専用BrowserWindowです。
 
 - packageを開いた時に自動表示
 - 閉じた後は `ウィンドウ > タイムラインを表示` で再表示

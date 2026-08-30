@@ -11,12 +11,28 @@ import {
   getPlaylistWindows,
   type PlaylistWindowInfo,
 } from './state';
+import {
+  createPackageSession,
+  getPackageSessionForWindow,
+  registerAuxiliaryWindow,
+  unregisterAuxiliaryWindow,
+  type PackageSession,
+} from '../packageSessionRegistry';
 
 const generateWindowId = (): string => {
   return `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const createPlaylistWindow = (filePath?: string): BrowserWindow => {
+const resolveSession = (owner?: BrowserWindow | null): PackageSession | null => {
+  const mainWindow = owner ?? getMainWindowRef();
+  if (!mainWindow) return null;
+  return getPackageSessionForWindow(mainWindow) ?? createPackageSession(mainWindow);
+};
+
+export const createPlaylistWindow = (
+  filePath?: string,
+  owner?: BrowserWindow | null,
+): BrowserWindow => {
   const playlistWindows = getPlaylistWindows();
   const windowId = filePath || generateWindowId();
 
@@ -29,6 +45,7 @@ export const createPlaylistWindow = (filePath?: string): BrowserWindow => {
     playlistWindows.delete(windowId);
   }
 
+  const session = resolveSession(owner);
   const offset = playlistWindows.size * 50;
 
   const window = new BrowserWindow({
@@ -57,7 +74,10 @@ export const createPlaylistWindow = (filePath?: string): BrowserWindow => {
     window,
     filePath: filePath || null,
     isDirty: false,
+    sessionId: session?.id ?? null,
+    session,
   });
+  if (session) registerAuxiliaryWindow(session, window);
 
   window.on('close', async (e) => {
     const info = playlistWindows.get(windowId);
@@ -93,17 +113,20 @@ export const createPlaylistWindow = (filePath?: string): BrowserWindow => {
 
   window.on('closed', () => {
     playlistWindows.delete(windowId);
-    const mainWindow = getMainWindowRef();
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(PLAYLIST_WINDOW_CHANNELS.windowClosed, windowId);
+    if (session) unregisterAuxiliaryWindow(session, window);
+    if (session && !session.mainWindow.isDestroyed()) {
+      session.mainWindow.webContents.send(PLAYLIST_WINDOW_CHANNELS.windowClosed, windowId);
     }
   });
 
   return window;
 };
 
-export const sendPlaylistFileToWindow = (filePath: string): void => {
-  const win = createPlaylistWindow(filePath);
+export const sendPlaylistFileToWindow = (
+  filePath: string,
+  owner?: BrowserWindow | null,
+): void => {
+  const win = createPlaylistWindow(filePath, owner);
   const send = () =>
     win.webContents.send(PLAYLIST_WINDOW_CHANNELS.externalOpen, filePath);
   if (win.webContents.isLoading()) {
@@ -123,39 +146,53 @@ export const closeAllPlaylistWindows = (): void => {
   playlistWindows.clear();
 };
 
-export const closePlaylistWindow = (): void => {
+export const closePlaylistWindowsForMainWindow = (owner: BrowserWindow): void => {
+  const session = resolveSession(owner);
+  if (!session) return;
+  for (const info of getPlaylistWindows().values()) {
+    if (info.sessionId === session.id && !info.window.isDestroyed()) info.window.close();
+  }
+};
+
+export const closePlaylistWindow = (owner?: BrowserWindow | null): void => {
   const playlistWindows = getPlaylistWindows();
-  const firstWindow = playlistWindows.values().next().value;
+  const session = resolveSession(owner);
+  const firstWindow = [...playlistWindows.values()].find(
+    (info) => !session || info.sessionId === session.id,
+  );
   if (firstWindow && !firstWindow.window.isDestroyed()) {
     firstWindow.window.close();
   }
 };
 
-export const isPlaylistWindowOpen = (): boolean => {
+export const isPlaylistWindowOpen = (owner?: BrowserWindow | null): boolean => {
   const playlistWindows = getPlaylistWindows();
+  const session = resolveSession(owner);
   for (const [, info] of playlistWindows) {
-    if (!info.window.isDestroyed()) {
+    if (!info.window.isDestroyed() && (!session || info.sessionId === session.id)) {
       return true;
     }
   }
   return false;
 };
 
-export const getOpenWindowCount = (): number => {
+export const getOpenWindowCount = (owner?: BrowserWindow | null): number => {
   const playlistWindows = getPlaylistWindows();
+  const session = resolveSession(owner);
   let count = 0;
   for (const [, info] of playlistWindows) {
-    if (!info.window.isDestroyed()) {
+    if (!info.window.isDestroyed() && (!session || info.sessionId === session.id)) {
       count += 1;
     }
   }
   return count;
 };
 
-export const addItemToAllWindows = (item: PlaylistItem): void => {
+export const addItemToAllWindows = (item: PlaylistItem, owner?: BrowserWindow | null): void => {
   const playlistWindows = getPlaylistWindows();
+  const session = resolveSession(owner);
   for (const [, info] of playlistWindows) {
-    if (!info.window.isDestroyed()) {
+    if (!info.window.isDestroyed() && (!session || info.sessionId === session.id)) {
       info.window.webContents.send(PLAYLIST_WINDOW_CHANNELS.addItem, item);
       info.isDirty = true;
     }
@@ -169,9 +206,12 @@ export const setWindowDirty = (windowId: string, isDirty: boolean): void => {
   }
 };
 
-export const syncToPlaylistWindow = (data: PlaylistSyncData): void => {
+export const syncToPlaylistWindow = (data: PlaylistSyncData, owner?: BrowserWindow | null): void => {
   const playlistWindows = getPlaylistWindows();
-  const firstWindow = playlistWindows.values().next().value;
+  const session = resolveSession(owner);
+  const firstWindow = [...playlistWindows.values()].find(
+    (info) => !session || info.sessionId === session.id,
+  );
   if (firstWindow && !firstWindow.window.isDestroyed()) {
     firstWindow.window.webContents.send(PLAYLIST_WINDOW_CHANNELS.sync, data);
   }

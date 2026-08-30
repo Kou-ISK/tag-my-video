@@ -50,7 +50,10 @@
     "typecheck:electron": "tsc -p electron/tsconfig.json",
     "build:electron-main": "tsc -p electron/tsconfig.build.json",
     "check:architecture": "node scripts/check-architecture.js",
+    "check:design-system": "node scripts/check-design-system.cjs",
     "check:adr": "node scripts/check-adr.js",
+    "storybook": "storybook dev -p 6006",
+    "build:storybook": "storybook build",
     "report:architecture-health": "node scripts/report-architecture-health.js",
     "report:large-files": "node scripts/report-large-files.js",
     "bundle:preload": "vite build --config vite.preload.config.ts",
@@ -74,6 +77,8 @@
     ]
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "10.5.10",
+    "@storybook/react-vite": "10.5.10",
     "@testing-library/react": "^16.3.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.9",
@@ -90,6 +95,7 @@
     "jsdom": "^27.4.0",
     "playwright": "1.61.1",
     "prettier": "^3.8.0",
+    "storybook": "10.5.10",
     "typescript": "^5.4.5",
     "vite": "^7.3.6",
     "vitest": "^4.1.10",

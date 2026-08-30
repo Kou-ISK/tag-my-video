@@ -144,6 +144,8 @@ export interface IElectronAPI {
     offProgress: (callback: (payload: unknown) => void) => void;
   };
   setWindowTitle: (title: string) => void;
+  bindPackageSession?: (packagePath: string) => Promise<boolean>;
+  releasePackageSession?: (packagePath: string) => Promise<boolean>;
   exportClipsWithOverlay?: (
     payload: ClipExportPayload,
   ) => Promise<ClipExportExecutionResult>;

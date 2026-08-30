@@ -17,6 +17,8 @@
 
 Model training / evaluation / dataset preparationはSporTagLytics repositoryの責務ではありません。別private R&D repositoryで管理し、public appにはmodel packのconsumer contractだけを置きます。
 
+`electron/src/packageSessionRegistry.ts` はpackage単位のMain Windowと補助Windowの所有関係を管理するmain-processの共有基盤です。OS由来のpackage openは `packageOpenQueue.ts` と `packageOpenRouter.ts` に置き、Window生成やElectron APIへの依存を持たないルーティング規則をテスト可能に保ちます。
+
 ### Optional runtime resource staging
 
 ```text
@@ -36,6 +38,7 @@ resources/
 | `src/pages/` | routing / entry composition only |
 | `src/features/<feature>/` | feature固有 Screen / Controller / Hook / View / Gateway / domain |
 | `src/components/ui/` | feature非依存 shared UI primitives / composites / patterns |
+| `src/design-system/` | foundation / semantic token、MUI theme、Storybook token story |
 | `src/components/` | legacy/shared UI |
 | `src/hooks/` | truly shared hooks |
 | `src/contexts/` | app-wide context only |

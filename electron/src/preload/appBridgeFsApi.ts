@@ -8,6 +8,8 @@ import {
 
 export type AppBridgeFsKeys =
   | 'setWindowTitle'
+  | 'bindPackageSession'
+  | 'releasePackageSession'
   | 'exportClipsWithOverlay'
   | 'onExportProgressWindowState'
   | 'requestExportProgressWindowState'
@@ -30,6 +32,22 @@ export const createAppBridgeFsApi = (
   return {
     setWindowTitle: (title: string) => {
       ipcRenderer.send('set-window-title', title);
+    },
+    bindPackageSession: async (packagePath: string): Promise<boolean> => {
+      try {
+        return await ipcRenderer.invoke('package-session:bind', packagePath);
+      } catch (error) {
+        console.error('Error in bindPackageSession:', error);
+        return false;
+      }
+    },
+    releasePackageSession: async (packagePath: string): Promise<boolean> => {
+      try {
+        return await ipcRenderer.invoke('package-session:release', packagePath);
+      } catch (error) {
+        console.error('Error in releasePackageSession:', error);
+        return false;
+      }
     },
     exportClipsWithOverlay: async (payload: unknown) => {
       try {

@@ -3,6 +3,7 @@ import { useNotification } from '../../../../../../contexts/NotificationContext'
 import type { PackageLoadResult } from '../types';
 import {
   loadPackageDirectory,
+  releasePackageSessionReservation,
   subscribeToPackageDirectoryOpen,
   toPackageLoadErrorMessage,
 } from '../gateway/packageGateway';
@@ -30,6 +31,7 @@ export const usePackageDropLoader = ({
           severity: 'success',
         });
       } catch (error) {
+        await releasePackageSessionReservation(packagePath);
         console.error('Failed to load dropped package:', error);
         notify({
           message: toPackageLoadErrorMessage(error),

@@ -22,6 +22,7 @@ import {
 } from './windowManager';
 import { getFfmpegPathRef, getMainWindowRef, getPlaylistWindows } from './state';
 import { loadPlaylistFromPath, savePlaylistToPath } from './storage';
+import { getPackageSessionForSender } from '../packageSessionRegistry';
 
 export const registerPlaylistHandlers = (): void => {
   ipcMain.handle(
@@ -31,7 +32,10 @@ export const registerPlaylistHandlers = (): void => {
         throw new Error('Invalid playlist open sender');
       }
 
-      createPlaylistWindow(typeof filePath === 'string' ? filePath : undefined);
+      createPlaylistWindow(
+        typeof filePath === 'string' ? filePath : undefined,
+        getValidatedEventSenderWindow(event),
+      );
     },
   );
 
@@ -40,21 +44,21 @@ export const registerPlaylistHandlers = (): void => {
       throw new Error('Invalid playlist close sender');
     }
 
-    closePlaylistWindow();
+    closePlaylistWindow(getValidatedEventSenderWindow(event));
   });
 
   ipcMain.handle(PLAYLIST_WINDOW_CHANNELS.isWindowOpen, (event) => {
     if (!getValidatedEventSenderWindow(event)) {
       throw new Error('Invalid playlist state sender');
     }
-    return isPlaylistWindowOpen();
+    return isPlaylistWindowOpen(getValidatedEventSenderWindow(event));
   });
 
   ipcMain.handle(PLAYLIST_WINDOW_CHANNELS.getOpenCount, (event) => {
     if (!getValidatedEventSenderWindow(event)) {
       throw new Error('Invalid playlist count sender');
     }
-    return getOpenWindowCount();
+    return getOpenWindowCount(getValidatedEventSenderWindow(event));
   });
 
   ipcMain.handle(
@@ -64,7 +68,9 @@ export const registerPlaylistHandlers = (): void => {
         return;
       }
 
-      addItemToAllWindows(item);
+      const session = getPackageSessionForSender(event.sender);
+      if (session) addItemToAllWindows(item, session.mainWindow);
+      else addItemToAllWindows(item);
     },
   );
 
@@ -73,7 +79,9 @@ export const registerPlaylistHandlers = (): void => {
       return;
     }
 
-    syncToPlaylistWindow(data);
+    const session = getPackageSessionForSender(event.sender);
+    if (session) syncToPlaylistWindow(data, session.mainWindow);
+    else syncToPlaylistWindow(data);
   });
 
   ipcMain.on(PLAYLIST_WINDOW_CHANNELS.command, (event, command: unknown) => {
@@ -95,7 +103,8 @@ export const registerPlaylistHandlers = (): void => {
       }
     }
 
-    const mainWindow = getMainWindowRef();
+    const windowInfo = getWindowInfoBySender(event.sender);
+    const mainWindow = windowInfo?.session?.mainWindow ?? getMainWindowRef();
 
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(PLAYLIST_WINDOW_CHANNELS.command, command);
@@ -256,7 +265,7 @@ export const registerPlaylistHandlers = (): void => {
         console.log('[Playlist] Loaded from:', targetPath);
 
         if (!isSenderPlaylistWindow(event.sender)) {
-          createPlaylistWindow(targetPath);
+          createPlaylistWindow(targetPath, getValidatedEventSenderWindow(event));
         } else {
           const windowInfo = getWindowInfoBySender(event.sender);
           if (windowInfo) {

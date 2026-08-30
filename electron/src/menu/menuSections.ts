@@ -11,6 +11,13 @@ import {
   sendToFocusedWindow,
 } from './menuWindowActions';
 
+const getBrowserWindowOwner = (
+  window: Electron.BaseWindow | undefined,
+): BrowserWindow | undefined =>
+  window
+    ? BrowserWindow.getAllWindows().find((candidate) => candidate.id === window.id)
+    : undefined;
+
 const sendToAllWindows = (channel: string, ...args: unknown[]): void => {
   BrowserWindow.getAllWindows().forEach((window) => {
     if (!window.isDestroyed()) {
@@ -230,20 +237,20 @@ export const buildWindowMenuItems =
   (): Electron.MenuItemConstructorOptions[] => [
     {
       label: 'タイムラインを開く',
-      click: () => {
-        void openTimelineWindow();
+      click: (_menuItem, browserWindow) => {
+        void openTimelineWindow(getBrowserWindowOwner(browserWindow));
       },
     },
     {
       label: '分析を開く',
-      click: () => {
-        openAnalysisWindow();
+      click: (_menuItem, browserWindow) => {
+        void openAnalysisWindow(getBrowserWindowOwner(browserWindow));
       },
     },
     {
       label: 'プレイリストを開く',
-      click: () => {
-        createPlaylistWindow();
+      click: (_menuItem, browserWindow) => {
+        createPlaylistWindow(undefined, getBrowserWindowOwner(browserWindow));
       },
     },
     { type: 'separator' },

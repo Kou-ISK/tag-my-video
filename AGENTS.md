@@ -84,6 +84,9 @@
 
 ## UI / Storybook 対応規約
 
+- `MUST`: UI変更時は `docs/design-system.md` と `src/design-system` のsemantic tokenを正本として扱い、feature内にUI chrome用の色・z-index・elevationを直接追加しない。
+- `MUST`: UI変更時は `pnpm run check:design-system` とStorybook buildを確認する。
+
 - `MUST`: Storybook の対象となる UI は `View` とし、props だけで描画可能にする。
 - `MUST`: `pages` と `Screen` は story の主対象にしない。story の主対象は `src/components/ui` と feature 配下の `View` コンポーネントに限定する。
 - `MUST`: `View` は `window.electronAPI`、IPC 呼び出し、URL/hash 読み取り、直接永続化、`BrowserWindow` 前提の分岐に依存しない。

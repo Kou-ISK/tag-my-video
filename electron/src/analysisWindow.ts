@@ -12,23 +12,57 @@ import {
 } from '../../src/types/ipc/analysisWindow';
 import { getValidatedEventSenderWindow, isEventFromWindow } from './ipc/windowSenderGuards';
 import { applyWindowSecurity } from './windowSecurity';
+import {
+  createPackageSession,
+  getPackageSessionForSender,
+  getPackageSessionForWindow,
+  registerAuxiliaryWindow,
+  unregisterAuxiliaryWindow,
+  type PackageSession,
+} from './packageSessionRegistry';
 
-let analysisWindow: BrowserWindow | null = null;
-let mainWindow: BrowserWindow | null = null;
+interface AnalysisSessionState {
+  analysisWindow: BrowserWindow | null;
+}
+
+const states = new Map<string, AnalysisSessionState>();
+let defaultMainWindow: BrowserWindow | null = null;
 
 const ANALYSIS_HASH_URL = `file:${path.join(__dirname, '../../index.html')}#/analysis`;
 
 export const setAnalysisMainWindowRef = (window: BrowserWindow): void => {
-  mainWindow = window;
+  defaultMainWindow = window;
+  createPackageSession(window);
 };
 
-const focusOrCreate = (): BrowserWindow => {
-  if (analysisWindow && !analysisWindow.isDestroyed()) {
-    analysisWindow.focus();
-    return analysisWindow;
+const resolveSession = (window?: BrowserWindow | null): PackageSession | null => {
+  const owner = window ?? defaultMainWindow;
+  return owner
+    ? getPackageSessionForWindow(owner) ?? createPackageSession(owner)
+    : null;
+};
+
+const resolveSenderSession = (sender: Electron.WebContents): PackageSession | null =>
+  getPackageSessionForSender(sender) ?? resolveSession(BrowserWindow.fromWebContents(sender));
+
+const getState = (session: PackageSession): AnalysisSessionState => {
+  const current = states.get(session.id);
+  if (current) return current;
+  const next = { analysisWindow: null };
+  states.set(session.id, next);
+  return next;
+};
+
+const focusOrCreate = (mainWindow?: BrowserWindow | null): BrowserWindow | null => {
+  const session = resolveSession(mainWindow);
+  if (!session) return null;
+  const state = getState(session);
+  if (state.analysisWindow && !state.analysisWindow.isDestroyed()) {
+    state.analysisWindow.focus();
+    return state.analysisWindow;
   }
 
-  analysisWindow = new BrowserWindow({
+  const analysisWindow = new BrowserWindow({
     width: 1200,
     height: 900,
     minWidth: 900,
@@ -42,19 +76,25 @@ const focusOrCreate = (): BrowserWindow => {
       webSecurity: true,
     },
   });
+  state.analysisWindow = analysisWindow;
+  registerAuxiliaryWindow(session, analysisWindow);
   applyWindowSecurity(analysisWindow);
 
   analysisWindow.loadURL(ANALYSIS_HASH_URL);
 
   analysisWindow.on('closed', () => {
-    analysisWindow = null;
+    state.analysisWindow = null;
+    unregisterAuxiliaryWindow(session, analysisWindow);
   });
 
   return analysisWindow;
 };
 
-export const openAnalysisWindow = async (): Promise<void> => {
-  const window = focusOrCreate();
+export const openAnalysisWindow = async (
+  mainWindow?: BrowserWindow | null,
+): Promise<void> => {
+  const window = focusOrCreate(mainWindow);
+  if (!window) return;
   if (window.webContents.isLoading()) {
     await new Promise<void>((resolve) => {
       window.webContents.once('did-finish-load', () => resolve());
@@ -62,17 +102,30 @@ export const openAnalysisWindow = async (): Promise<void> => {
   }
 };
 
-export const closeAnalysisWindow = (): void => {
-  if (analysisWindow && !analysisWindow.isDestroyed()) {
-    analysisWindow.close();
-    analysisWindow = null;
+export const closeAnalysisWindow = (mainWindow?: BrowserWindow | null): void => {
+  if (mainWindow) {
+    getState(resolveSession(mainWindow)!).analysisWindow?.close();
+    return;
+  }
+  for (const state of states.values()) {
+    if (state.analysisWindow && !state.analysisWindow.isDestroyed()) state.analysisWindow.close();
   }
 };
 
-export const isAnalysisWindowOpen = (): boolean =>
-  Boolean(analysisWindow && !analysisWindow.isDestroyed());
+export const isAnalysisWindowOpen = (mainWindow?: BrowserWindow | null): boolean => {
+  if (mainWindow) {
+    const session = resolveSession(mainWindow);
+    return Boolean(session && getState(session).analysisWindow && !getState(session).analysisWindow?.isDestroyed());
+  }
+  return [...states.values()].some(({ analysisWindow }) => analysisWindow && !analysisWindow.isDestroyed());
+};
 
-export const sendAnalysisSync = (payload: AnalysisWindowSyncPayload): void => {
+export const sendAnalysisSync = (
+  payload: AnalysisWindowSyncPayload,
+  mainWindow?: BrowserWindow | null,
+): void => {
+  const session = resolveSession(mainWindow);
+  const analysisWindow = session ? getState(session).analysisWindow : null;
   if (analysisWindow && !analysisWindow.isDestroyed()) {
     analysisWindow.webContents.send(ANALYSIS_WINDOW_CHANNELS.sync, payload);
   }
@@ -80,8 +133,11 @@ export const sendAnalysisSync = (payload: AnalysisWindowSyncPayload): void => {
 
 export const sendAnalysisDashboardFileToWindow = async (
   filePath: string,
+  mainWindow?: BrowserWindow | null,
 ): Promise<void> => {
-  await openAnalysisWindow();
+  await openAnalysisWindow(mainWindow);
+  const session = resolveSession(mainWindow);
+  const analysisWindow = session ? getState(session).analysisWindow : null;
   if (analysisWindow && !analysisWindow.isDestroyed()) {
     analysisWindow.webContents.send(
       ANALYSIS_WINDOW_CHANNELS.dashboardExternalOpen,
@@ -92,10 +148,12 @@ export const sendAnalysisDashboardFileToWindow = async (
 
 export const registerAnalysisWindowHandlers = (): void => {
   ipcMain.handle(ANALYSIS_WINDOW_CHANNELS.openWindow, async (event) => {
-    if (!getValidatedEventSenderWindow(event)) {
+    const senderWindow = getValidatedEventSenderWindow(event);
+    const session = resolveSession(senderWindow);
+    if (!senderWindow || !session) {
       throw new Error('Invalid analysis open sender');
     }
-    await openAnalysisWindow();
+    await openAnalysisWindow(session.mainWindow);
   });
 
   ipcMain.handle(ANALYSIS_WINDOW_CHANNELS.closeWindow, (event) => {
@@ -104,50 +162,62 @@ export const registerAnalysisWindowHandlers = (): void => {
       throw new Error('Invalid analysis close sender');
     }
 
-    if (senderWindow && senderWindow === analysisWindow) {
+    const session = resolveSession(senderWindow);
+    if (!session) throw new Error('Invalid analysis close sender');
+    const state = getState(session);
+    if (senderWindow === state.analysisWindow) {
       senderWindow.close();
-      analysisWindow = null;
       return;
     }
-    closeAnalysisWindow();
+    if (senderWindow !== session.mainWindow) throw new Error('Invalid analysis close sender');
+    state.analysisWindow?.close();
   });
 
   ipcMain.handle(ANALYSIS_WINDOW_CHANNELS.isWindowOpen, (event) => {
-    if (!getValidatedEventSenderWindow(event)) {
+    const senderWindow = getValidatedEventSenderWindow(event);
+    const session = resolveSession(senderWindow);
+    if (!senderWindow || !session) {
       throw new Error('Invalid analysis state sender');
     }
-    return isAnalysisWindowOpen();
+    const state = getState(session);
+    if (senderWindow !== session.mainWindow && senderWindow !== state.analysisWindow) {
+      throw new Error('Invalid analysis state sender');
+    }
+    return Boolean(state.analysisWindow && !state.analysisWindow.isDestroyed());
   });
 
   ipcMain.on(ANALYSIS_WINDOW_CHANNELS.syncToWindow, (event, payload: unknown) => {
-    if (!isEventFromWindow(event, mainWindow) || !isAnalysisWindowSyncPayload(payload)) {
+    const session = resolveSenderSession(event.sender);
+    if (!session || !isEventFromWindow(event, session.mainWindow) || !isAnalysisWindowSyncPayload(payload)) {
       return;
     }
-    sendAnalysisSync(payload);
+    sendAnalysisSync(payload, session.mainWindow);
   });
 
   ipcMain.on(ANALYSIS_WINDOW_CHANNELS.jumpToSegment, (event, segment: unknown) => {
-    if (!isEventFromWindow(event, analysisWindow) || !isTimelineData(segment)) {
+    const session = resolveSenderSession(event.sender);
+    const analysisWindow = session ? getState(session).analysisWindow : null;
+    if (!session || !isEventFromWindow(event, analysisWindow) || !isTimelineData(segment)) {
       return;
     }
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(ANALYSIS_WINDOW_CHANNELS.jumpToSegment, segment);
+    if (!session.mainWindow.isDestroyed()) {
+      session.mainWindow.webContents.send(ANALYSIS_WINDOW_CHANNELS.jumpToSegment, segment);
     }
   });
 
   ipcMain.on(
     ANALYSIS_WINDOW_CHANNELS.createAiPlaylist,
     (event, payload: unknown) => {
-      if (
-        !isEventFromWindow(event, analysisWindow) ||
-        !isAnalysisAiPlaylistPayload(payload)
-      ) {
+      const session = resolveSenderSession(event.sender);
+      const analysisWindow = session ? getState(session).analysisWindow : null;
+      if (!session || !isEventFromWindow(event, analysisWindow) ||
+          !isAnalysisAiPlaylistPayload(payload)) {
         return;
       }
 
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(
+      if (!session.mainWindow.isDestroyed()) {
+        session.mainWindow.webContents.send(
           ANALYSIS_WINDOW_CHANNELS.createAiPlaylist,
           payload,
         );

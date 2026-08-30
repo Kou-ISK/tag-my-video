@@ -1,9 +1,12 @@
 import type { BrowserWindow } from 'electron';
+import type { PackageSession } from '../packageSessionRegistry';
 
 export interface PlaylistWindowInfo {
   window: BrowserWindow;
   filePath: string | null;
   isDirty: boolean;
+  sessionId: string | null;
+  session: PackageSession | null;
 }
 
 const playlistWindows = new Map<string, PlaylistWindowInfo>();
