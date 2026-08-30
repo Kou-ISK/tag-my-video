@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 複数 `.stpkg` をPackage Sessionごとの独立したMain Windowで扱い、Finder/Explorerからのopen要求で既存パッケージを復元・focusできるようにした。
+
+### Changed
+
+- Timeline、Analysis、Coding Panel、PlaylistのWindowとIPCをPackage Session単位で分離し、異なるパッケージ間の状態混線を防止した。
+
 ## [0.11.1] - 2026-08-26
 
 ### Changed

@@ -143,6 +143,10 @@ export const loadPackageDirectory = async (
 ): Promise<LoadedPackageData> => {
   const api = getElectronApi();
   const preparedPackagePath = await preparePackagePathForOpen(packagePath);
+  const sessionBound = await api.bindPackageSession?.(preparedPackagePath);
+  if (sessionBound === false) {
+    throw new Error('このパッケージは別のウィンドウで開かれています。');
+  }
   const configFilePath = `${preparedPackagePath}/.metadata/config.json`;
 
   try {
@@ -203,6 +207,16 @@ export const loadPackageDirectory = async (
       })),
     },
   };
+};
+
+export const releasePackageSessionReservation = async (
+  packagePath: string,
+): Promise<void> => {
+  try {
+    await getElectronApi().releasePackageSession?.(packagePath);
+  } catch (error) {
+    console.warn('パッケージSession予約の解放をスキップ:', error);
+  }
 };
 
 export const readPackageTeamNames = async (

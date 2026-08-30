@@ -31,6 +31,13 @@ import { useContinuousReversePlayback } from '../../../hooks/useContinuousRevers
 import { getMinAllowedGlobalTime } from './hooks/useVideoTimeController';
 import { EventDetectionDialogView } from '../eventDetection/components/EventDetectionDialogView';
 import { useEventDetectionController } from '../eventDetection/hooks/useEventDetectionController';
+import { useNotification } from '../../../contexts/NotificationContext';
+import {
+  loadPackageDirectory,
+  releasePackageSessionReservation,
+  subscribeToPackageDirectoryOpen,
+  toPackageLoadErrorMessage,
+} from '../components/Setup/VideoPathSelector/gateway/packageGateway';
 
 export const VideoPlayerScreen = () => {
   const {
@@ -91,11 +98,55 @@ export const VideoPlayerScreen = () => {
     performUndo,
     performRedo,
   } = useVideoPlayerScreenController();
+  const { notify } = useNotification();
 
   const [viewMode, setViewMode] = useState<'dual' | 'angle1' | 'angle2'>(
     'dual',
   );
   const [openWizardRequestKey, setOpenWizardRequestKey] = useState(0);
+
+  // This listener belongs to the screen lifecycle, not the setup selector.
+  // The selector is intentionally unmounted after a package is loaded, while
+  // Finder/Explorer opens must continue to route to this package session.
+  const handleExternalPackageOpen = useCallback(
+    async (packagePath: string): Promise<void> => {
+      try {
+        const loadedPackage = await loadPackageDirectory(packagePath);
+        setVideoList(loadedPackage.result.videoList);
+        setSyncData(loadedPackage.result.syncData);
+        setTimelineFilePath(loadedPackage.result.timelinePath);
+        setMetaDataConfigFilePath(loadedPackage.result.metaDataConfigFilePath);
+        setMediaAngles(loadedPackage.result.mediaAngles ?? []);
+        setPackagePath(loadedPackage.result.packagePath ?? packagePath);
+        setIsFileSelected(true);
+        notify({ message: 'パッケージを開きました', severity: 'success' });
+      } catch (error) {
+        await releasePackageSessionReservation(packagePath);
+        console.error('Failed to open external package:', error);
+        notify({
+          message: toPackageLoadErrorMessage(error),
+          severity: 'error',
+        });
+      }
+    },
+    [
+      notify,
+      setIsFileSelected,
+      setMediaAngles,
+      setMetaDataConfigFilePath,
+      setPackagePath,
+      setSyncData,
+      setTimelineFilePath,
+      setVideoList,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isFileSelected) return undefined;
+    return subscribeToPackageDirectoryOpen((packagePath) => {
+      void handleExternalPackageOpen(packagePath);
+    });
+  }, [handleExternalPackageOpen, isFileSelected]);
 
   useEffect(() => {
     return subscribeCreateVideoPackageMenu(() => {

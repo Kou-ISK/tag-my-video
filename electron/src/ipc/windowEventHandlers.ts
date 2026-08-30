@@ -43,7 +43,9 @@ export const registerWindowEventHandlers = ({
       return;
     }
 
-    const window = getMainWindow();
+    // A renderer may be a package-owned auxiliary window. Always update the
+    // validated sender itself instead of whichever main window was registered last.
+    const window = getValidatedEventSenderWindow(event) ?? getMainWindow();
     if (window && !window.isDestroyed()) {
       window.setTitle(title);
     }
