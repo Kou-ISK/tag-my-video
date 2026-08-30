@@ -38,6 +38,7 @@ resources/
 | `src/pages/` | routing / entry composition only |
 | `src/features/<feature>/` | feature固有 Screen / Controller / Hook / View / Gateway / domain |
 | `src/components/ui/` | feature非依存 shared UI primitives / composites / patterns |
+| `src/design-system/` | foundation / semantic token、MUI theme、Storybook token story |
 | `src/components/` | legacy/shared UI |
 | `src/hooks/` | truly shared hooks |
 | `src/contexts/` | app-wide context only |

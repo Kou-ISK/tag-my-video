@@ -21,7 +21,9 @@ export const useHotkeySettingsSave = ({
   markSaved,
   setSaveSuccess,
 }: UseHotkeySettingsSaveParams): (() => Promise<void>) => {
-  const timeoutRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     return () => {

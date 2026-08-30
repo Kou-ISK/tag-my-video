@@ -1,0 +1,5 @@
+export { IconAction } from './primitives/IconAction';
+export type { IconActionProps } from './primitives/IconAction';
+export { FloatingToolPanel } from './patterns/FloatingToolPanel';
+export type { FloatingToolPanelProps } from './patterns/FloatingToolPanel';
+export { CodeWindowButtonSurface } from './composites/CodeWindowButtonSurface';

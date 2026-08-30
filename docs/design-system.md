@@ -182,6 +182,8 @@ Help に必ず含めるもの:
 
 Storybook を導入・利用する場合は `ThemeProvider` + `CssBaseline` を共通 decorator とし、実アプリと同じ theme を適用します。Token、Toolbar / Footer、error surface、Code Window button など、再利用する View を優先して story 化します。
 
+`pnpm run storybook` で確認し、`pnpm run build:storybook` をCIで実行します。a11y addonはerrorを失敗として扱います。`pnpm run check:design-system` は移行済みUIの色、数値z-index、数値shadowの再導入を検知します。canvas、ユーザー設定、分析データの色は対象外です。
+
 ## 運用ルール
 
 - 新規 UI はテーマ色のハードコード禁止が原則。

@@ -36,6 +36,19 @@
 - [ ] `pnpm run check:architecture`
 - [ ] `pnpm run test:run`
 
+## UI / Design System Impact
+
+- [ ] UI変更なし
+- [ ] `docs/design-system.md` に準拠し、既存のshared UI / tokenを確認した
+- [ ] dark / light、keyboard、focus-visible、disabled / empty / loading / errorを確認した
+- [ ] Storyを追加・更新し、a11yチェックを確認した
+- [ ] visual regressionを確認した
+
+### Visual Evidence
+
+- Dark:
+- Light:
+
 ## User Impact / Docs
 
 - [ ] Docs Impact Matrix（`docs/documentation-guide.md`）を確認した

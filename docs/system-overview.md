@@ -23,6 +23,8 @@ SporTagLytics の現行アーキテクチャ概要です。詳細規約は `AGEN
 - Electron、URL、永続化、OS file dialog などの外部依存は Gateway / Controller / Hook に閉じ込める
 - Storybook 対象は描画専用 `View` と `src/components/ui`。View は `window.electronAPI` を直接使用しない
 - Atomic Design はアプリ全体のフォルダ規約ではなく、shared UI 設計時のメンタルモデルとしてのみ利用
+- `src/design-system/` はfoundation / semantic tokenとMUI Themeの正本、`src/components/ui/` はprops-only shared patternの配置先
+- UI変更は `check:design-system` とStorybook a11y/buildで検証する
 
 ## Electron 構成
 

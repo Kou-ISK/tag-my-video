@@ -1,4 +1,8 @@
 import { BrowserWindow, app } from 'electron';
+import { primitiveShape, primitiveSpacing } from '../../src/design-system/tokens/primitive';
+import { createSemanticTokens } from '../../src/design-system/tokens/semantic';
+import { fontFamilies, typographyScale } from '../../src/design-system/tokens/typography';
+import { zIndexTokens } from '../../src/design-system/tokens/zIndex';
 import { applyWindowSecurity } from './windowSecurity';
 
 let helpWindow: BrowserWindow | null = null;
@@ -118,6 +122,11 @@ const sections: HelpSection[] = [
   },
 ];
 
+const helpTokens = {
+  light: createSemanticTokens('light'),
+  dark: createSemanticTokens('dark'),
+};
+
 const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, '&amp;')
@@ -151,6 +160,9 @@ export const buildHelpHtml = (): string => {
     )
     .join('');
 
+  const light = helpTokens.light;
+  const dark = helpTokens.dark;
+
   return `
   <html>
     <head>
@@ -160,50 +172,52 @@ export const buildHelpHtml = (): string => {
       <style>
         :root {
           color-scheme: light dark;
-          --bg: #f5f5f5;
-          --sidebar: #ffffff;
-          --surface: #ffffff;
-          --text: #000000;
-          --secondary: #666666;
-          --divider: rgba(0,0,0,.12);
-          --accent: #1e90ff;
-          --selected: rgba(30,144,255,.12);
-          --hover: rgba(0,0,0,.05);
+          --bg: ${light.surface.canvas};
+          --sidebar: ${light.surface.raised};
+          --surface: ${light.surface.work};
+          --text: ${light.content.primary};
+          --secondary: ${light.content.secondary};
+          --divider: ${light.border.subtle};
+          --accent: ${light.interactive.primary};
+          --focus: ${light.border.focus};
+          --selected: ${light.surface.selected};
+          --hover: ${light.surface.hover};
         }
         @media (prefers-color-scheme: dark) {
           :root {
-            --bg: #0d0d0d;
-            --sidebar: #121212;
-            --surface: #121212;
-            --text: #ffffff;
-            --secondary: #e0e0e0;
-            --divider: rgba(255,255,255,.12);
-            --accent: #1e90ff;
-            --selected: rgba(30,144,255,.16);
-            --hover: rgba(255,255,255,.08);
+            --bg: ${dark.surface.canvas};
+            --sidebar: ${dark.surface.work};
+            --surface: ${dark.surface.work};
+            --text: ${dark.content.primary};
+            --secondary: ${dark.content.secondary};
+            --divider: ${dark.border.subtle};
+            --accent: ${dark.interactive.primary};
+            --focus: ${dark.border.focus};
+            --selected: ${dark.surface.selected};
+            --hover: ${dark.surface.hover};
           }
         }
         * { box-sizing: border-box; }
         body {
-          font-family: Inter, "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: ${fontFamilies.ui};
           margin: 0;
           background: var(--bg);
           color: var(--text);
-          font-size: 14px;
+          font-size: ${typographyScale.body.fontSize};
         }
         h1, h2 { margin: 0; letter-spacing: -.015em; }
-        h1 { font-size: 22px; }
-        h2 { font-size: 24px; }
+        h1 { font-size: ${typographyScale.heading.fontSize}; }
+        h2 { font-size: ${typographyScale.heading.fontSize}; }
         .layout { display: grid; grid-template-columns: minmax(250px, 310px) minmax(0, 1fr); min-height: 100vh; }
         .sidebar { border-right: 1px solid var(--divider); background: var(--sidebar); min-width: 0; }
-        .sidebar-header { position: sticky; top: 0; z-index: 2; padding: 20px 16px 12px; background: var(--sidebar); }
+        .sidebar-header { position: sticky; top: 0; z-index: ${zIndexTokens.stickyChrome}; padding: ${primitiveSpacing.xl}px ${primitiveSpacing.lg}px ${primitiveSpacing.md}px; background: var(--sidebar); }
         .subtitle { margin: 3px 0 14px; color: var(--secondary); font-size: 12px; }
-        .search { width: 100%; min-height: 36px; padding: 7px 11px; border: 1px solid var(--divider); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
-        .search:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+        .search { width: 100%; min-height: 36px; padding: 7px 11px; border: 1px solid var(--divider); border-radius: ${primitiveShape.radiusLg}px; background: var(--surface); color: var(--text); font: inherit; }
+        .search:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
         .nav { padding: 4px 8px 20px; }
-        .nav-item { width: 100%; display: block; text-align: left; background: transparent; color: var(--text); border: 0; border-radius: 12px; padding: 9px 10px; margin: 1px 0; cursor: pointer; }
+        .nav-item { width: 100%; display: block; text-align: left; background: transparent; color: var(--text); border: 0; border-radius: ${primitiveShape.radiusLg}px; padding: 9px 10px; margin: 1px 0; cursor: pointer; }
         .nav-item:hover { background: var(--hover); }
-        .nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+        .nav-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
         .nav-item[aria-selected="true"] { background: var(--selected); color: var(--accent); }
         .nav-item[hidden] { display: none; }
         .nav-title, .nav-summary { display: block; }
@@ -304,7 +318,7 @@ export const openHelpWindow = (): void => {
     minWidth: 620,
     minHeight: 480,
     autoHideMenuBar: true,
-    backgroundColor: '#0d0d0d',
+    backgroundColor: helpTokens.dark.surface.canvas,
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
