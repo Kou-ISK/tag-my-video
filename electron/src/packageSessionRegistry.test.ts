@@ -18,6 +18,14 @@ const createWindow = (id: string): BrowserWindow => ({
   isDestroyed: () => false,
 }) as unknown as BrowserWindow;
 
+const createDestroyedWindow = (id: string): BrowserWindow => ({
+  id,
+  get webContents(): never {
+    throw new TypeError('Object has been destroyed');
+  },
+  isDestroyed: () => true,
+}) as unknown as BrowserWindow;
+
 describe('package session registry', () => {
   it('binds a canonical package path and detects duplicate sessions', () => {
     const mainA = createWindow('main-a');
@@ -38,6 +46,13 @@ describe('package session registry', () => {
 
     expect(getPackageSessionForSender(timeline.webContents)).toBe(session);
     expect(getPackageSessionForSender({ id: 'unknown' })).toBeNull();
+  });
+
+  it('ignores destroyed main and auxiliary windows while resolving a sender', () => {
+    const session = createPackageSession(createDestroyedWindow('destroyed-main'));
+    registerAuxiliaryWindow(session, createDestroyedWindow('destroyed-timeline'));
+
+    expect(getPackageSessionForSender({ id: 'late-ipc' })).toBeNull();
   });
 
   it('reserves a path before renderer loading and releases failed reservations', () => {
