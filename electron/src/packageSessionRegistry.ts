@@ -49,13 +49,24 @@ export const getPackageSessionForWindow = (
   return sessionsByWindow.get(window) ?? null;
 };
 
+const getLiveWebContents = (window: BrowserWindow): unknown | null => {
+  if (window.isDestroyed()) return null;
+
+  try {
+    return window.webContents;
+  } catch {
+    // Electron may destroy WebContents between the liveness check and access.
+    return null;
+  }
+};
+
 export const getPackageSessionForSender = (
   sender: unknown,
 ): PackageSession | null => {
   for (const session of sessions.values()) {
-    if (session.mainWindow.webContents === sender) return session;
+    if (getLiveWebContents(session.mainWindow) === sender) return session;
     for (const window of session.auxiliaryWindows) {
-      if (window.webContents === sender) return session;
+      if (getLiveWebContents(window) === sender) return session;
     }
   }
   return null;
