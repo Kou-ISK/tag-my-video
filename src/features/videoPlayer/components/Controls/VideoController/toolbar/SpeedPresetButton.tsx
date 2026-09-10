@@ -32,6 +32,8 @@ export const SpeedPresetButton: React.FC<SpeedPresetButtonProps> = ({
     <Tooltip title={`${label}で再生`}>
       <span>
         <IconButton
+          aria-label={`${label}で再生`}
+          aria-pressed={isActive}
           onClick={() => {
             if (disabled) return;
             onSelect(value);
@@ -44,9 +46,11 @@ export const SpeedPresetButton: React.FC<SpeedPresetButtonProps> = ({
             '&:hover': {
               bgcolor: lit ? 'primary.dark' : theme.custom.glass.hoverStrong,
             },
-            color: 'white',
+            color: lit ? 'primary.contrastText' : 'text.secondary',
+            minWidth: 40,
+            gap: 0.25,
           }}
-          size="large"
+          size="small"
         >
           {icon}
           <Typography

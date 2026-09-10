@@ -28,18 +28,36 @@ afterEach(() => {
 });
 
 describe('VideoPathSelectorView', () => {
+  it('opens files through a callback without a notification or Electron provider', () => {
+    const onOpenPackage = vi.fn();
+    render(
+      <ThemeProvider theme={getAppTheme('dark')}>
+        <VideoPathSelectorView
+          showWelcome
+          dragState={dragState}
+          dragHandlers={{}}
+          recentPackages={[]}
+          onOpenPackage={onOpenPackage}
+          onOpenWizard={vi.fn()}
+          onOpenRecentPackage={vi.fn()}
+          onRemoveRecentPackage={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'パッケージを開く' }));
+    expect(onOpenPackage).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('最近開いたパッケージはありません')).toBeTruthy();
+  });
+
   it('prioritizes opening an existing package over creating a new one', () => {
     renderWithProviders(
       <VideoPathSelectorView
         showWelcome
         dragState={dragState}
         dragHandlers={{}}
-        wizardOpen={false}
         recentPackages={[]}
-        onPackageLoaded={vi.fn()}
+        onOpenPackage={vi.fn()}
         onOpenWizard={vi.fn()}
-        onCloseWizard={vi.fn()}
-        onPackageCreated={vi.fn()}
         onOpenRecentPackage={vi.fn()}
         onRemoveRecentPackage={vi.fn()}
       />,
@@ -59,12 +77,9 @@ describe('VideoPathSelectorView', () => {
         showWelcome
         dragState={dragState}
         dragHandlers={{}}
-        wizardOpen={false}
         recentPackages={[]}
-        onPackageLoaded={vi.fn()}
+        onOpenPackage={vi.fn()}
         onOpenWizard={handleOpenWizard}
-        onCloseWizard={vi.fn()}
-        onPackageCreated={vi.fn()}
         onOpenRecentPackage={vi.fn()}
         onRemoveRecentPackage={vi.fn()}
       />,

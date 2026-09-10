@@ -1,11 +1,9 @@
 import React from 'react';
 import { Box, Stack } from '@mui/material';
-import { CreatePackageWizard } from './VideoPathSelector/CreatePackageWizard';
 import { WelcomeHeader } from './VideoPathSelector/components/WelcomeHeader';
 import { DropZoneCard } from './VideoPathSelector/components/DropZoneCard';
 import { ActionButtonsRow } from './VideoPathSelector/components/ActionButtonsRow';
 import { RecentPackagesSection } from './VideoPathSelector/components/RecentPackagesSection';
-import type { PackageLoadResult } from './VideoPathSelector/types';
 import type { DragAndDropState } from './VideoPathSelector/hooks/useDragAndDrop';
 import type { RecentPackage } from './VideoPathSelector/hooks/useRecentPackages';
 
@@ -13,12 +11,9 @@ interface VideoPathSelectorViewProps {
   showWelcome: boolean;
   dragState: DragAndDropState;
   dragHandlers: React.HTMLAttributes<HTMLDivElement>;
-  wizardOpen: boolean;
   recentPackages: RecentPackage[];
-  onPackageLoaded: (payload: PackageLoadResult) => void;
+  onOpenPackage: () => void;
   onOpenWizard: () => void;
-  onCloseWizard: () => void;
-  onPackageCreated: (payload: PackageLoadResult) => void;
   onOpenRecentPackage: (path: string) => void;
   onRemoveRecentPackage: (path: string) => void;
 }
@@ -27,12 +22,9 @@ export const VideoPathSelectorView: React.FC<VideoPathSelectorViewProps> = ({
   showWelcome,
   dragState,
   dragHandlers,
-  wizardOpen,
   recentPackages,
-  onPackageLoaded,
+  onOpenPackage,
   onOpenWizard,
-  onCloseWizard,
-  onPackageCreated,
   onOpenRecentPackage,
   onRemoveRecentPackage,
 }) => {
@@ -41,40 +33,43 @@ export const VideoPathSelectorView: React.FC<VideoPathSelectorViewProps> = ({
       sx={{
         width: '100%',
         mx: 'auto',
-        mt: 2,
+        my: { xs: 2, md: 5 },
         px: { xs: 2, md: 3 },
-        pb: 3,
+        py: { xs: 2, md: 3 },
         maxWidth: 1180,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: (theme) => `1px solid ${theme.palette.divider}`,
+        bgcolor: 'background.default',
         color: 'text.primary',
         fontFamily: 'inherit',
       }}
       {...dragHandlers}
     >
-      <Stack spacing={2.5}>
+      <Stack spacing={3}>
         <WelcomeHeader show={showWelcome} />
-
-        <RecentPackagesSection
-          packages={recentPackages}
-          onOpen={onOpenRecentPackage}
-          onRemove={onRemoveRecentPackage}
-        />
-
-        <ActionButtonsRow
-          onPackageLoaded={onPackageLoaded}
-          onOpenWizard={onOpenWizard}
-        />
-
-        <DropZoneCard dragState={dragState} />
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'minmax(260px, 0.85fr) minmax(0, 1.5fr)',
+            },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          <Stack spacing={2}>
+            <ActionButtonsRow
+              onOpenPackage={onOpenPackage}
+              onOpenWizard={onOpenWizard}
+            />
+            <DropZoneCard dragState={dragState} />
+          </Stack>
+          <RecentPackagesSection
+            packages={recentPackages}
+            onOpen={onOpenRecentPackage}
+            onRemove={onRemoveRecentPackage}
+          />
+        </Box>
       </Stack>
-
-      <CreatePackageWizard
-        open={wizardOpen}
-        onClose={onCloseWizard}
-        onPackageCreated={onPackageCreated}
-      />
     </Box>
   );
 };

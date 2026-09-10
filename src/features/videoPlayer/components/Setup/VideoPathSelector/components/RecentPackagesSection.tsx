@@ -1,6 +1,5 @@
 import React from 'react';
-import { Stack, Typography } from '@mui/material';
-import Grid from '@mui/material/GridLegacy';
+import { Box, Paper, Stack, Typography } from '@mui/material';
 import { RecentPackageCard } from '../RecentPackageCard';
 import type { RecentPackage } from '../hooks/useRecentPackages';
 
@@ -15,25 +14,33 @@ export const RecentPackagesSection: React.FC<RecentPackagesSectionProps> = ({
   onOpen,
   onRemove,
 }) => {
-  if (packages.length === 0) return null;
-
   return (
     <Stack spacing={1.5}>
       <Typography variant="overline" color="text.secondary">
         最近開いたパッケージ
       </Typography>
 
-      <Grid container spacing={1.5}>
+      {packages.length === 0 && (
+        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+          <Typography variant="subtitle2">
+            最近開いたパッケージはありません
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            パッケージを開くと、ここから分析を再開できます。
+          </Typography>
+        </Paper>
+      )}
+      <Box sx={{ display: 'grid', gap: 1 }}>
         {packages.map((pkg) => (
-          <Grid item xs={12} sm={6} md={4} key={pkg.path}>
+          <Box key={pkg.path}>
             <RecentPackageCard
               package={pkg}
               onOpen={onOpen}
               onRemove={onRemove}
             />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Stack>
   );
 };

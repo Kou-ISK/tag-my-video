@@ -2,6 +2,16 @@ const { readFile } = require('node:fs/promises');
 const { resolve } = require('node:path');
 
 const targets = [
+  'src/features/videoPlayer/components/Setup/VideoPathSelectorView.tsx',
+  'src/features/videoPlayer/components/Setup/VideoPathSelector/components/ActionButtonsRow.tsx',
+  'src/features/videoPlayer/components/Setup/VideoPathSelector/components/WelcomeHeader.tsx',
+  'src/features/videoPlayer/components/Controls/VideoController/VideoControllerToolbar.tsx',
+  'src/features/videoPlayer/components/Controls/VideoController/toolbar/SpeedSelector.tsx',
+  'src/features/videoPlayer/components/Timeline/VisualTimeline/TimelineLaneView.tsx',
+  'src/features/videoPlayer/components/Timeline/VisualTimeline/TimelineLaneItem.tsx',
+  'src/features/videoPlayer/components/Timeline/VisualTimeline/TimelineFooter.tsx',
+  'src/features/playlist/components/PlaylistHeaderToolbar.tsx',
+  'src/features/playlist/components/PlaylistClipInspector.tsx',
   'src/components/OnboardingTutorialView.tsx',
   'src/features/playlist/components/AnnotationToolbar.tsx',
 ];
@@ -17,7 +27,8 @@ const run = async () => {
   for (const target of targets) {
     const content = await readFile(resolve(target), 'utf8');
     for (const rule of forbidden) {
-      if (rule.expression.test(content)) violations.push(`${target}: ${rule.name}`);
+      if (rule.expression.test(content))
+        violations.push(`${target}: ${rule.name}`);
     }
   }
   if (violations.length > 0) {

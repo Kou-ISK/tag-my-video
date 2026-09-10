@@ -50,14 +50,16 @@ export const CodingPanelWindowToolbar = ({
       spacing={0.5}
       alignItems="center"
       sx={{
-        minHeight: 36,
-        px: 0.5,
+        minHeight: 38,
+        bgcolor: (theme) => theme.custom.tokens.surface.work,
+        px: 1,
         py: 0.25,
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
     >
       <ToggleButtonGroup
+        aria-label="コードウィンドウのモード"
         exclusive
         size="small"
         value={mode}

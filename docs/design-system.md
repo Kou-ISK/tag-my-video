@@ -1,6 +1,6 @@
-# SporTagLytics Design System (NEON / Dark-first)
+# SporTagLytics Design System (Professional Analysis / Dark-first)
 
-このドキュメントは SporTagLytics の UI 実装における単一の参照点です。実装上の色・タイポグラフィ・spacing の正本は MUI theme (`src/theme.ts`) とし、本書は「どのトークンを、どの意味で使うか」を定義します。
+このドキュメントは SporTagLytics の UI 実装における単一の参照点です。実装上の色・タイポグラフィ・spacing の正本は semantic token と MUI theme (`src/design-system/`; `src/theme.ts` は互換export) とし、本書は「どのトークンを、どの意味で使うか」を定義します。
 
 SporTagLytics はスポーツ分析者が長時間操作する desktop application です。装飾性よりも、映像・Timeline・Code Window といった作業対象の視認性、情報密度、操作の安定性を優先します。
 
@@ -26,16 +26,19 @@ SporTagLytics はスポーツ分析者が長時間操作する desktop applicati
 
 ### Palette (dark)
 
-- `primary`: `#1E90FF` (Electric Blue)
+- `primary`: `#62C8FF` (Signal Blue; light は `#00649A`)
 - `secondary`: `#00FF85` (Neon Green)
 - `team1`: `#1E90FF`
 - `team2`: `#FF6F61`
-- `background.default`: `#0D0D0D`
-- `background.paper`: `#121212`
-- `text.primary`: `#FFFFFF`
-- `text.secondary`: `#E0E0E0`
+- `background.default`: `#090F18`
+- `background.paper`: `#111C2A`
+- `text.primary`: `#E8EFF7`
+- `text.secondary`: `#A7B8CB`
 - `text.disabled`: `rgba(255,255,255,0.5)`
 - `divider`: `rgba(255,255,255,0.12)`
+
+- `surface.raised`: `#19283A`。canvas → work → raised の明度を段階的に上げる。
+- チームのデータ色は従来どおり。操作のSignal Blueと分離する。
 
 ### Typography
 
@@ -47,10 +50,10 @@ SporTagLytics はスポーツ分析者が長時間操作する desktop applicati
 ### Shape / spacing / elevation
 
 - `spacing(1) = 8px` を基準とする。
-- `shape.borderRadius = 12px` を標準 radius とする。
+- `shape.borderRadius = 8px` を標準 radius とする。
 - Toolbar / Footer の高さは 32–40px 程度を基準とし、分析画面を不必要に圧迫しない。
 - application の標準 shadow は `none`。意味のない drop shadow は追加しない。
-- 小さな group control 内では 12px radius をそのまま重ねず、外枠が shape を所有して内部 control は連続した形状にしてよい。
+- 小さな group control 内では 8px radius をそのまま重ねず、外枠が shape を所有して内部 control は連続した形状にしてよい。
 
 ### Custom tokens (`theme.custom`)
 
@@ -168,7 +171,7 @@ Help に必ず含めるもの:
    - 文字: `theme.typography` / `theme.typography.fontFamily` を利用。
    - 余白: 8px scale を基準とする。
 2. **共通 Surface**
-   - Paper / Card: `background.paper`, `divider`, radius 12。
+   - Paper / Card: `background.paper`, `divider`, radius 8。
    - 一般操作に team color や error color を装飾目的で使わない。
 3. **State / accessibility**
    - hover だけで操作可能性を伝えず、focus-visible でも状態を確認できるようにする。
@@ -191,3 +194,14 @@ Storybook を導入・利用する場合は `ThemeProvider` + `CssBaseline` を�
 - UI の用語を追加する場合は Terminology の原則に従う。
 - UI から意図的に隠す高度操作を追加・変更した場合は同じ変更で Help を更新する。
 - ダークモードを基準に設計し、ライトモードでも foreground / background / divider が theme 依存で成立することを確認する。
+
+## Professional Analysis の作業画面
+
+Sportscodeの映像・コード・Timeline中心の作業モデルを参考に、角を抑えたパネル、細い境界、コンパクトな操作列で構成する。近未来的な印象は青みのあるsurfaceと選択色で表現し、常時発光や装飾的アニメーションを増やさない。
+
+- 開始画面は開始操作と最近のパッケージを横並びにし、狭い幅では縦並びにする。履歴なし・有効／無効dropも明示する。
+- 再生時刻は等幅の専用領域、速度presetは選択状態を明示する。ライトモードでも固定白文字を使わない。
+- Timelineは行名を左揃えにし、行色は薄い背景、選択は輪郭と状態で示す。クリップ本体は保存された色を不透明で表示し、文字は背景とのコントラストに応じた白／黒を選ぶ。Footerに行数と選択件数を表示する。
+- Playlistは未保存を文字で表示し、長い名称を省略、操作列は必要に応じて折り返す。
+- `Workspace/*` storiesで開始画面、再生バー、Timeline行とFooter、Code Window、分析Toolbar、Playlist、設定Headerを確認する。
+- ファイル選択・ウィザードとShortcutGuideの外部イベント購読は組み立て側が所有し、対象Viewへcallbackまたはslotを渡す。

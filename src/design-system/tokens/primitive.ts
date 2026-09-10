@@ -3,17 +3,22 @@
  * Components should consume semantic tokens instead of these values directly.
  */
 export const primitiveColors = {
+  signalBlue: '#62C8FF',
+  signalBlueLight: '#00649A',
+  textCool: '#E8EFF7',
+  textMuted: '#A7B8CB',
+  ink: '#142437',
   neonBlue: '#1E90FF',
   neonGreen: '#00FF85',
   vividPink: '#FF0099',
   warmCoral: '#FF6F61',
-  nearBlack: '#0D0D0D',
-  charcoal: '#121212',
-  charcoalRaised: '#0F0F0F',
+  nearBlack: '#090F18',
+  charcoal: '#111C2A',
+  charcoalRaised: '#19283A',
   white: '#FFFFFF',
   black: '#000000',
-  neutral50: '#FAFAFA',
-  neutral100: '#F5F5F5',
+  neutral50: '#EAF0F6',
+  neutral100: '#F3F6FA',
   neutral400: '#BDBDBD',
   neutral600: '#666666',
   neutral700: '#616161',
@@ -41,9 +46,9 @@ export const primitiveSpacing = {
 
 export const primitiveShape = {
   radiusNone: 0,
-  radiusSm: 6,
-  radiusMd: 10,
-  radiusLg: 12,
+  radiusSm: 4,
+  radiusMd: 6,
+  radiusLg: 8,
   radiusRound: 999,
 } as const;
 
@@ -57,4 +62,5 @@ export const primitiveSizes = {
   interactiveComfortable: 44,
 } as const;
 
-export type PrimitiveColor = (typeof primitiveColors)[keyof typeof primitiveColors];
+export type PrimitiveColor =
+  (typeof primitiveColors)[keyof typeof primitiveColors];

@@ -124,3 +124,7 @@ pnpm run test:e2e:timeline-rows
 - model training/evaluation codeをpublic app repositoryへ再混在させない
 - private source-identifying fixtureをpublic CIへ入れない
 - license不適格modelを精度だけでproduction昇格させない
+
+## UI一括ゲート
+
+`pnpm run verify` で型検査、lint、architecture/design-system/ADR、unit tests、アプリとStorybookのbuildを実行する。Storybook buildの成功は操作試験・a11y試験の成功を意味しない。`Workspace/*` storiesで表示と操作を別途確認し、Electronの実ファイル・映像操作はアプリで試験する。

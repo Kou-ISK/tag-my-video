@@ -9,6 +9,7 @@ import {
   Box,
   IconButton,
   alpha,
+  Tooltip,
 } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 import CloseIcon from '@mui/icons-material/Close';
@@ -107,7 +108,7 @@ export const RecentPackageCard: React.FC<RecentPackageCardProps> = ({
             <Chip
               label={pkg.team1Name}
               size="small"
-              color="error"
+              variant="outlined"
               sx={{
                 fontSize: '0.75rem',
                 maxWidth: '45%',
@@ -126,7 +127,7 @@ export const RecentPackageCard: React.FC<RecentPackageCardProps> = ({
             <Chip
               label={pkg.team2Name}
               size="small"
-              color="primary"
+              variant="outlined"
               sx={{
                 fontSize: '0.75rem',
                 maxWidth: '45%',
@@ -158,23 +159,25 @@ export const RecentPackageCard: React.FC<RecentPackageCardProps> = ({
         </CardContent>
       </CardActionArea>
 
-      <IconButton
-        size="small"
-        aria-label={`${pkg.name}を最近開いたパッケージから削除`}
-        onClick={handleRemove}
-        sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.9),
-          '&:hover': {
-            bgcolor: 'error.main',
-            color: 'white',
-          },
-        }}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title="最近開いたパッケージから削除">
+        <IconButton
+          size="small"
+          aria-label={`${pkg.name}を最近開いたパッケージから削除`}
+          onClick={handleRemove}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: (theme) => alpha(theme.palette.background.paper, 0.9),
+            '&:hover': {
+              bgcolor: (theme) => theme.custom.tokens.surface.hover,
+              color: 'error.main',
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
     </Card>
   );
 };

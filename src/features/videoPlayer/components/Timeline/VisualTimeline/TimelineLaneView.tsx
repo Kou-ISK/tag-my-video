@@ -49,7 +49,9 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         alignItems: 'center',
         gap: 0,
         position: 'relative',
-        minHeight: 32,
+        minHeight: 34,
+        borderBottom: 1,
+        borderColor: 'divider',
         width: '100%',
       }}
     >
@@ -69,6 +71,7 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         onDragOver={onRowDragOver}
         onDrop={(event) => onRowDrop(event, rowId)}
         aria-label={`${actionName} 行`}
+        title={actionName}
         variant="caption"
         sx={{
           color: laneLabelColor,
@@ -76,12 +79,15 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
           fontSize: '0.7rem',
           width: TIMELINE_ROW_HEADER_WIDTH_PX,
           flexShrink: 0,
-          textAlign: 'right',
+          textAlign: 'left',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           userSelect: 'none',
           lineHeight: 1.1,
           position: 'sticky',
           left: 0,
-          zIndex: 12,
+          zIndex: theme.custom.zIndex.timelineRowHeader,
           alignSelf: 'stretch',
           border: 0,
           borderRight: 1,
@@ -114,8 +120,8 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
           height: 26,
           flex: 1,
           flexShrink: 0,
-          backgroundColor: alpha(rowColor, 0.16),
-          borderRadius: 1,
+          backgroundColor: alpha(rowColor, 0.06),
+          borderRadius: 0.5,
           border: 1,
           borderColor: 'divider',
           boxSizing: 'border-box',
@@ -171,9 +177,9 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
               boxSizing: 'border-box',
               bgcolor: alpha(rowColor, 0.72),
               border: `1px dashed ${rowColor}`,
-              borderRadius: 1,
+              borderRadius: 0.5,
               pointerEvents: 'none',
-              zIndex: 9,
+              zIndex: theme.custom.zIndex.timelineSelection,
             }}
           />
         )}
@@ -189,7 +195,7 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
             transform: 'translateX(-1px)',
             backgroundColor: 'error.main',
             pointerEvents: 'none',
-            zIndex: 10,
+            zIndex: theme.custom.zIndex.stickyChrome,
             transition: isDraggingPlayhead ? 'none' : 'left 80ms linear',
           }}
         />
@@ -205,7 +211,10 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
             width: 12,
             transform: 'translateX(-6px)',
             backgroundColor: 'transparent',
-            zIndex: isEditModifierPressed || isDraggingPlayhead ? 11 : 1,
+            zIndex:
+              isEditModifierPressed || isDraggingPlayhead
+                ? theme.custom.zIndex.timelinePlayhead
+                : theme.custom.zIndex.timelineItem,
             cursor: isEditModifierPressed
               ? 'col-resize'
               : isDraggingPlayhead

@@ -7,7 +7,6 @@ import {
   Stack,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { ShortcutGuide } from '../../../../../../components/ShortcutGuide';
 
 interface SpeedSelectorProps {
   playbackRate: number;
@@ -29,34 +28,14 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
     flexWrap="wrap"
     sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
   >
-    <FormControl
-      size="small"
-      variant="outlined"
-      sx={{
-        minWidth: 120,
-        '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-        '& .MuiInputLabel-shrink': { color: 'primary.light' },
-        '& .MuiOutlinedInput-input': { color: 'white' },
-        '& .MuiSvgIcon-root': { color: 'white' },
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(255,255,255,0.3)',
-        },
-        '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(255,255,255,0.6)',
-        },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'primary.light',
-        },
-      }}
-    >
-      <InputLabel id="playback-speed-label">Speed</InputLabel>
+    <FormControl size="small" variant="outlined" sx={{ minWidth: 104 }}>
+      <InputLabel id="playback-speed-label">再生速度</InputLabel>
       <Select
         labelId="playback-speed-label"
-        label="Speed"
+        label="再生速度"
         value={String(playbackRate)}
         onChange={onSpeedChange}
         disabled={disabled}
-        sx={{ '& .MuiSelect-icon': { color: 'white' } }}
       >
         {speedOptions.map((speed) => (
           <MenuItem key={speed} value={speed.toString()}>
@@ -65,6 +44,5 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
         ))}
       </Select>
     </FormControl>
-    <ShortcutGuide />
   </Stack>
 );

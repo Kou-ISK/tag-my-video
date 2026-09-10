@@ -38,12 +38,21 @@ export const AnalysisPanelView = ({
         sx={{
           position: 'sticky',
           top: 0,
-          zIndex: 10,
-          bgcolor: 'background.default',
-          pb: 2,
+          zIndex: (theme) => theme.custom.zIndex.stickyChrome,
+          bgcolor: 'background.paper',
+          p: 1,
+          mb: 2,
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ gap: 1, flexWrap: 'wrap' }}
+        >
           <AnalysisPanelToolbar
             currentView={currentView}
             onChangeView={onChangeView}
@@ -87,7 +96,14 @@ export const AnalysisPanelView = ({
 
   if (embedded) {
     return (
-      <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          p: { xs: 1, md: 2 },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {content}
       </Box>
     );

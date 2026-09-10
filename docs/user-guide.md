@@ -801,3 +801,7 @@ GitHub Issues: https://github.com/Kou-ISK/SporTagLytics/issues
 - [開発ガイド](development.md)
 - [プレイリスト機能実装](playlist-features.md)
 - [コードウィンドウ編集実装](code-window-settings.md)
+
+## 分析ワークスペースの表示
+
+開始画面では左の「パッケージを開く」「新しいパッケージを作成」または右の履歴から作業を開始できます。狭いウィンドウでは縦並びになります。再生バーの右側に時刻、Timeline下部に行数と選択件数を表示します。Playlistの未保存状態は「未保存」の表示で確認できます。

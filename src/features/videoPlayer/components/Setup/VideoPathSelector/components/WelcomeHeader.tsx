@@ -1,21 +1,45 @@
-import React from 'react';
-import { Box, Typography } from '@mui/material';
+import type { ReactElement } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 
-interface WelcomeHeaderProps {
+export const WelcomeHeader = ({
+  show,
+}: {
   show: boolean;
-}
-
-export const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ show }) => {
-  if (!show) return null;
-
-  return (
-    <Box sx={{ pt: { xs: 2, md: 3 } }}>
-      <Typography variant="h4" fontWeight={800}>
-        SporTagLytics
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-        分析するパッケージを開くか、新しく作成します
-      </Typography>
-    </Box>
-  );
-};
+}): ReactElement | null =>
+  show ? (
+    <Stack
+      direction="row"
+      spacing={2}
+      alignItems="center"
+      sx={{ pb: 2.5, borderBottom: 1, borderColor: 'divider' }}
+    >
+      <Box
+        sx={{
+          display: 'grid',
+          placeItems: 'center',
+          width: 48,
+          height: 48,
+          border: 1,
+          borderColor: 'primary.main',
+          borderRadius: 1,
+          color: 'primary.main',
+          bgcolor: (theme) => theme.custom.tokens.surface.selected,
+        }}
+      >
+        <GraphicEqIcon />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ overflowWrap: 'anywhere' }}
+        >
+          SporTagLytics
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          映像を読み解き、次のプレーへ。
+        </Typography>
+      </Box>
+    </Stack>
+  ) : null;

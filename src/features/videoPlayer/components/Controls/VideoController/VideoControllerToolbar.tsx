@@ -13,6 +13,7 @@ import { SpeedSelector } from './toolbar/SpeedSelector';
 import { SPEED_PRESETS } from './toolbar/constants';
 
 interface VideoControllerToolbarProps {
+  shortcutGuide?: React.ReactNode;
   hasVideos: boolean;
   isVideoPlaying: boolean;
   playbackRate: number;
@@ -38,6 +39,7 @@ interface ControlButtonConfig {
 }
 
 export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
+  shortcutGuide,
   hasVideos,
   isVideoPlaying,
   playbackRate,
@@ -55,13 +57,13 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
   const controlButtons: ControlButtonConfig[] = useMemo(
     () => [
       {
-        title: '30秒戻る',
+        title: `${largeSkipSeconds}秒戻る`,
         actionKey: 'rewind-30',
         onClick: () => onSeekAdjust(-largeSkipSeconds),
         icon: <Replay30Icon />,
       },
       {
-        title: '10秒戻る',
+        title: `${smallSkipSeconds}秒戻る`,
         actionKey: 'rewind-10',
         onClick: () => onSeekAdjust(-smallSkipSeconds),
         icon: <Replay10Icon />,
@@ -75,13 +77,13 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
         active: isVideoPlaying,
       },
       {
-        title: '10秒進む',
+        title: `${smallSkipSeconds}秒進む`,
         actionKey: 'forward-10',
         onClick: () => onSeekAdjust(smallSkipSeconds),
         icon: <Forward10Icon />,
       },
       {
-        title: '30秒進む',
+        title: `${largeSkipSeconds}秒進む`,
         actionKey: 'forward-30',
         onClick: () => onSeekAdjust(largeSkipSeconds),
         icon: <Forward30Icon />,
@@ -100,11 +102,12 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
     <Box
       sx={{
         width: '100%',
-        backgroundColor: (theme) => theme.custom.glass.panel,
-        backdropFilter: 'blur(10px)',
-        borderRadius: 2,
+        backgroundColor: (theme) => theme.custom.tokens.surface.work,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
         pointerEvents: 'auto',
-        p: { xs: 1.25, md: 1.5 },
+        p: 0.75,
       }}
     >
       <Box
@@ -112,7 +115,7 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: { xs: 1, md: 1.5 },
+          gap: 1,
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">
@@ -173,13 +176,22 @@ export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
           onSpeedChange={onSpeedChange}
         />
 
+        {shortcutGuide}
         <Box sx={{ flexGrow: 1 }} />
 
         <Typography
           variant="body2"
           sx={{
             textAlign: { xs: 'left', md: 'right' },
-            color: 'white',
+            color: 'primary.main',
+            fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
+            fontVariantNumeric: 'tabular-nums',
+            bgcolor: 'background.default',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 0.5,
+            px: 1.5,
+            py: 1,
             fontWeight: 'bold',
             minWidth: { xs: 'auto', md: 140 },
             lineHeight: 1.2,

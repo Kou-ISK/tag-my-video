@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- プロ向けスポーツ分析UIとしてdark/lightテーマ、開始画面、再生バー、Timeline、Playlist、Code Window、分析・設定のchromeを統一。主要ViewのStorybookと一括 `pnpm run verify` を追加。
+
 ### Added
 
 - Design System token基盤、shared UI stories、Storybook a11y、UI chromeのDesign System検査を追加。

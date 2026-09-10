@@ -273,3 +273,7 @@ pnpm run check:adr
 ```
 
 GitHub Actions `quality-check` は `main` / `develop` / `feat**` 宛てpull requestで上記相当の検証を実行します。Model R&DのCIはprivate repository側で管理します。
+
+## 分析ワークスペースの表示境界
+
+UIのsemantic tokenとテーマは `src/design-system/` に集約する。開始画面のファイル選択とウィザードは `VideoPathSelector` が、ショートカットガイドは `VideoController` が組み立てる。表示Viewはpropsで再現し、Storybookの `Workspace/*` を実画面の視覚確認に使う。保存・IPC・分析モデルの契約は変更しない。

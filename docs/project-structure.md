@@ -290,3 +290,7 @@ docs/
 7. pure domain logicをHook/Viewへ埋め込んでいないか。
 8. ML学習・評価コードやdeployable model binaryをSporTagLytics runtime repositoryへ戻していないか。
 9. 新しい設計判断ならADR/docs indexを更新したか。
+
+### 作業画面のStorybook
+
+feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレクトリに配置する。共通controlの比較は `src/design-system/stories/Controls.stories.tsx`、開始画面は `VideoPathSelectorView.stories.tsx` が入口となる。

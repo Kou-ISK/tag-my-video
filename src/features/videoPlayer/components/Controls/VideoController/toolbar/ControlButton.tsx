@@ -38,7 +38,7 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
 
   const getHoverBgColor = () => {
     if (isActive) {
-      return emphasize ? 'primary.dark' : theme.custom.accents.hoverPink;
+      return emphasize ? 'primary.dark' : theme.custom.tokens.interactive.hover;
     }
     return theme.custom.glass.hoverStrong;
   };
@@ -57,6 +57,8 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
           sx={{
             ...theme.custom.controllerButton,
             bgcolor: getBgColor(),
+            color:
+              isActive && emphasize ? 'primary.contrastText' : 'text.primary',
             '&:hover': {
               bgcolor: getHoverBgColor(),
             },
@@ -64,7 +66,7 @@ export const ControlButton: React.FC<ControlButtonProps> = ({
               ? `0 0 0 2px ${theme.custom.bars.selectedBorder}`
               : undefined,
           }}
-          size="large"
+          size="small"
         >
           {icon}
         </IconButton>

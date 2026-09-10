@@ -1,30 +1,48 @@
-import React from 'react';
-import { Button, Stack } from '@mui/material';
+import type { ReactElement } from 'react';
+import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { ExistingPackageLoader } from '../ExistingPackageLoader';
-import type { PackageLoadResult } from '../types';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface ActionButtonsRowProps {
-  onPackageLoaded: (payload: PackageLoadResult) => void;
+  onOpenPackage: () => void;
   onOpenWizard: () => void;
 }
 
-export const ActionButtonsRow: React.FC<ActionButtonsRowProps> = ({
-  onPackageLoaded,
+export const ActionButtonsRow = ({
+  onOpenPackage,
   onOpenWizard,
-}) => {
-  return (
-    <Stack spacing={1.25}>
-      <ExistingPackageLoader onPackageLoaded={onPackageLoaded} />
-
+}: ActionButtonsRowProps): ReactElement => (
+  <Paper
+    variant="outlined"
+    sx={{ p: 2.5, borderTop: 2, borderTopColor: 'primary.main' }}
+  >
+    <Stack spacing={2}>
+      <Box sx={{ color: 'primary.main' }}>
+        <FolderOpenIcon fontSize="large" />
+      </Box>
+      <Box>
+        <Typography variant="h6">分析を開始</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+          試合映像・タグ・分析を、ひとつのパッケージで管理します。
+        </Typography>
+      </Box>
+      <Button
+        variant="contained"
+        endIcon={<ArrowForwardIcon />}
+        onClick={onOpenPackage}
+        fullWidth
+      >
+        パッケージを開く
+      </Button>
       <Button
         variant="outlined"
         startIcon={<AddIcon />}
         onClick={onOpenWizard}
-        sx={{ alignSelf: 'flex-start' }}
+        fullWidth
       >
         新しいパッケージを作成
       </Button>
     </Stack>
-  );
-};
+  </Paper>
+);

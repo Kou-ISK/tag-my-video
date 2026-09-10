@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   IconButton,
-  Box,
   Menu,
   MenuItem,
   Paper,
@@ -13,7 +12,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import FolderOpen from '@mui/icons-material/FolderOpen';
 import MoreVert from '@mui/icons-material/MoreVert';
 import Outbox from '@mui/icons-material/Outbox';
@@ -61,7 +60,7 @@ export const PlaylistHeaderToolbar = ({
   onWorkspaceModeChange,
   inspectorVisible,
   onInspectorToggle,
-}: PlaylistHeaderToolbarProps) => {
+}: PlaylistHeaderToolbarProps): React.ReactElement => {
   const theme = useTheme();
 
   return (
@@ -71,24 +70,41 @@ export const PlaylistHeaderToolbar = ({
         bgcolor: theme.palette.background.paper,
         borderBottom: '1px solid',
         borderColor: theme.palette.divider,
+        borderRadius: 0,
         px: 1.5,
         py: 0.5,
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        useFlexGap
+        sx={{ flexWrap: 'wrap', minHeight: 38 }}
+      >
         <PlaylistPlay sx={{ color: theme.palette.primary.main }} />
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography
+          variant="subtitle2"
+          noWrap
+          title={playlistName}
+          sx={{ flex: 1, minWidth: 100 }}
+        >
           {playlistName}
         </Typography>
 
         {hasUnsavedChanges ? (
-          <Tooltip title="未保存の変更">
-            <Box
-              component="span"
-              aria-label="未保存の変更"
-              sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'warning.main' }}
-            />
-          </Tooltip>
+          <Typography
+            variant="caption"
+            color="warning.main"
+            sx={{
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 0.5,
+              px: 0.75,
+            }}
+          >
+            未保存
+          </Typography>
         ) : null}
 
         <ToggleButtonGroup
@@ -108,9 +124,20 @@ export const PlaylistHeaderToolbar = ({
           </ToggleButton>
         </ToggleButtonGroup>
 
-        <Tooltip title={inspectorVisible ? 'Inspectorを閉じる' : 'Inspectorを開く'}>
-          <IconButton size="small" onClick={onInspectorToggle} aria-label="Inspector">
-            {inspectorVisible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+        <Tooltip
+          title={inspectorVisible ? 'Inspectorを閉じる' : 'Inspectorを開く'}
+        >
+          <IconButton
+            size="small"
+            onClick={onInspectorToggle}
+            aria-label="Inspector"
+            aria-pressed={inspectorVisible}
+          >
+            {inspectorVisible ? (
+              <VisibilityOff fontSize="small" />
+            ) : (
+              <Visibility fontSize="small" />
+            )}
           </IconButton>
         </Tooltip>
 
@@ -120,10 +147,11 @@ export const PlaylistHeaderToolbar = ({
           <IconButton
             size="small"
             onClick={onSaveClick}
+            aria-label="保存"
             sx={{
               color: hasUnsavedChanges ? 'warning.main' : 'text.secondary',
               '&:hover': {
-                bgcolor: alpha(theme.palette.action.hover, 0.08),
+                bgcolor: theme.palette.action.hover,
               },
             }}
           >
@@ -135,20 +163,31 @@ export const PlaylistHeaderToolbar = ({
           <IconButton
             size="small"
             onClick={onExportClick}
+            aria-label="エクスポート"
             disabled={exportDisabled}
             sx={{
               color: 'text.secondary',
-              '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) },
+              '&:hover': { bgcolor: theme.palette.action.hover },
             }}
           >
             <Outbox fontSize="small" />
           </IconButton>
         </Tooltip>
 
-        <IconButton size="small" onClick={onMenuOpen}>
-          <MoreVert fontSize="small" />
-        </IconButton>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onMenuClose}>
+        <Tooltip title="その他の操作">
+          <IconButton
+            size="small"
+            onClick={onMenuOpen}
+            aria-label="その他の操作"
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={onMenuClose}
+        >
           <MenuItem
             onClick={() => {
               onMenuClose();

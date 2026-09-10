@@ -194,7 +194,7 @@ export const VisualTimelineView = ({
         <Box
           sx={{
             flex: '0 0 auto',
-            zIndex: 5,
+            zIndex: (theme) => theme.custom.zIndex.stickyChrome,
             backgroundColor: 'background.paper',
             px: 1.5,
             pt: 0,
@@ -304,6 +304,8 @@ export const VisualTimelineView = ({
       </Box>
 
       <TimelineFooter
+        rowCount={rows.length}
+        selectedCount={selectedIds.length}
         zoomScale={zoomScale}
         canZoomOut={canZoomOut}
         canZoomIn={canZoomIn}

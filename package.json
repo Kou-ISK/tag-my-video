@@ -29,6 +29,7 @@
   "homepage": "./",
   "author": "Kou-ISK",
   "scripts": {
+    "verify": "pnpm run typecheck && pnpm run typecheck:electron && pnpm run lint && pnpm run check:architecture && pnpm run check:design-system && pnpm run check:adr && pnpm run test:run && pnpm run build && pnpm run build:storybook",
     "lint": "eslint src electron/src scripts --max-warnings=0",
     "lint:fix": "eslint src electron/src scripts --fix",
     "fix": "pnpm run lint:fix && pnpm run format",
