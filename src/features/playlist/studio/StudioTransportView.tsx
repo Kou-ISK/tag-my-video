@@ -36,18 +36,20 @@ export const StudioTransportView = (
       flexShrink: 0,
     }}
   >
-    <Slider
-      size="small"
-      aria-label="Tactics 再生位置"
-      min={props.min}
-      max={Math.max(props.min + 0.001, props.max)}
-      step={0.01}
-      value={props.time}
-      disabled={props.disabled}
-      onChange={(_, value) => {
-        if (typeof value === 'number') props.onSeek(value);
-      }}
-    />
+    {props.coachMode && (
+      <Slider
+        size="small"
+        aria-label="Paint 再生位置"
+        min={props.min}
+        max={Math.max(props.min + 0.001, props.max)}
+        step={0.01}
+        value={props.time}
+        disabled={props.disabled}
+        onChange={(_, value) => {
+          if (typeof value === 'number') props.onSeek(value);
+        }}
+      />
+    )}
     <Stack
       direction="row"
       alignItems="center"
@@ -59,7 +61,7 @@ export const StudioTransportView = (
           exclusive
           size="small"
           value={props.coachMode ? 'coach' : 'edit'}
-          aria-label="Tactics 表示モード"
+          aria-label="Paint 表示モード"
           onChange={(_, value: string | null) => {
             if (value) props.onCoachModeChange?.(value === 'coach');
           }}

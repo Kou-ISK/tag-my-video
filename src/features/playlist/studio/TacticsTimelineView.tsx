@@ -20,7 +20,7 @@ export const TacticsTimelineView = (
   return (
     <Box
       role="region"
-      aria-label="Tactics 描画タイムライン"
+      aria-label="Paint 描画タイムライン"
       sx={{
         maxHeight: 180,
         pr: 1,

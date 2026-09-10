@@ -14,7 +14,7 @@ export const StudioCanvasView = ({
     width={Math.round(width)}
     height={Math.round(height)}
     tabIndex={enabled ? 0 : -1}
-    aria-label="Tactics 描画キャンバス"
+    aria-label="Paint 描画キャンバス"
     {...handlers}
     style={{
       position: 'absolute',

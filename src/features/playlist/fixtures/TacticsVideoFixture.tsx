@@ -1,3 +1,4 @@
+import { StudioToolsView } from '../studio/StudioToolsView';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { Box } from '@mui/material';
@@ -82,6 +83,7 @@ export const TacticsVideoFixture = (): ReactElement => {
     offsetY: (size.height - height) / 2,
   };
   const editor = useStudioEditor({
+    onTogglePlayback: () => setPlaying((value) => !value),
     documentKey: 'video-fixture',
     enabled: !playing,
     ...size,
@@ -136,6 +138,16 @@ export const TacticsVideoFixture = (): ReactElement => {
   return (
     <Box sx={{ height: '100vh', minHeight: 540 }}>
       <PlaylistReviewView
+        onKeyDown={editor.inspector.onKeyDown}
+        tools={
+          true && (
+            <StudioToolsView
+              tool={editor.inspector.tool}
+              onChange={editor.inspector.onToolChange}
+              disabled={!editor.inspector.enabled}
+            />
+          )
+        }
         media={
           <Box ref={area} sx={{ position: 'absolute', inset: 0 }}>
             <video

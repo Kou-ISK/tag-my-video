@@ -295,7 +295,7 @@ docs/
 
 feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレクトリに配置する。共通controlの比較は `src/design-system/stories/Controls.stories.tsx`、開始画面は `VideoPathSelectorView.stories.tsx` が入口となる。
 
-### Playlist Tactics
+### Playlist Paint
 
 `src/features/playlist/studio/` は描画gesture/editor hook、Playlist runtime adapter、描画ツール・プロパティ・レイヤー・transport・clip Viewを配置する。`components/annotationDrawing.ts` は編集とPNG出力で共通の描画処理。`fixtures/studio.ts` はStorybookとテスト専用データ。外部依存は既存Playlist controller/gatewayに閉じ込める。
 
@@ -309,4 +309,4 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 - `src/features/playlist/studio/tacticsPreferencesGateway.ts`: 端末設定の読込検証と保存。
 - `electron/src/ipc/exportMotionOverlays.ts` / `exportChroma.ts`: 検証済みの動画描画を静止挿入前のFFmpeg filterへ変換。
 
-利用者向けの名称はTactics。`studio/` と既存内部モード値は互換性のため維持する。
+利用者向けの名称はPaint。`studio/` と既存内部モード値は互換性のため維持する。

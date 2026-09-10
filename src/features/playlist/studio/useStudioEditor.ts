@@ -19,6 +19,7 @@ import { useStudioGesture } from './useStudioGesture';
 import type { StudioContentRect, StudioGesture } from './useStudioGesture';
 
 export interface StudioEditorParams {
+  onTogglePlayback?: () => void;
   chromaKey?: ChromaKey;
   videoRef?: RefObject<HTMLVideoElement | null>;
   maxTime?: number;
@@ -105,6 +106,7 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     dashed,
     selectedId,
     onSelect: select,
+    onDrawComplete: () => setTool('select'),
   });
   const renderError = useAnnotationCanvasRendering({
     chromaKey: params.chromaKey,
@@ -155,8 +157,38 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       element.closest('input,textarea,select,[contenteditable="true"]')
     )
       return;
+    if (
+      event.code === 'Space' &&
+      params.onTogglePlayback &&
+      !(
+        element instanceof HTMLElement &&
+        element.closest('button,[role="button"]')
+      )
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      gesture.cancel();
+      params.onTogglePlayback();
+      return;
+    }
     if (!params.enabled) return;
     const command = event.metaKey || event.ctrlKey;
+    const shortcuts: Record<string, DrawingToolType> = {
+      v: 'select',
+      p: 'pen',
+      a: 'arrow',
+      r: 'rectangle',
+      o: 'circle',
+      t: 'text',
+    };
+    const nextTool = shortcuts[event.key.toLowerCase()];
+    if (!command && !event.altKey && nextTool) {
+      event.preventDefault();
+      event.stopPropagation();
+      gesture.cancel();
+      setTool(nextTool);
+      return;
+    }
     if (command && event.key.toLowerCase() === 'z') {
       event.preventDefault();
       event.stopPropagation();
@@ -174,6 +206,7 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       event.stopPropagation();
       gesture.cancel();
       select(null);
+      setTool('select');
     } else if (
       selected &&
       ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)

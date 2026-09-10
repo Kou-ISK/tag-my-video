@@ -31,7 +31,6 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { IconAction } from '../../../components/ui';
 import type { AnnotationTarget } from '../../../types/playlist/core';
 import type { StudioEditor } from './useStudioEditor';
-import { StudioToolsView } from './StudioToolsView';
 import { StudioPropertiesView } from './StudioPropertiesView';
 import { STUDIO_TOOLS } from './studioGeometry';
 
@@ -56,7 +55,7 @@ export const StudioSidebarView = (
   return (
     <Box
       component="aside"
-      aria-label="Tactics Inspector"
+      aria-label="Paint Inspector"
       onKeyDown={props.onKeyDown}
       sx={{
         width: 292,
@@ -74,7 +73,7 @@ export const StudioSidebarView = (
           alignItems="center"
           justifyContent="space-between"
         >
-          <Typography variant="subtitle2">Tactics</Typography>
+          <Typography variant="subtitle2">Paint</Typography>
           <Stack direction="row">
             <IconAction
               label="元に戻す"
@@ -120,27 +119,19 @@ export const StudioSidebarView = (
             props.onPanelChange(panel)
           }
           variant="fullWidth"
-          aria-label="Tactics 編集パネル"
+          aria-label="Paint 編集パネル"
         >
-          <Tab value="draw" label="描画" sx={{ minWidth: 0 }} />
+          <Tab value="draw" label="スタイル" sx={{ minWidth: 0 }} />
           <Tab value="motion" label="動き" sx={{ minWidth: 0 }} />
           {(props.pitch || props.chroma) && (
-            <Tab value="pitch" label="平面" sx={{ minWidth: 0 }} />
+            <Tab value="pitch" label="ピッチ" sx={{ minWidth: 0 }} />
           )}
           {props.presets && (
-            <Tab value="presets" label="保存済み" sx={{ minWidth: 0 }} />
+            <Tab value="presets" label="素材" sx={{ minWidth: 0 }} />
           )}
         </Tabs>
         {props.panel === 'draw' && (
           <>
-            <StudioToolsView
-              tool={props.tool}
-              onChange={props.onToolChange}
-              disabled={!props.enabled}
-            />
-            <Typography variant="caption" color="text.secondary">
-              ドラッグで描画。選択ツールで移動・サイズ調整できます。
-            </Typography>
             <Box
               component="fieldset"
               disabled={!props.enabled}

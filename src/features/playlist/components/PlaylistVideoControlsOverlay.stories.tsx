@@ -24,7 +24,11 @@ const meta = {
     currentTime: 12,
     sliderMin: 0,
     sliderMax: 30,
-    marks: [],
+    marks: [
+      { value: 6, label: '' },
+      { value: 18, label: '' },
+      { value: 24, label: '' },
+    ],
     isPlaying: false,
     isFrozen: false,
     autoAdvance: true,

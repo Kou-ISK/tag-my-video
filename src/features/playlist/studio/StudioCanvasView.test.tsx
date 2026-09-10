@@ -19,7 +19,7 @@ it('uses video dimensions for the drawing buffer, not the canvas default 300x150
       onLostPointerCapture={vi.fn()}
     />,
   );
-  const canvas = screen.getByLabelText('Tactics 描画キャンバス');
+  const canvas = screen.getByLabelText('Paint 描画キャンバス');
   expect(canvas).toHaveProperty('width', 1280);
   expect(canvas).toHaveProperty('height', 720);
 });

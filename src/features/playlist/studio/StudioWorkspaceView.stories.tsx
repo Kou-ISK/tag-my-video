@@ -1,3 +1,4 @@
+import { StudioToolsView } from './StudioToolsView';
 import { TacticsVideoFixture } from '../fixtures/TacticsVideoFixture';
 import { TacticsTimelineView } from './TacticsTimelineView';
 import { useLayoutEffect, useRef, useState } from 'react';
@@ -50,6 +51,7 @@ const StudioFixture = ({
     return () => observer.disconnect();
   }, []);
   const editor = useStudioEditor({
+    onTogglePlayback: () => setPlaying((value) => !value),
     documentKey: 'fixture-primary',
     enabled: !empty && !playing,
     objects: history[cursor],
@@ -71,6 +73,16 @@ const StudioFixture = ({
   return (
     <Box ref={root} sx={{ height: '100vh', minHeight: 480 }}>
       <PlaylistReviewView
+        onKeyDown={editor.inspector.onKeyDown}
+        tools={
+          !coachMode && (
+            <StudioToolsView
+              tool={editor.inspector.tool}
+              onChange={editor.inspector.onToolChange}
+              disabled={!editor.inspector.enabled}
+            />
+          )
+        }
         inspector={
           coachMode ? null : (
             <StudioSidebarView
@@ -157,7 +169,7 @@ const StudioFixture = ({
                 <circle cx="610" cy="350" r="12" />
               </g>
               <text x="40" y="55" fill="#FFFFFF" fontSize="12">
-                TACTICS · FIXTURE
+                PAINT · FIXTURE
               </text>
             </svg>
             <StudioCanvasView {...editor.canvas} />
@@ -168,7 +180,7 @@ const StudioFixture = ({
   );
 };
 const meta: Meta<typeof PlaylistReviewView> = {
-  title: 'Workspace/Playlist/Tactics',
+  title: 'Workspace/Playlist/Paint',
   component: PlaylistReviewView,
   render: () => <StudioFixture />,
 };

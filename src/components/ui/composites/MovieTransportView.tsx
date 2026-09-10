@@ -1,13 +1,6 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { Box, IconButton, Stack, Tooltip } from '@mui/material';
-import {
-  FastForward,
-  FastRewind,
-  Pause,
-  PlayArrow,
-  ChevronLeft,
-  ChevronRight,
-} from '@mui/icons-material';
+import { Pause, PlayArrow } from '@mui/icons-material';
 
 export interface MovieTransportViewProps {
   playing: boolean;
@@ -26,8 +19,8 @@ export const MovieTransportView = (
 ): ReactElement => {
   const control = (
     label: string,
-    icon: ReactNode,
     onClick: () => void,
+    outer: boolean,
   ): ReactElement => (
     <Tooltip title={label}>
       <span>
@@ -37,13 +30,30 @@ export const MovieTransportView = (
           onClick={onClick}
           size="small"
           sx={{
-            width: 30,
-            height: 32,
+            width: outer ? 30 : 26,
+            height: 30,
+            p: 0.5,
+            borderRadius: 0,
             color: 'text.secondary',
-            borderRadius: 0.5,
+            '&:hover': { bgcolor: 'action.hover' },
           }}
         >
-          {icon}
+          <Box
+            aria-hidden="true"
+            sx={{ display: 'flex', gap: '3px', alignItems: 'center' }}
+          >
+            {[0, 1, 2, 3].map((bar) => (
+              <Box
+                key={bar}
+                sx={{
+                  width: '2px',
+                  height: outer ? 17 : 21,
+                  bgcolor: 'currentColor',
+                  opacity: 0.7,
+                }}
+              />
+            ))}
+          </Box>
         </IconButton>
       </span>
     </Tooltip>
@@ -52,58 +62,41 @@ export const MovieTransportView = (
     <Stack
       direction="row"
       alignItems="center"
-      spacing={0.25}
       role="group"
       aria-label="映像再生操作"
       sx={{
-        px: 0.5,
-        py: 0.25,
         flexShrink: 0,
-        border: 1,
+        border: 2,
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: '4px',
+        overflow: 'hidden',
         background: (theme) =>
-          `linear-gradient(180deg, ${theme.custom.tokens.surface.canvas}, ${theme.custom.tokens.surface.raised})`,
+          `linear-gradient(180deg, ${theme.custom.tokens.surface.raised}, ${theme.custom.tokens.surface.canvas} 45%, ${theme.custom.tokens.surface.raised})`,
       }}
     >
       {props.outerBackward &&
-        control(
-          props.outerBackward.label,
-          <FastRewind fontSize="small" />,
-          props.outerBackward.onClick,
-        )}
-      {control(
-        props.backwardLabel,
-        <ChevronLeft fontSize="small" />,
-        props.onBackward,
-      )}
-      <Box
-        sx={{ borderLeft: 1, borderRight: 1, borderColor: 'divider', px: 0.5 }}
-      >
-        <Tooltip title={props.playing ? '一時停止' : '再生'}>
-          <span>
-            <IconButton
-              aria-label={props.playing ? '一時停止' : '再生'}
-              disabled={props.disabled}
-              onClick={props.onTogglePlay}
-              sx={{ width: 38, height: 38, color: 'primary.main' }}
-            >
-              {props.playing ? <Pause /> : <PlayArrow />}
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-      {control(
-        props.forwardLabel,
-        <ChevronRight fontSize="small" />,
-        props.onForward,
-      )}
+        control(props.outerBackward.label, props.outerBackward.onClick, true)}
+      {control(props.backwardLabel, props.onBackward, false)}
+      <Tooltip title={props.playing ? '一時停止' : '再生'}>
+        <span>
+          <IconButton
+            aria-label={props.playing ? '一時停止' : '再生'}
+            disabled={props.disabled}
+            onClick={props.onTogglePlay}
+            sx={{
+              width: 32,
+              height: 30,
+              borderRadius: 0,
+              color: 'primary.main',
+            }}
+          >
+            {props.playing ? <Pause fontSize="small" /> : <PlayArrow />}
+          </IconButton>
+        </span>
+      </Tooltip>
+      {control(props.forwardLabel, props.onForward, false)}
       {props.outerForward &&
-        control(
-          props.outerForward.label,
-          <FastForward fontSize="small" />,
-          props.outerForward.onClick,
-        )}
+        control(props.outerForward.label, props.outerForward.onClick, true)}
     </Stack>
   );
 };

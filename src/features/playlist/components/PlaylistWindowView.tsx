@@ -1,3 +1,4 @@
+import { StudioToolsView } from '../studio/StudioToolsView';
 import { PitchCalibrationOverlayView } from '../studio/PitchCalibrationOverlayView';
 import { TacticsTimelineView } from '../studio/TacticsTimelineView';
 import { PlaylistReviewView } from './PlaylistReviewView';
@@ -52,6 +53,21 @@ export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
         }}
       >
         <PlaylistReviewView
+          onKeyDown={
+            controller.studio.active
+              ? controller.studio.sidebar.onKeyDown
+              : undefined
+          }
+          tools={
+            controller.studio.active &&
+            !controller.studio.coachMode && (
+              <StudioToolsView
+                tool={controller.studio.sidebar.tool}
+                onChange={controller.studio.sidebar.onToolChange}
+                disabled={!controller.studio.sidebar.enabled}
+              />
+            )
+          }
           media={
             <PlaylistVideoArea
               {...controller.videoArea}

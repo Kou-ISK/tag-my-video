@@ -15,7 +15,7 @@ export const StudioClipsView = ({
 }: StudioClipsViewProps): ReactElement => (
   <Stack
     component="nav"
-    aria-label="Tactics クリップ"
+    aria-label="Paint クリップ"
     direction="row"
     spacing={1}
     sx={{ p: 1.5, overflowX: 'auto', height: '100%', alignItems: 'stretch' }}

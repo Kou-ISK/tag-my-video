@@ -34,14 +34,15 @@ export const VideoControllerToolbar = (
       alignItems="center"
       justifyContent="center"
       sx={{
-        width: '100%',
-        minHeight: 56,
+        width: 'min(640px, 100%)',
+        mx: 'auto',
+        borderRadius: '5px',
+        minHeight: 44,
         px: 1.5,
-        gap: 2,
+        gap: 1,
         flexWrap: 'wrap',
         bgcolor: (theme) => theme.custom.tokens.surface.work,
-        borderTop: 1,
-        borderBottom: 1,
+        border: 1,
         borderColor: 'divider',
         pointerEvents: 'auto',
       }}

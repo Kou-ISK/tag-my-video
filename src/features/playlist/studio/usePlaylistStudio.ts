@@ -59,7 +59,13 @@ export const usePlaylistStudio = (
     playback.handlePlayItem(id);
     core.setIsPlaying(false);
   };
+  const togglePlayback = (): void => {
+    if (!item || !currentItemState.currentVideoSource) return;
+    if (core.isPlaying || core.isFrozen) seek(core.currentTime);
+    else playback.handleTogglePlay();
+  };
   const editor = useStudioEditor({
+    onTogglePlayback: togglePlayback,
     chromaKey: annotations.currentAnnotation?.chromaKey?.[target],
     videoRef: secondary ? core.videoRef2 : core.videoRef,
     documentKey: `${core.loadedFilePath}:${item?.id}:${target}`,
@@ -207,10 +213,7 @@ export const usePlaylistStudio = (
       freezeDuration: annotations.currentAnnotation?.freezeDuration ?? 3,
       onFreezeDurationChange: annotations.handleFreezeDurationChange,
       onSeek: seek,
-      onTogglePlay: () => {
-        if (core.isPlaying || core.isFrozen) seek(core.currentTime);
-        else playback.handleTogglePlay();
-      },
+      onTogglePlay: togglePlayback,
     },
     clips: {
       items: history.items,

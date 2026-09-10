@@ -122,8 +122,8 @@ export const PlaylistHeaderToolbar = ({
           <ToggleButton value="sorter" aria-label="Sorter">
             Sorter
           </ToggleButton>
-          <ToggleButton value="studio" aria-label="Tactics">
-            Tactics
+          <ToggleButton value="studio" aria-label="Paint">
+            Paint
           </ToggleButton>
         </ToggleButtonGroup>
 

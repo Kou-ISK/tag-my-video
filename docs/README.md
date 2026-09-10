@@ -67,5 +67,5 @@ AI agent は次の順で参照してください。
 
 - [Playlist Studio annotation contract (ADR 0028)](adr/0028-playlist-studio-annotation-contract.md)
 
-- [Tacticsの機能範囲と公式調査](tactics.md)
+- [Paintの機能範囲と公式調査](tactics.md)
 - [Tactics motion and plane contract (ADR 0029)](adr/0029-tactics-motion-and-plane-contract.md)

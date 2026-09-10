@@ -13,6 +13,14 @@ import Polyline from '@mui/icons-material/Polyline';
 import TextFields from '@mui/icons-material/TextFields';
 import type { DrawingToolType } from '../../../types/playlist/core';
 import { STUDIO_TOOLS } from './studioGeometry';
+const shortcuts: Record<string, string> = {
+  select: 'V',
+  pen: 'P',
+  arrow: 'A',
+  rectangle: 'R',
+  circle: 'O',
+  text: 'T',
+};
 const icons = [
   NearMeOutlined,
   Flare,
@@ -41,18 +49,26 @@ export const StudioToolsView = ({
   <ToggleButtonGroup
     exclusive
     value={tool}
-    aria-label="Tactics 描画ツール"
+    aria-label="Paint 描画ツール"
     onChange={(_, value: DrawingToolType | null) => {
       if (value) onChange(value);
     }}
     sx={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateColumns: '1fr',
+      width: 44,
+      flexShrink: 0,
+      alignContent: 'start',
+      overflowY: 'auto',
+      p: 0.5,
+      bgcolor: 'background.paper',
+      borderRight: 1,
+      borderColor: 'divider',
       gap: 0.5,
       '& .MuiToggleButtonGroup-grouped': {
-        border: 1,
+        border: 0,
         borderColor: 'divider',
-        borderRadius: '6px !important',
+        borderRadius: '3px !important',
         m: 0,
       },
     }}
@@ -60,14 +76,18 @@ export const StudioToolsView = ({
     {STUDIO_TOOLS.map((entry, index) => {
       const Icon = icons[index];
       return (
-        <Tooltip key={entry.id} title={entry.label}>
+        <Tooltip
+          key={entry.id}
+          title={`${entry.label}${shortcuts[entry.id] ? ` (${shortcuts[entry.id]})` : ''}`}
+          placement="right"
+        >
           <ToggleButton
             disabled={disabled}
             value={entry.id}
             aria-label={entry.label}
             sx={{
               minWidth: 36,
-              minHeight: 52,
+              minHeight: 32,
               p: 0.5,
               flexDirection: 'column',
               gap: 0.5,
@@ -76,7 +96,6 @@ export const StudioToolsView = ({
             }}
           >
             <Icon fontSize="small" />
-            {entry.label}
           </ToggleButton>
         </Tooltip>
       );

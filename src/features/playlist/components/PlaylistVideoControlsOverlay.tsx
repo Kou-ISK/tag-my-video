@@ -91,7 +91,7 @@ export const PlaylistVideoControlsOverlay = (
         backdropFilter: 'blur(16px)',
         border: 1,
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: '5px',
         opacity: props.visible ? 1 : 0,
         transition: 'opacity 0.2s ease',
         pointerEvents: props.visible ? 'auto' : 'none',
@@ -99,6 +99,34 @@ export const PlaylistVideoControlsOverlay = (
         '&:focus-within': { opacity: 1, pointerEvents: 'auto' },
       }}
     >
+      <Box
+        sx={{ position: 'relative', height: 24, mt: 0.5 }}
+        aria-label="描画のある位置"
+      >
+        {[...new Set(props.marks.map((mark) => mark.value))]
+          .filter((time) => time >= props.sliderMin && time <= props.sliderMax)
+          .map((time) => (
+            <Tooltip key={time} title={`${time.toFixed(2)}秒 · 描画へ移動`}>
+              <IconButton
+                aria-label={`${time.toFixed(2)}秒の描画へ移動`}
+                onClick={() => seek(time)}
+                sx={{
+                  position: 'absolute',
+                  left: `${((time - props.sliderMin) / Math.max(0.001, props.sliderMax - props.sliderMin)) * 100}%`,
+                  transform: 'translateX(-50%)',
+                  p: 0,
+                  width: 24,
+                  height: 24,
+                  minWidth: 24,
+                  minHeight: 24,
+                  color: 'primary.main',
+                }}
+              >
+                <Brush sx={{ fontSize: 12 }} />
+              </IconButton>
+            </Tooltip>
+          ))}
+      </Box>
       <Slider
         aria-label="映像の再生位置"
         size="small"
@@ -108,7 +136,7 @@ export const PlaylistVideoControlsOverlay = (
         step={0.01}
         onChange={props.onSeek}
         onChangeCommitted={props.onSeekCommitted}
-        marks={props.marks}
+        marks={props.marks.map((mark) => ({ value: mark.value }))}
         sx={{ height: 2, py: 1, '& .MuiSlider-thumb': { width: 8, height: 8 } }}
       />
       <Stack
@@ -118,7 +146,7 @@ export const PlaylistVideoControlsOverlay = (
         spacing={1}
         sx={{ flexWrap: 'wrap', rowGap: 1 }}
       >
-        <Stack direction="row" sx={{ flex: 1 }}>
+        <Stack direction="row" alignItems="center" sx={{ flex: 1 }}>
           {action(
             props.loopPlaylist
               ? PLAYLIST_CONTROL_LABELS.loop.on
@@ -135,6 +163,13 @@ export const PlaylistVideoControlsOverlay = (
             props.onToggleAutoAdvance,
             props.autoAdvance,
           )}
+          <Typography
+            variant="technical"
+            color="text.secondary"
+            sx={{ ml: 0.5, whiteSpace: 'nowrap', fontSize: 10 }}
+          >
+            {props.currentTime.toFixed(2)} s
+          </Typography>
         </Stack>
         <MovieTransportView
           playing={props.isPlaying && !props.isFrozen}
@@ -191,11 +226,6 @@ export const PlaylistVideoControlsOverlay = (
           )}
         </Stack>
       </Stack>
-      <Box sx={{ textAlign: 'center', mt: 0.5 }}>
-        <Typography variant="technical" color="text.secondary">
-          {props.currentTime.toFixed(2)} / {props.sliderMax.toFixed(2)}
-        </Typography>
-      </Box>
     </Paper>
   );
 };

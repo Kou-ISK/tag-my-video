@@ -41,6 +41,7 @@ interface Params {
   target: AnnotationTarget;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onDrawComplete?: () => void;
   onCommit: (objects: DrawingObject[]) => void;
 }
 interface Gesture {
@@ -282,6 +283,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
           ),
     );
     params.onSelect(current.latest.id);
+    if (current.kind === 'draw') params.onDrawComplete?.();
   };
   const cancel = (): void => {
     gesture.current = null;
