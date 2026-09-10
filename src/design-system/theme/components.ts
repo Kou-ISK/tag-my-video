@@ -181,10 +181,31 @@ export const buildComponents = (
     },
   },
   MuiMenuItem: {
+    defaultProps: {
+      onMouseEnter: (event) =>
+        event.currentTarget.focus({ preventScroll: true }),
+    },
     styleOverrides: {
       root: {
         fontSize: '0.8125rem',
-        minHeight: 34,
+        minHeight: 30,
+        padding: '4px 10px',
+        lineHeight: 1.4,
+        '& .MuiListItemText-primary': {
+          fontSize: 'inherit',
+          fontWeight: 400,
+          lineHeight: 'inherit',
+        },
+        '& .MuiListItemIcon-root': {
+          minWidth: 28,
+          color: 'inherit',
+          opacity: 0.8,
+        },
+        '& .MuiSvgIcon-root': { fontSize: 17 },
+        '&.Mui-focusVisible, &:hover': {
+          backgroundColor: tokens.interactive.primary,
+          color: tokens.content.inverse,
+        },
         borderRadius: primitiveShape.radiusSm,
         marginInline: 4,
       },
@@ -210,9 +231,14 @@ export const buildComponents = (
     styleOverrides: { root: { borderColor: tokens.border.subtle } },
   },
   MuiMenu: {
+    defaultProps: { transitionDuration: 120 },
     styleOverrides: {
+      list: { paddingBlock: 5, '& .MuiDivider-root': { margin: '5px 10px' } },
       paper: {
         backgroundColor: tokens.surface.overlay,
+        backgroundImage: 'none',
+        borderRadius: primitiveShape.radiusMd,
+        color: tokens.content.primary,
         border: `1px solid ${tokens.border.subtle}`,
         boxShadow: elevationTokens.overlay,
         zIndex: zIndexTokens.overlay,

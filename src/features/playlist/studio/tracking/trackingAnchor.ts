@@ -1,16 +1,16 @@
 import type { GrayFrame, TrackPoint } from './templateTracker';
 /** 芝など無地の中心に固執せず、対象の近くにある輪郭・模様を初期点とする。 */
-export const findTrackingAnchor = (
+export const findTrackingAnchors = (
   frame: GrayFrame,
   center: TrackPoint,
   radius: number,
   preferAbove: boolean,
-): TrackPoint => {
-  let best = center;
-  let bestScore = 0;
+): TrackPoint[] => {
+  const candidates: Array<TrackPoint & { score: number }> = [];
   const span = Math.max(8, Math.min(40, radius));
-  const top = preferAbove ? center.y - span * 2 : center.y - span;
-  const bottom = preferAbove ? center.y : center.y + span;
+  const top = preferAbove ? center.y - span * 4 : center.y - span;
+  const bottom = preferAbove ? center.y - span : center.y + span;
+  const focusY = preferAbove ? center.y - span * 3 : center.y;
   for (
     let y = Math.max(9, Math.round(top));
     y < Math.min(frame.height - 9, bottom);
@@ -36,13 +36,20 @@ export const findTrackingAnchor = (
         }
       // 最小固有値で一本の白線より二方向の特徴を優先する。
       const corner = (xx + yy - Math.sqrt((xx - yy) ** 2 + 4 * xy * xy)) / 2;
-      const score =
-        corner / (1 + Math.hypot(x - center.x, y - center.y) / span);
-      if (score > bestScore) {
-        bestScore = score;
-        best = { x, y };
-      }
+      const score = corner / (1 + Math.hypot(x - center.x, y - focusY) / span);
+      if (score > 100) candidates.push({ x, y, score });
     }
   }
-  return best;
+  candidates.sort((a, b) => b.score - a.score);
+  const points: TrackPoint[] = [];
+  for (const point of candidates) {
+    if (
+      points.every(
+        (other) => Math.hypot(other.x - point.x, other.y - point.y) >= 5,
+      )
+    )
+      points.push({ x: point.x, y: point.y });
+    if (points.length >= 10) break;
+  }
+  return points;
 };

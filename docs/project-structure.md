@@ -315,4 +315,6 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 
 `src/shared/hooks/useVideoWindowAspect.ts` は映像のメタデータと表示領域をOSのウィンドウ寸法へ接続する共通Hook。描画専用Viewは寸法制約やIPCを持たない。
 
-`StudioTimeRulerView` は目盛りとネイティブシーク入力のみを描画し、TacticsTimelineViewがレイヤーと共通再生線へ合成する。
+`useStudioRulerInput` が連続入力のフレーム単位の集約を担当する。`StudioTimeRulerView` は目盛りとネイティブシーク入力のみを描画し、TacticsTimelineViewがレイヤーと共通再生線へ合成する。
+
+Paint trackingのfeatureTrackerは複数点の往復照合と変位の合意、trackingAnchorは初期点/再探索、trackAnnotationはフレーム読込とキーフレーム出力を担当する。PlaylistはuseVideoWindowAspectを利用しない。

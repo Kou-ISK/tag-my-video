@@ -14,7 +14,13 @@ vi.mock('./videoFrameReader', () => ({
     dispose: mock.dispose,
   }),
 }));
-vi.mock('./templateTracker', () => ({ matchTemplate: mock.match }));
+vi.mock('./featureTracker', () => ({ trackFeatures: mock.match }));
+vi.mock('./trackingAnchor', () => ({
+  findTrackingAnchors: (_frame: unknown, center: { x: number; y: number }) => [
+    center,
+    { x: center.x + 5, y: center.y },
+  ],
+}));
 const object: DrawingObject = {
   id: 'tracked',
   type: 'rectangle',
@@ -41,9 +47,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mock.read.mockResolvedValue({});
   mock.match.mockImplementation(
-    (_frame: unknown, at: { x: number; y: number }) => ({
-      x: at.x + 2,
-      y: at.y,
+    (_frame: unknown, _next: unknown, points: { x: number; y: number }[]) => ({
+      points: points.map((point) => ({ x: point.x + 2 / 3, y: point.y })),
+      dx: 2 / 3,
+      dy: 0,
       confidence: 0.99,
       reliable: true,
     }),
@@ -60,13 +67,13 @@ describe('resumable tracking', () => {
       12,
     );
     expect(mock.read.mock.calls[0][0]).toBe(12);
-    expect(mock.match.mock.calls[0][1]).toEqual({ x: 94, y: 75 });
+    expect(mock.match.mock.calls[0][2][0]).toEqual({ x: 94, y: 75 });
     expect(result.object.motion?.keyframes.slice(0, 3)).toEqual(
       object.motion?.keyframes.slice(0, 3),
     );
     expect(result.object.motion?.keyframes.at(-1)).toEqual({
       time: 4,
-      x: 82,
+      x: expect.closeTo(82, 6),
       y: 3,
     });
     expect(result.trackedDuration).toBe(2);
@@ -76,8 +83,9 @@ describe('resumable tracking', () => {
   });
   it('does not overwrite the document when no reliable step is available', async () => {
     mock.match.mockReturnValue({
-      x: 0,
-      y: 0,
+      points: [],
+      dx: 0,
+      dy: 0,
       confidence: 0.1,
       reliable: false,
     });
@@ -90,7 +98,7 @@ describe('resumable tracking', () => {
         () => {},
         12,
       ),
-    ).rejects.toThrow('対象を識別できませんでした');
+    ).rejects.toThrow('追尾に必要な特徴が不足しています');
     expect(mock.dispose).toHaveBeenCalledOnce();
   });
 });

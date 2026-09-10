@@ -30,9 +30,8 @@ it('excludes the measured chrome, deduplicates resize events and releases the co
     new DOMRect(0, 0, 640, 360),
   );
   const ref = { current: root };
-  const { unmount, rerender } = renderHook(
-    ({ fraction }) => useVideoWindowAspect(ref, 'single', 16 / 9, fraction),
-    { initialProps: { fraction: 1 } },
+  const { unmount } = renderHook(() =>
+    useVideoWindowAspect(ref, 'single', 16 / 9),
   );
   act(() => vi.advanceTimersByTime(110));
   expect(update).toHaveBeenCalledExactlyOnceWith({
@@ -45,13 +44,6 @@ it('excludes the measured chrome, deduplicates resize events and releases the co
     vi.advanceTimersByTime(110);
   });
   expect(update).toHaveBeenCalledTimes(1);
-  rerender({ fraction: 0.5 });
-  act(() => vi.advanceTimersByTime(110));
-  expect(update).toHaveBeenLastCalledWith({
-    aspectRatio: 8 / 9,
-    width: innerWidth - 640,
-    height: innerHeight - 720,
-  });
   unmount();
   expect(update).toHaveBeenLastCalledWith(null);
   Reflect.deleteProperty(window, 'electronAPI');

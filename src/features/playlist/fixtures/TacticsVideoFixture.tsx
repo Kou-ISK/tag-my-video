@@ -53,7 +53,7 @@ export const TacticsVideoFixture = (): ReactElement => {
     setCursor(cursor + 1);
   };
   const seek = (next: number): void => {
-    setPlaying(false);
+    if (playing) setPlaying(false);
     setTime(next);
     if (video.current) video.current.currentTime = next;
   };

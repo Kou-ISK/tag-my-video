@@ -7,7 +7,6 @@ export const useVideoWindowAspect = (
   rootRef: RefObject<HTMLElement | null>,
   layoutKey: string,
   ratio?: number,
-  heightFraction = 1,
 ): void => {
   useEffect(() => {
     const root = rootRef.current;
@@ -47,12 +46,9 @@ export const useVideoWindowAspect = (
         if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) return;
         const rect = media.getBoundingClientRect();
         const value = {
-          aspectRatio: aspectRatio * heightFraction,
+          aspectRatio,
           width: Math.max(0, Math.round(innerWidth - rect.width)),
-          height: Math.max(
-            0,
-            Math.round(innerHeight - rect.height / heightFraction),
-          ),
+          height: Math.max(0, Math.round(innerHeight - rect.height)),
         };
         const key = JSON.stringify(value);
         if (key !== previous) {
@@ -75,5 +71,5 @@ export const useVideoWindowAspect = (
       window.removeEventListener('resize', measure);
       update(null);
     };
-  }, [rootRef, layoutKey, ratio, heightFraction]);
+  }, [rootRef, layoutKey, ratio]);
 };

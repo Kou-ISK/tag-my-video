@@ -52,7 +52,7 @@ export const usePlaylistStudio = (
     [annotations.currentAnnotation, target],
   );
   const seek = (time: number): void => {
-    core.setIsPlaying(false);
+    if (core.isPlaying) core.setIsPlaying(false);
     playback.handleSeek(new Event('studio-seek'), time);
   };
   const selectClip = (id: string): void => {

@@ -68,7 +68,7 @@ export const openVideoFrameReader = async (
     dispose();
     throw error;
   }
-  const width = Math.min(640, video.videoWidth);
+  const width = Math.min(1280, video.videoWidth);
   const height = Math.round((width * video.videoHeight) / video.videoWidth);
   const canvas = document.createElement('canvas');
   canvas.width = width;

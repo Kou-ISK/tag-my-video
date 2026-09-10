@@ -23,7 +23,6 @@ export const PlaylistReviewView = ({
       sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}
     >
       <Box
-        data-video-aspect-surface
         sx={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}
       >
         {media}

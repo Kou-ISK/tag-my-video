@@ -1,4 +1,4 @@
-import { findTrackingAnchor } from './trackingAnchor';
+import { findTrackingAnchors } from './trackingAnchor';
 import {
   annotationAtTime,
   annotationOffsetAt,
@@ -9,7 +9,7 @@ import type {
   DrawingObject,
 } from '../../../../types/playlist/core';
 import { getObjectBounds } from '../../components/annotationCanvasUtils';
-import { matchTemplate } from './templateTracker';
+import { trackFeatures } from './featureTracker';
 import { openVideoFrameReader } from './videoFrameReader';
 export interface TrackingResult {
   object: DrawingObject;
@@ -36,16 +36,21 @@ export const trackAnnotation = async (
     const scaleY = reader.height / (object.baseHeight ?? reader.height);
     const center = {
       x: Math.round(((bounds.minX + bounds.maxX) / 2) * scaleX),
-      y: Math.round(((bounds.minY + bounds.maxY) / 2) * scaleY),
+      y: Math.round(
+        (bounds.minY +
+          (bounds.maxY - bounds.minY) *
+            (bounds.maxY - bounds.minY > (bounds.maxX - bounds.minX) * 1.3
+              ? 0.3
+              : 0.5)) *
+          scaleY,
+      ),
     };
     let frame = await reader.read(start);
-    const origin = findTrackingAnchor(
-      frame,
-      center,
-      Math.max(8, ((bounds.maxX - bounds.minX) * scaleX) / 2),
-      ['disc', 'ring', 'beam'].includes(object.type),
-    );
-    let at = origin;
+    const radius = Math.max(8, ((bounds.maxX - bounds.minX) * scaleX) / 2);
+    const preferAbove = ['disc', 'ring'].includes(object.type);
+    let points = findTrackingAnchors(frame, center, radius, preferAbove);
+    let travel = { x: 0, y: 0 };
+    let prediction = { x: 0, y: 0 };
     const duration = Math.min(
       20,
       endTime - start,
@@ -54,22 +59,40 @@ export const trackAnnotation = async (
     const keys: DrawingKeyframe[] = [{ time: localStart, ...startingOffset }];
     let lost = false;
     let confidence = 1;
-    const steps = Math.ceil(duration * 10);
+    const steps = Math.ceil(duration * 30);
     for (let step = 1; step <= steps; step++) {
-      const time = Math.min(duration, step / 10);
+      const time = Math.min(duration, step / 30);
       const next = await reader.read(start + time);
-      const match = matchTemplate(frame, at, next);
+      let match = trackFeatures(frame, next, points, prediction);
+      if (!match.reliable) {
+        points = findTrackingAnchors(
+          frame,
+          { x: center.x + travel.x, y: center.y + travel.y },
+          radius,
+          preferAbove,
+        );
+        match = trackFeatures(frame, next, points, prediction);
+      }
       confidence = Math.min(confidence, match.confidence);
       if (!match.reliable) {
         lost = true;
         break;
       }
+      travel = { x: travel.x + match.dx, y: travel.y + match.dy };
+      if (match.dx || match.dy) prediction = { x: match.dx, y: match.dy };
       keys.push({
         time: localStart + time,
-        x: startingOffset.x + (match.x - origin.x) / scaleX,
-        y: startingOffset.y + (match.y - origin.y) / scaleY,
+        x: startingOffset.x + travel.x / scaleX,
+        y: startingOffset.y + travel.y / scaleY,
       });
-      at = match;
+      points = match.points;
+      if (points.length < 4)
+        points = findTrackingAnchors(
+          next,
+          { x: center.x + travel.x, y: center.y + travel.y },
+          radius,
+          preferAbove,
+        );
       frame = next;
       onProgress(step / steps);
       // キャンセルと描画のためイベントループへ制御を返す。
@@ -78,7 +101,7 @@ export const trackAnnotation = async (
     }
     if (keys.length < 2)
       throw new Error(
-        '対象を識別できませんでした。図形の中央を選手の模様や輪郭へ合わせて再試行してください。',
+        '追尾に必要な特徴が不足しています。選手の上半身を矩形で囲み、対象が隠れていない少し前の時刻から再試行してください。',
       );
     const prefix =
       object.motion?.keyframes.filter((key) => key.time < localStart) ?? [];

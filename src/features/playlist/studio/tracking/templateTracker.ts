@@ -11,44 +11,61 @@ export interface TrackMatch extends TrackPoint {
   confidence: number;
   reliable: boolean;
 }
-const RADIUS = 8;
-const vector = (frame: GrayFrame, x: number, y: number): number[] => {
+const vector = (
+  frame: GrayFrame,
+  x: number,
+  y: number,
+  radius: number,
+): number[] => {
   const values: number[] = [];
-  for (let dy = -RADIUS; dy <= RADIUS; dy += 2)
-    for (let dx = -RADIUS; dx <= RADIUS; dx += 2)
+  const stride = radius >= 8 ? 2 : 1;
+  for (let dy = -radius; dy <= radius; dy += stride)
+    for (let dx = -radius; dx <= radius; dx += stride)
       values.push(
         frame.pixels[(Math.round(y) + dy) * frame.width + Math.round(x) + dx],
       );
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
   return values.map((value) => value - mean);
 };
-const inside = (frame: GrayFrame, x: number, y: number): boolean =>
-  x >= RADIUS &&
-  y >= RADIUS &&
-  x < frame.width - RADIUS &&
-  y < frame.height - RADIUS;
+const inside = (
+  frame: GrayFrame,
+  x: number,
+  y: number,
+  radius: number,
+): boolean =>
+  x >= radius &&
+  y >= radius &&
+  x < frame.width - radius &&
+  y < frame.height - radius;
 /** 画像の局所パターンを正規化相互相関で追跡する。低コントラスト/曖昧な一致は拒否。 */
 export const matchTemplate = (
   reference: GrayFrame,
   at: TrackPoint,
   next: GrayFrame,
   searchRadius = 24,
+  patchRadius = 8,
+  searchCenter: TrackPoint = at,
+  minimumConfidence = 0.72,
 ): TrackMatch => {
-  if (!inside(reference, at.x, at.y))
+  if (!inside(reference, at.x, at.y, patchRadius))
     return { ...at, confidence: 0, reliable: false };
-  const template = vector(reference, at.x, at.y);
+  const template = vector(reference, at.x, at.y, patchRadius);
   const energy = template.reduce((sum, value) => sum + value * value, 0);
-  if (energy / template.length < 64)
+  if (energy / template.length < 25)
     return { ...at, confidence: 0, reliable: false };
   const candidates: TrackMatch[] = [];
-  for (let y = Math.round(at.y - searchRadius); y <= at.y + searchRadius; y++)
+  for (
+    let y = Math.round(searchCenter.y - searchRadius);
+    y <= searchCenter.y + searchRadius;
+    y++
+  )
     for (
-      let x = Math.round(at.x - searchRadius);
-      x <= at.x + searchRadius;
+      let x = Math.round(searchCenter.x - searchRadius);
+      x <= searchCenter.x + searchRadius;
       x++
     ) {
-      if (!inside(next, x, y)) continue;
-      const candidate = vector(next, x, y);
+      if (!inside(next, x, y, patchRadius)) continue;
+      const candidate = vector(next, x, y, patchRadius);
       let cross = 0;
       let norm = 0;
       for (let i = 0; i < template.length; i++) {
@@ -67,7 +84,7 @@ export const matchTemplate = (
   return {
     ...best,
     reliable:
-      best.confidence >= 0.72 &&
+      best.confidence >= minimumConfidence &&
       (!rival || best.confidence - rival.confidence > 0.04),
   };
 };

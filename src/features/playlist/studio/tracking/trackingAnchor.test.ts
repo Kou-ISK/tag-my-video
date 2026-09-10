@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findTrackingAnchor } from './trackingAnchor';
+import { findTrackingAnchors } from './trackingAnchor';
 import { matchTemplate } from './templateTracker';
 import type { GrayFrame } from './templateTracker';
 const frame = (dx = 0): GrayFrame => {
@@ -16,7 +16,7 @@ describe('tracking anchor', () => {
     expect(matchTemplate(start, { x: 54, y: 78 }, frame(7)).reliable).toBe(
       false,
     );
-    const point = findTrackingAnchor(start, { x: 54, y: 78 }, 22, true);
+    const point = findTrackingAnchors(start, { x: 54, y: 78 }, 22, true)[0];
     expect(point.y).toBeLessThan(60);
     expect(matchTemplate(start, point, frame(7))).toMatchObject({
       x: point.x + 7,
@@ -26,7 +26,6 @@ describe('tracking anchor', () => {
   });
   it('does not fabricate a track on blank video or outside the image', () => {
     const blank = { width: 120, height: 100, pixels: new Uint8Array(12000) };
-    const point = findTrackingAnchor(blank, { x: 2, y: 2 }, 22, true);
-    expect(matchTemplate(blank, point, blank).reliable).toBe(false);
+    expect(findTrackingAnchors(blank, { x: 2, y: 2 }, 22, true)).toEqual([]);
   });
 });

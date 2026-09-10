@@ -46,6 +46,12 @@ export const useAnnotationCanvasRendering = ({
 }: UseAnnotationCanvasRenderingParams): string => {
   const scratch = useRef<HTMLCanvasElement | null>(null);
   const [renderError, setRenderError] = useState('');
+  const lastError = useRef('');
+  const reportError = useCallback((message: string): void => {
+    if (lastError.current === message) return;
+    lastError.current = message;
+    setRenderError(message);
+  }, []);
   const renderAllObjects = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -95,14 +101,14 @@ export const useAnnotationCanvasRendering = ({
           displayTarget,
           scratch.current,
         );
-        setRenderError('');
+        reportError('');
       } catch {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setRenderError(
+        reportError(
           '映像の色を読み込めないため、芝色処理を適用できません。平面パネルで解除してください。',
         );
       }
-    } else setRenderError('');
+    } else reportError('');
     if (!selectedObjectId) return;
     const selectedObject = displayObjects.find(
       (object) => object.id === selectedObjectId,
@@ -139,6 +145,7 @@ export const useAnnotationCanvasRendering = ({
     }
     ctx.restore();
   }, [
+    reportError,
     chromaKey,
     videoRef,
     canvasRef,
