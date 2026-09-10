@@ -15,14 +15,14 @@ export const StudioClipsView = ({
 }: StudioClipsViewProps): ReactElement => (
   <Stack
     component="nav"
-    aria-label="Studio クリップ"
+    aria-label="Tactics クリップ"
     direction="row"
     spacing={1}
     sx={{ p: 1.5, overflowX: 'auto', height: '100%', alignItems: 'stretch' }}
   >
     {items.length === 0 ? (
       <Typography color="text.secondary" variant="body2">
-        プレイリストにクリップを追加すると、Studioで映像へ描画できます。
+        プレイリストにクリップを追加すると、Tacticsで映像へ描画できます。
       </Typography>
     ) : (
       items.map((item, index) => (

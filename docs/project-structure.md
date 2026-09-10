@@ -4,16 +4,16 @@
 
 ## Top-Level Layout
 
-| Path | Role | Placement rule |
-| --- | --- | --- |
-| `.github/` | GitHub workflows / templates / AI instructions | GitHub上の運用・CI・Copilot指示 |
-| `docs/` | user / developer / architecture docs | 仕様、ADR、配布・運用手順。新規docsは`docs/README.md`へ掲載 |
-| `electron/` | Electron main / preload | Node/Electron API、IPC、BrowserWindow、local process管理 |
-| `public/` | static bundled assets | icon、static template、同梱assets。大型modelはgit管理しない |
-| `resources/` | optional packaged runtime assets | release/local build時に注入するruntime asset。model binaryはgit管理しない |
-| `scripts/` | repo-level automation | architecture/preload/ADR check、report、E2E |
-| `src/` | React renderer | UI、feature、shared domain、shared type。Electron direct import禁止 |
-| root | package/config/community entry | package.json、TS/Vite/ESLint、README、LICENSE等 |
+| Path         | Role                                           | Placement rule                                                            |
+| ------------ | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `.github/`   | GitHub workflows / templates / AI instructions | GitHub上の運用・CI・Copilot指示                                           |
+| `docs/`      | user / developer / architecture docs           | 仕様、ADR、配布・運用手順。新規docsは`docs/README.md`へ掲載               |
+| `electron/`  | Electron main / preload                        | Node/Electron API、IPC、BrowserWindow、local process管理                  |
+| `public/`    | static bundled assets                          | icon、static template、同梱assets。大型modelはgit管理しない               |
+| `resources/` | optional packaged runtime assets               | release/local build時に注入するruntime asset。model binaryはgit管理しない |
+| `scripts/`   | repo-level automation                          | architecture/preload/ADR check、report、E2E                               |
+| `src/`       | React renderer                                 | UI、feature、shared domain、shared type。Electron direct import禁止       |
+| root         | package/config/community entry                 | package.json、TS/Vite/ESLint、README、LICENSE等                           |
 
 Model training / evaluation / dataset preparationはSporTagLytics repositoryの責務ではありません。別private R&D repositoryで管理し、public appにはmodel packのconsumer contractだけを置きます。
 
@@ -33,18 +33,18 @@ resources/
 
 依存方向は `pages -> features -> shared` です。
 
-| Path | Role |
-| --- | --- |
-| `src/pages/` | routing / entry composition only |
+| Path                      | Role                                                             |
+| ------------------------- | ---------------------------------------------------------------- |
+| `src/pages/`              | routing / entry composition only                                 |
 | `src/features/<feature>/` | feature固有 Screen / Controller / Hook / View / Gateway / domain |
-| `src/components/ui/` | feature非依存 shared UI primitives / composites / patterns |
-| `src/design-system/` | foundation / semantic token、MUI theme、Storybook token story |
-| `src/components/` | legacy/shared UI |
-| `src/hooks/` | truly shared hooks |
-| `src/contexts/` | app-wide context only |
-| `src/shared/` | shared domain/service/contract |
-| `src/types/` | shared type contracts |
-| `src/report/` | report DTO / renderer-independent report contracts |
+| `src/components/ui/`      | feature非依存 shared UI primitives / composites / patterns       |
+| `src/design-system/`      | foundation / semantic token、MUI theme、Storybook token story    |
+| `src/components/`         | legacy/shared UI                                                 |
+| `src/hooks/`              | truly shared hooks                                               |
+| `src/contexts/`           | app-wide context only                                            |
+| `src/shared/`             | shared domain/service/contract                                   |
+| `src/types/`              | shared type contracts                                            |
+| `src/report/`             | report DTO / renderer-independent report contracts               |
 
 ### Feature placement rule
 
@@ -212,12 +212,12 @@ src/features/videoPlayer/app/hooks/
 
 Window-specific BrowserWindow / IPC contractはmainとshared typeを分けます。
 
-| Window | Main | Shared IPC contract |
-| --- | --- | --- |
-| Analysis | `electron/src/analysisWindow.ts` | `src/types/ipc/analysisWindow.ts` |
-| Coding Panel | `electron/src/codingPanelWindow.ts` | `src/types/ipc/codingPanelWindow.ts` |
-| Timeline | `electron/src/timelineWindow.ts` | `src/types/ipc/timelineWindow.ts` |
-| Playlist | `electron/src/playlistWindow.ts` | playlist IPC contracts |
+| Window          | Main                                   | Shared IPC contract                     |
+| --------------- | -------------------------------------- | --------------------------------------- |
+| Analysis        | `electron/src/analysisWindow.ts`       | `src/types/ipc/analysisWindow.ts`       |
+| Coding Panel    | `electron/src/codingPanelWindow.ts`    | `src/types/ipc/codingPanelWindow.ts`    |
+| Timeline        | `electron/src/timelineWindow.ts`       | `src/types/ipc/timelineWindow.ts`       |
+| Playlist        | `electron/src/playlistWindow.ts`       | playlist IPC contracts                  |
 | Export Progress | `electron/src/exportProgressWindow.ts` | `src/types/ipc/exportProgressWindow.ts` |
 
 ## Scripts
@@ -295,10 +295,18 @@ docs/
 
 feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレクトリに配置する。共通controlの比較は `src/design-system/stories/Controls.stories.tsx`、開始画面は `VideoPathSelectorView.stories.tsx` が入口となる。
 
-### Playlist Studio
+### Playlist Tactics
 
 `src/features/playlist/studio/` は描画gesture/editor hook、Playlist runtime adapter、描画ツール・プロパティ・レイヤー・transport・clip Viewを配置する。`components/annotationDrawing.ts` は編集とPNG出力で共通の描画処理。`fixtures/studio.ts` はStorybookとテスト専用データ。外部依存は既存Playlist controller/gatewayに閉じ込める。
 
 - `src/components/ui/composites/MovieTransportView.tsx`: 映像featureに依存しないジョグ式再生操作View。
 - `src/features/playlist/components/tacticalDrawing.ts`: 編集とPNG出力が共用する戦術図形renderer。
 - `src/features/playlist/studio/StudioCoachView.tsx`: Coach表示用の描画操作View。
+
+- `src/shared/tactics/`: 時間補間、キー簡略化、平面射影、芝色処理、注釈検証の純粋計算。
+- `src/features/playlist/studio/tracking/`: 動画フレーム読取・テンプレート追跡・結果適用hook。
+- `src/features/playlist/studio/Tactics*View.tsx` / `PitchCalibration*View.tsx`: props-onlyの区間・追跡・較正・プリセットUI。
+- `src/features/playlist/studio/tacticsPreferencesGateway.ts`: 端末設定の読込検証と保存。
+- `electron/src/ipc/exportMotionOverlays.ts` / `exportChroma.ts`: 検証済みの動画描画を静止挿入前のFFmpeg filterへ変換。
+
+利用者向けの名称はTactics。`studio/` と既存内部モード値は互換性のため維持する。

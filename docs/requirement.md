@@ -15,15 +15,15 @@
 
 ### 1.3 技術基準
 
-| Category | Technology |
-| --- | --- |
-| Frontend | React 19 |
-| Language | TypeScript 5.4 strict |
-| Desktop | Electron 43 |
-| UI | Material UI 7 |
-| Video | Video.js 8 |
-| Package manager | pnpm 9 |
-| Build | Vite |
+| Category        | Technology            |
+| --------------- | --------------------- |
+| Frontend        | React 19              |
+| Language        | TypeScript 5.4 strict |
+| Desktop         | Electron 43           |
+| UI              | Material UI 7         |
+| Video           | Video.js 8            |
+| Package manager | pnpm 9                |
+| Build           | Vite                  |
 
 実装規約の正本は `AGENTS.md` とする。
 
@@ -218,12 +218,12 @@ Product UIへ出るmodel/event classは最低runtime基準を満たすものだ�
 
 Minimum per class:
 
-| Metric | Requirement |
-| --- | ---: |
-| Recall | >= 0.95 |
-| unseen evaluation matches | >= 5 |
-| Precision | 0〜1の有限値として記録 |
-| confidence threshold | 0〜1の有限値 |
+| Metric                    |            Requirement |
+| ------------------------- | ---------------------: |
+| Recall                    |                >= 0.95 |
+| unseen evaluation matches |                   >= 5 |
+| Precision                 | 0〜1の有限値として記録 |
+| confidence threshold      |           0〜1の有限値 |
 
 Precisionの固定最低値や秒単位の厳密なevent onsetをruntime gateにしない。
 
@@ -457,6 +457,6 @@ Pull request CIは `develop` を含む通常統合先で実行する。Model R&D
 - [ADR 0021 Detached Timeline and Playback Authority](adr/0021-detached-timeline-playback-authority.md)
 - [ADR 0023 External Rugby Event Model R&D Boundary](adr/0023-external-rugby-event-model-rd-boundary.md)
 
-### Studio 戦術グラフィック
+### Tactics 戦術グラフィック
 
-手動のビーム・ディスク・2〜11点の選手リンク・曲線矢印、選手名/背番号、Coach表示を提供する。図形はアングル・時刻・基準解像度を維持してPlaylistに保存し、既存静止画挿入方式で動画へ書き出す。自動追跡・自動較正・3D投影は含まない。
+手動のビーム・ディスク・2〜11点の選手リンク・曲線矢印、選手名/背番号、Coach表示を提供する。図形はアングル・時刻・基準解像度を維持してPlaylistに保存し、静止挿入と動画上の移動描画の両方を書き出す。位置キーフレーム、映像パターン追跡、手動4点較正による平面投影、芝色抽出、描画プリセットを提供する。選手の意味的識別・自動ピッチ較正・完全な3D投影は未対応。詳細は[Tactics](tactics.md)。

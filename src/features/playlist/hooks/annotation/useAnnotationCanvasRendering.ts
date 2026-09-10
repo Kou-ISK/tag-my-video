@@ -1,4 +1,10 @@
-import { useCallback, useEffect } from 'react';
+import {
+  annotationAtTime,
+  isAnnotationVisible,
+} from '../../../../shared/tactics/annotationMotion';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { applyAnnotationChroma } from './applyAnnotationChroma';
+import type { ChromaKey } from '../../../../shared/tactics/chromaKey';
 import type { DrawingObject } from '../../../../types/playlist/core';
 import {
   getObjectBounds,
@@ -7,6 +13,8 @@ import {
 } from '../../components/annotationCanvasUtils';
 
 interface UseAnnotationCanvasRenderingParams {
+  chromaKey?: ChromaKey;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   objects: DrawingObject[];
   currentObject: DrawingObject | null;
@@ -24,6 +32,8 @@ interface UseAnnotationCanvasRenderingParams {
 }
 
 export const useAnnotationCanvasRendering = ({
+  chromaKey,
+  videoRef,
   canvasRef,
   objects,
   currentObject,
@@ -33,7 +43,9 @@ export const useAnnotationCanvasRendering = ({
   height,
   selectedObjectId,
   timestampTolerance,
-}: UseAnnotationCanvasRenderingParams) => {
+}: UseAnnotationCanvasRenderingParams): string => {
+  const scratch = useRef<HTMLCanvasElement | null>(null);
+  const [renderError, setRenderError] = useState('');
   const renderAllObjects = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -51,14 +63,18 @@ export const useAnnotationCanvasRendering = ({
 
     const filteredObjects =
       typeof currentTime === 'number'
-        ? objects.filter(
-            (object) =>
-              Math.abs(object.timestamp - currentTime) <= timestampTolerance,
+        ? objects.filter((object) =>
+            isAnnotationVisible(object, currentTime, timestampTolerance),
           )
         : objects;
 
     const displayObjects = filteredObjects.map((object) =>
-      scaleObjectForDisplay(object, displayTarget),
+      scaleObjectForDisplay(
+        currentTime === undefined
+          ? object
+          : annotationAtTime(object, currentTime),
+        displayTarget,
+      ),
     );
     const displayCurrent = currentObject
       ? scaleObjectForDisplay(currentObject, displayTarget)
@@ -69,6 +85,24 @@ export const useAnnotationCanvasRendering = ({
       renderObject(ctx, displayCurrent);
     }
 
+    if (chromaKey && videoRef?.current) {
+      try {
+        scratch.current ??= document.createElement('canvas');
+        applyAnnotationChroma(
+          ctx,
+          videoRef.current,
+          chromaKey,
+          displayTarget,
+          scratch.current,
+        );
+        setRenderError('');
+      } catch {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setRenderError(
+          '映像の色を読み込めないため、芝色処理を適用できません。平面パネルで解除してください。',
+        );
+      }
+    } else setRenderError('');
     if (!selectedObjectId) return;
     const selectedObject = displayObjects.find(
       (object) => object.id === selectedObjectId,
@@ -90,7 +124,11 @@ export const useAnnotationCanvasRendering = ({
         bounds.maxY - bounds.minY + 8,
       );
     }
-    if (selectedObject.type === 'linkedDiscs') {
+    if (
+      selectedObject.type === 'linkedDiscs' ||
+      (selectedObject.type === 'polygon' &&
+        (selectedObject.path?.length ?? 0) <= 12)
+    ) {
       ctx.setLineDash([]);
       selectedObject.path?.forEach((node) => {
         ctx.beginPath();
@@ -101,6 +139,8 @@ export const useAnnotationCanvasRendering = ({
     }
     ctx.restore();
   }, [
+    chromaKey,
+    videoRef,
     canvasRef,
     objects,
     currentObject,
@@ -115,4 +155,5 @@ export const useAnnotationCanvasRendering = ({
   useEffect(() => {
     renderAllObjects();
   }, [renderAllObjects]);
+  return renderError;
 };

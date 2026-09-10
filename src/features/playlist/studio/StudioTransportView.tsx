@@ -38,7 +38,7 @@ export const StudioTransportView = (
   >
     <Slider
       size="small"
-      aria-label="Studio 再生位置"
+      aria-label="Tactics 再生位置"
       min={props.min}
       max={Math.max(props.min + 0.001, props.max)}
       step={0.01}
@@ -59,7 +59,7 @@ export const StudioTransportView = (
           exclusive
           size="small"
           value={props.coachMode ? 'coach' : 'edit'}
-          aria-label="Studio 表示モード"
+          aria-label="Tactics 表示モード"
           onChange={(_, value: string | null) => {
             if (value) props.onCoachModeChange?.(value === 'coach');
           }}

@@ -1,3 +1,5 @@
+import { TacticsVideoFixture } from '../fixtures/TacticsVideoFixture';
+import { TacticsTimelineView } from './TacticsTimelineView';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -5,6 +7,7 @@ import { Box } from '@mui/material';
 import { PlaylistReviewView } from '../components/PlaylistReviewView';
 import { StudioCoachView } from './StudioCoachView';
 import { StudioCanvasView } from './StudioCanvasView';
+import type { TacticsInspectorPanel } from './StudioSidebarView';
 import { StudioSidebarView } from './StudioSidebarView';
 import { StudioTransportView } from './StudioTransportView';
 import { useStudioEditor } from './useStudioEditor';
@@ -22,9 +25,21 @@ const StudioFixture = ({
     empty ? [] : studioObjects,
   ]);
   const [cursor, setCursor] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(12);
+  const [panel, setPanel] = useState<TacticsInspectorPanel>('draw');
   const [coachMode, setCoachMode] = useState(false);
   const [freeze, setFreeze] = useState(3);
+  useLayoutEffect(() => {
+    if (!playing) return;
+    let last = performance.now();
+    const timer = setInterval(() => {
+      const now = performance.now();
+      setTime((value) => (value >= 30 ? 0 : value + (now - last) / 1000));
+      last = now;
+    }, 33);
+    return () => clearInterval(timer);
+  }, [playing]);
   useLayoutEffect(() => {
     const media = root.current?.querySelector('[data-studio-media]');
     if (!media) return;
@@ -36,9 +51,10 @@ const StudioFixture = ({
   }, []);
   const editor = useStudioEditor({
     documentKey: 'fixture-primary',
-    enabled: !empty,
+    enabled: !empty && !playing,
     objects: history[cursor],
     time,
+    maxTime: 30,
     target: 'primary',
     ...size,
     contentRect: { ...size, offsetX: 0, offsetY: 0 },
@@ -58,6 +74,8 @@ const StudioFixture = ({
         inspector={
           coachMode ? null : (
             <StudioSidebarView
+              panel={panel}
+              onPanelChange={setPanel}
               {...{
                 ...editor.inspector,
                 target: 'primary',
@@ -83,6 +101,17 @@ const StudioFixture = ({
                 }}
               />
             )}
+            {!coachMode && (
+              <TacticsTimelineView
+                objects={history[cursor]}
+                time={time}
+                min={0}
+                max={30}
+                selectedId={editor.inspector.selectedId}
+                onSelect={editor.inspector.onSelect}
+                onSeek={setTime}
+              />
+            )}
             <StudioTransportView
               coachMode={coachMode}
               onCoachModeChange={setCoachMode}
@@ -92,10 +121,10 @@ const StudioFixture = ({
                 max: 30,
                 freezeDuration: freeze,
                 onFreezeDurationChange: setFreeze,
-                playing: false,
+                playing,
                 disabled: empty,
                 onSeek: setTime,
-                onTogglePlay: () => setTime(time === 12 ? 13 : 12),
+                onTogglePlay: () => setPlaying(!playing),
               }}
             />
           </>
@@ -128,7 +157,7 @@ const StudioFixture = ({
                 <circle cx="610" cy="350" r="12" />
               </g>
               <text x="40" y="55" fill="#FFFFFF" fontSize="12">
-                STUDIO · FIXTURE
+                TACTICS · FIXTURE
               </text>
             </svg>
             <StudioCanvasView {...editor.canvas} />
@@ -139,7 +168,7 @@ const StudioFixture = ({
   );
 };
 const meta: Meta<typeof PlaylistReviewView> = {
-  title: 'Workspace/Playlist/Studio',
+  title: 'Workspace/Playlist/Tactics',
   component: PlaylistReviewView,
   render: () => <StudioFixture />,
 };
@@ -147,3 +176,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const Interactive: Story = {};
 export const Empty: Story = { render: () => <StudioFixture empty /> };
+
+export const VideoTracking: Story = { render: () => <TacticsVideoFixture /> };

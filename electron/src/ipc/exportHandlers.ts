@@ -1,3 +1,5 @@
+import { isExportChroma } from './exportChroma';
+import { isExportMotionOverlays } from './exportMotionValidation';
 import { isExportFreezeFrames } from './exportFreezeFramesValidation';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'node:fs/promises';
@@ -82,6 +84,8 @@ const isClipExportItem = (value: unknown): boolean => {
     typeof value.endTime === 'number' &&
     Number.isFinite(value.endTime) &&
     isExportFreezeFrames(value.freezeFrames, duration) &&
+    isExportMotionOverlays(value.motionOverlays, duration) &&
+    isExportChroma(value.chromaKey) &&
     (value.freezeAt === null || isOptionalNumber(value.freezeAt)) &&
     isOptionalNumber(value.freezeDuration) &&
     isOptionalString(value.memo) &&

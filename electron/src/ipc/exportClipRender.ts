@@ -1,3 +1,4 @@
+import { hasExportAudio } from './exportAudioProbe';
 import * as fs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -137,7 +138,26 @@ export const renderClipWithFfmpeg = async ({
 
   const clipMainSource = clip.videoSource || mainSource;
   const clipSecondarySource = clip.videoSource2 || secondarySource;
+  const motionOverlays = clip.motionOverlays
+    ? await Promise.all(
+        clip.motionOverlays.map(async ({ png, ...entry }, index) => ({
+          ...entry,
+          image: await dataUrlToTempFile(
+            png,
+            `motion_${clip.id}_${index}`,
+            tempFiles,
+          ),
+        })),
+      )
+    : undefined;
   const ffmpegClip: ExportClipForFfmpeg = {
+    chromaKey: clip.chromaKey,
+    hasAudio: await hasExportAudio(
+      clip.angleType === 'angle2'
+        ? clipSecondarySource || clipMainSource
+        : clipMainSource,
+    ),
+    motionOverlays,
     freezeFrames,
     startTime: clip.startTime,
     endTime: clip.endTime,
@@ -152,6 +172,10 @@ export const renderClipWithFfmpeg = async ({
       sourcePath: secondaryOnly,
       clip: {
         ...ffmpegClip,
+        chromaKey: { primary: clip.chromaKey?.secondary },
+        motionOverlays: motionOverlays
+          ?.filter((entry) => entry.target === 'secondary')
+          .map((entry) => ({ ...entry, target: 'primary' })),
         freezeFrames: freezeFrames?.map((frame) => ({
           ...frame,
           primary: frame.secondary,

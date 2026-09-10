@@ -112,6 +112,7 @@ export const usePlaylistPlaybackEffects = ({
             : defaultFreezeDuration;
         const shouldFreeze = currentAnnotation.objects.some(
           (obj) =>
+            !obj.motion &&
             Math.abs(playbackTime - obj.timestamp) < annotationTimeTolerance,
         );
         const lastFreezeAt = lastFreezeTimestampRef.current;

@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderClipWithFfmpeg } from './exportClipRender';
 import { runFfmpegSingle } from './exportFfmpegRunners';
 
+vi.mock('./exportAudioProbe', () => ({
+  hasExportAudio: vi.fn(async () => true),
+}));
+
 vi.mock('./exportFfmpegRunners', async () => {
   const actual = await vi.importActual<typeof import('./exportFfmpegRunners')>(
     './exportFfmpegRunners',
@@ -26,7 +30,9 @@ describe('renderClipWithFfmpeg', () => {
   });
 
   afterEach(async () => {
-    await Promise.all(tempFiles.map((file) => fs.unlink(file).catch(() => undefined)));
+    await Promise.all(
+      tempFiles.map((file) => fs.unlink(file).catch(() => undefined)),
+    );
     tempFiles.length = 0;
   });
 
@@ -56,7 +62,9 @@ describe('renderClipWithFfmpeg', () => {
 
     const params = mockedRunFfmpegSingle.mock.calls[0]?.[0];
     expect(result).toBe('/out.mp4');
-    expect(params?.annotationPath).toEqual(expect.stringContaining('anno_p_clip-1'));
+    expect(params?.annotationPath).toEqual(
+      expect.stringContaining('anno_p_clip-1'),
+    );
     expect(params?.annotationPath).toEqual(expect.stringContaining('.png'));
     expect(params?.outputPath).toBe('/out.mp4');
     expect(params?.overlayEnabled).toBe(false);

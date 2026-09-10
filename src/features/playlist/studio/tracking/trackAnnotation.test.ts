@@ -1,0 +1,96 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DrawingObject } from '../../../../types/playlist/core';
+import { trackAnnotation } from './trackAnnotation';
+const mock = vi.hoisted(() => ({
+  read: vi.fn(),
+  dispose: vi.fn(),
+  match: vi.fn(),
+}));
+vi.mock('./videoFrameReader', () => ({
+  openVideoFrameReader: async () => ({
+    width: 320,
+    height: 180,
+    read: mock.read,
+    dispose: mock.dispose,
+  }),
+}));
+vi.mock('./templateTracker', () => ({ matchTemplate: mock.match }));
+const object: DrawingObject = {
+  id: 'tracked',
+  type: 'rectangle',
+  startX: 40,
+  startY: 60,
+  endX: 64,
+  endY: 84,
+  baseWidth: 320,
+  baseHeight: 180,
+  timestamp: 10,
+  color: '#fff',
+  strokeWidth: 2,
+  motion: {
+    duration: 4,
+    keyframes: [
+      { time: 0, x: 0, y: 0 },
+      { time: 1, x: 20, y: 0 },
+      { time: 2, x: 42, y: 3 },
+      { time: 4, x: 80, y: 0 },
+    ],
+  },
+};
+beforeEach(() => {
+  vi.clearAllMocks();
+  mock.read.mockResolvedValue({});
+  mock.match.mockImplementation(
+    (_frame: unknown, at: { x: number; y: number }) => ({
+      x: at.x + 2,
+      y: at.y,
+      confidence: 0.99,
+      reliable: true,
+    }),
+  );
+});
+describe('resumable tracking', () => {
+  it('starts at the corrected position and preserves earlier keys', async () => {
+    const result = await trackAnnotation(
+      'video',
+      object,
+      14,
+      new AbortController().signal,
+      () => {},
+      12,
+    );
+    expect(mock.read.mock.calls[0][0]).toBe(12);
+    expect(mock.match.mock.calls[0][1]).toEqual({ x: 94, y: 75 });
+    expect(result.object.motion?.keyframes.slice(0, 3)).toEqual(
+      object.motion?.keyframes.slice(0, 3),
+    );
+    expect(result.object.motion?.keyframes.at(-1)).toEqual({
+      time: 4,
+      x: 82,
+      y: 3,
+    });
+    expect(result.trackedDuration).toBe(2);
+    expect(result.lost).toBe(false);
+    expect(object.motion?.keyframes.at(-1)?.x).toBe(80);
+    expect(mock.dispose).toHaveBeenCalledOnce();
+  });
+  it('does not overwrite the document when no reliable step is available', async () => {
+    mock.match.mockReturnValue({
+      x: 0,
+      y: 0,
+      confidence: 0.1,
+      reliable: false,
+    });
+    await expect(
+      trackAnnotation(
+        'video',
+        object,
+        14,
+        new AbortController().signal,
+        () => {},
+        12,
+      ),
+    ).rejects.toThrow('対象を識別できませんでした');
+    expect(mock.dispose).toHaveBeenCalledOnce();
+  });
+});

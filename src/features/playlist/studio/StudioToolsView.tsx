@@ -41,7 +41,7 @@ export const StudioToolsView = ({
   <ToggleButtonGroup
     exclusive
     value={tool}
-    aria-label="Studio 描画ツール"
+    aria-label="Tactics 描画ツール"
     onChange={(_, value: DrawingToolType | null) => {
       if (value) onChange(value);
     }}

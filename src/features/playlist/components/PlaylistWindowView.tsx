@@ -1,3 +1,5 @@
+import { PitchCalibrationOverlayView } from '../studio/PitchCalibrationOverlayView';
+import { TacticsTimelineView } from '../studio/TacticsTimelineView';
 import { PlaylistReviewView } from './PlaylistReviewView';
 import { StudioCoachView } from '../studio/StudioCoachView';
 import { StudioCanvasView } from '../studio/StudioCanvasView';
@@ -55,7 +57,15 @@ export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
               {...controller.videoArea}
               studioOverlay={
                 controller.studio.active ? (
-                  <StudioCanvasView {...controller.studio.canvas} />
+                  <>
+                    <StudioCanvasView {...controller.studio.canvas} />
+                    <PitchCalibrationOverlayView
+                      pitch={controller.studio.pitch}
+                      width={controller.studio.canvas.width}
+                      height={controller.studio.canvas.height}
+                      contentRect={controller.studio.contentRect}
+                    />
+                  </>
                 ) : undefined
               }
             />
@@ -65,6 +75,9 @@ export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
               <>
                 {controller.studio.coachMode && (
                   <StudioCoachView {...controller.studio.coach} />
+                )}
+                {!controller.studio.coachMode && (
+                  <TacticsTimelineView {...controller.studio.timeline} />
                 )}
                 <StudioTransportView {...controller.studio.transport} />
               </>

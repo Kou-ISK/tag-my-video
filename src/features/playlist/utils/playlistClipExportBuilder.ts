@@ -1,3 +1,4 @@
+import { buildMotionOverlays } from './playlistMotionExport';
 import type {
   AnnotationTarget,
   DrawingObject,
@@ -77,8 +78,41 @@ export const buildPlaylistExportClips = ({
         time <= item.endTime - item.startTime
       );
     });
+    const hasMotion =
+      objects.some((object) => object.motion) ||
+      Boolean(
+        annotation?.chromaKey?.primary || annotation?.chromaKey?.secondary,
+      );
+    const motionOverlays = hasMotion
+      ? buildMotionOverlays(
+          objects.map((object) => {
+            const rect =
+              object.target === 'secondary'
+                ? secondaryContentRect
+                : primaryContentRect;
+            return {
+              ...object,
+              baseWidth: object.baseWidth ?? rect.width,
+              baseHeight: object.baseHeight ?? rect.height,
+            };
+          }),
+          embedded ? 0 : item.startTime,
+          item.endTime - item.startTime,
+          (entries, target) =>
+            renderAnnotationPng(
+              entries,
+              target,
+              target === 'primary' ? primaryContentRect : secondaryContentRect,
+              target === 'primary' ? primarySourceSize : secondarySourceSize,
+            ),
+        )
+      : undefined;
     const timestamps = [
-      ...new Set(objects.map((object) => object.timestamp)),
+      ...new Set(
+        objects
+          .filter((object) => !object.motion)
+          .map((object) => object.timestamp),
+      ),
     ].sort((a, b) => a - b);
     // Match playback's frame tolerance, preserving each frame's layer order.
     const frames: number[] = [];
@@ -93,21 +127,27 @@ export const buildPlaylistExportClips = ({
       return {
         time: embedded ? timestamp : timestamp - item.startTime,
         duration: freezeDuration,
-        annotationPngPrimary: renderAnnotationPng(
-          frameObjects,
-          'primary',
-          primaryContentRect,
-          primarySourceSize,
-        ),
-        annotationPngSecondary: renderAnnotationPng(
-          frameObjects,
-          'secondary',
-          secondaryContentRect,
-          secondarySourceSize,
-        ),
+        annotationPngPrimary: hasMotion
+          ? null
+          : renderAnnotationPng(
+              frameObjects,
+              'primary',
+              primaryContentRect,
+              primarySourceSize,
+            ),
+        annotationPngSecondary: hasMotion
+          ? null
+          : renderAnnotationPng(
+              frameObjects,
+              'secondary',
+              secondaryContentRect,
+              secondarySourceSize,
+            ),
       };
     });
     return {
+      motionOverlays,
+      chromaKey: annotation?.chromaKey,
       id: item.id,
       actionName: item.actionName,
       startTime: item.startTime,

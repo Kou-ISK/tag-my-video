@@ -4,11 +4,11 @@
 
 ## 開発環境
 
-| ツール | バージョン |
-| --- | --- |
-| Node.js | 22.12以上 |
-| pnpm | 9.1.0以上 |
-| Git | 最新版 |
+| ツール  | バージョン |
+| ------- | ---------- |
+| Node.js | 22.12以上  |
+| pnpm    | 9.1.0以上  |
+| Git     | 最新版     |
 
 通常のElectron開発・配布にPython runtimeは不要です。Event modelのtraining/evaluationは別private R&D repositoryで管理します。
 
@@ -179,12 +179,12 @@ Model manifestにはschema/version/id、`status: verified | experimental`、supp
 
 Verified event class単位:
 
-| Metric | Minimum |
-| --- | ---: |
-| Recall | 0.95 |
-| unseen evaluation matches | 5 |
-| Precision | 0〜1の有限値 |
-| confidence threshold | 0〜1の有限値 |
+| Metric                    |      Minimum |
+| ------------------------- | -----------: |
+| Recall                    |         0.95 |
+| unseen evaluation matches |            5 |
+| Precision                 | 0〜1の有限値 |
+| confidence threshold      | 0〜1の有限値 |
 
 Precision単独でmodelを昇格させません。秒単位の厳密なevent onsetも主目的ではありません。
 
@@ -290,10 +290,12 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 
 `pnpm run verify` はRenderer/Electronの型検査、lint、architecture/design-system/ADR検査、unit tests、アプリbuild、Storybook buildを順に実行する。UI調整をまとめた後に実行できる。`pnpm run storybook` の `Design System/Foundation/Controls` と `Workspace/*` でdark/light、空状態、長い名称、無効操作、狭い幅を確認する。
 
-## Native UI / Studio の確認
+## Native UI / Tactics の確認
 
-`pnpm run verify`で型、Electron型、lint、architecture、design-system、ADR、テスト、アプリbuild、Storybook buildを一括検証する。Storybookの `Workspace/Playlist/Studio` はElectron不要の描画fixture、`Workspace/Timeline/Continuous` はrulerと行の共有座標を確認するView story。Studioでは描画・移動・拡縮・レイヤー・Undo/Redoを、Timelineではズームと縦横スクロール後のシーク位置を確認する。映像の再生・ファイル保存・FFmpeg書き出しはElectron実機でも確認する。
+`pnpm run verify`で型、Electron型、lint、architecture、design-system、ADR、テスト、アプリbuild、Storybook buildを一括検証する。Storybookの `Workspace/Playlist/Tactics` はElectron不要の描画fixture、`Workspace/Timeline/Continuous` はrulerと行の共有座標を確認するView story。Tacticsでは描画・移動・拡縮・レイヤー・Undo/Redoを、Timelineではズームと縦横スクロール後のシーク位置を確認する。映像の再生・ファイル保存・FFmpeg書き出しはElectron実機でも確認する。
 
-### Movie Controller / Tactical Studio の確認
+### Movie Controller / Tactics の確認
 
-Storybook `Design System/Composites/Movie Transport`、`Workspace/Transport`、`Workspace/Playlist/Studio` で確認する。Studio storyは戦術図のfixtureで、実映像の自動追跡デモではない。ビームの高さ、曲線の曲がり、リンク各点のドラッグと選手数、Coachの消去→Undo、明暗テーマと狭い幅を確認する。図形の変更時は `tacticalGeometry.test.ts` と `useStudioGesture.test.tsx` の保存座標・letterbox・1操作1履歴の検証も維持する。
+Storybook `Design System/Composites/Movie Transport`、`Workspace/Transport`、`Workspace/Playlist/Tactics` で確認する。Interactive storyは戦術図のfixture、Video Tracking storyは実際にデコードする合成WebMを使用し、追跡・平面較正・芝色処理・プリセットを操作できる。ビームの高さ、曲線の曲がり、リンク各点のドラッグと選手数、Coachの消去→Undo、明暗テーマと狭い幅を確認する。図形の変更時は `tacticalGeometry.test.ts` と `useStudioGesture.test.tsx` の保存座標・letterbox・1操作1履歴の検証も維持する。
+
+Tacticsの時間・較正・芝色の純粋計算は `src/shared/tactics`、外部動画の解析は `studio/tracking`、端末プリセットの永続化は `tacticsPreferencesGateway.ts` が担当する。Video Tracking storyでは、結果適用→中間時刻の手修正→再追跡、較正取消、プリセット挿入Undoを確認する。追跡fixtureは320×180・4秒の合成WebMで実動画デコーダーを使う。書き出しはElectronのFFmpeg経路でも、単一/二映像・静止挿入・音声のない素材・芝色処理を確認する。[対応範囲](tactics.md)と[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)を参照。

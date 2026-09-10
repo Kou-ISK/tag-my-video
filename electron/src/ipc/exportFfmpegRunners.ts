@@ -1,3 +1,10 @@
+import {
+  prepareChromaForeground,
+  restoreChromaForeground,
+} from './exportChroma';
+import type { ChromaKey } from '../../../src/shared/tactics/chromaKey';
+import { overlayMotion } from './exportMotionOverlays';
+import type { ExportMotionOverlay } from './exportMotionOverlays';
 import { insertFreeze, overlayFreeze } from './exportFreezeFrames';
 import type { ExportFreezeFrame } from './exportFreezeFrames';
 import { buildOverlayFilters } from './exportFfmpegOverlay';
@@ -9,6 +16,9 @@ import {
 import { H264_ENCODER_ARGS } from '../mediaTools';
 
 export interface ExportClipForFfmpeg {
+  chromaKey?: Partial<Record<'primary' | 'secondary', ChromaKey>>;
+  hasAudio?: boolean;
+  motionOverlays?: ExportMotionOverlay[];
   freezeFrames?: ExportFreezeFrame[];
   startTime: number;
   endTime: number;
@@ -80,7 +90,8 @@ const canUseStreamCopyForSingle = ({
     !overlayEnabled &&
     !annotationPath &&
     !hasFreeze &&
-    !clip.freezeFrames?.length
+    !clip.freezeFrames?.length &&
+    !clip.motionOverlays?.length
   );
 };
 
@@ -148,11 +159,33 @@ export const runFfmpegSingle = ({
       `[0:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[vtrim]`,
     );
     filterSteps.push(
-      `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
+      clip.hasAudio === false
+        ? `anullsrc=r=48000:cl=stereo,atrim=duration=${clipDuration}[atrim]`
+        : `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
     );
     baseLabel = '[vtrim]';
     mapLabel = '[vtrim]';
     audioMap = '[atrim]';
+    baseLabel = prepareChromaForeground(
+      filterSteps,
+      baseLabel,
+      clip.chromaKey?.primary,
+      'chroma',
+    );
+    const motion = overlayMotion(
+      filterSteps,
+      inputArgs,
+      baseLabel,
+      clip.motionOverlays ?? [],
+      'primary',
+      1,
+    );
+    baseLabel = restoreChromaForeground(
+      filterSteps,
+      motion.label,
+      clip.chromaKey?.primary,
+      'chroma',
+    );
 
     const frames =
       clip.freezeFrames ??
@@ -188,7 +221,7 @@ export const runFfmpegSingle = ({
       );
       insertedDuration += frame.duration;
     }
-    let imageIndex = 1;
+    let imageIndex = motion.inputIndex;
     insertedDuration = 0;
     for (const [index, frame] of ordered.entries()) {
       const time =
@@ -285,7 +318,9 @@ export const runFfmpegDual = ({
       `[0:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[mtrim]`,
     );
     filterSteps.push(
-      `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
+      clip.hasAudio === false
+        ? `anullsrc=r=48000:cl=stereo,atrim=duration=${clipDuration}[atrim]`
+        : `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
     );
     filterSteps.push(
       `[1:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[strim]`,
@@ -294,6 +329,47 @@ export const runFfmpegDual = ({
     mainLabel = '[mtrim]';
     subLabel = '[strim]';
     audioMap = '[atrim]';
+    mainLabel = prepareChromaForeground(
+      filterSteps,
+      mainLabel,
+      clip.chromaKey?.primary,
+      'chromaP',
+    );
+    subLabel = prepareChromaForeground(
+      filterSteps,
+      subLabel,
+      clip.chromaKey?.secondary,
+      'chromaS',
+    );
+    const mainMotion = overlayMotion(
+      filterSteps,
+      inputs,
+      mainLabel,
+      clip.motionOverlays ?? [],
+      'primary',
+      currentInputIndex,
+    );
+    mainLabel = restoreChromaForeground(
+      filterSteps,
+      mainMotion.label,
+      clip.chromaKey?.primary,
+      'chromaP',
+    );
+    const subMotion = overlayMotion(
+      filterSteps,
+      inputs,
+      subLabel,
+      clip.motionOverlays ?? [],
+      'secondary',
+      mainMotion.inputIndex,
+    );
+    subLabel = restoreChromaForeground(
+      filterSteps,
+      subMotion.label,
+      clip.chromaKey?.secondary,
+      'chromaS',
+    );
+    currentInputIndex = subMotion.inputIndex;
 
     const frames =
       clip.freezeFrames ??

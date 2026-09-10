@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 描画モードの表示名をTacticsへ変更。位置キーフレーム、映像パターン追跡と再開、平面較正、芝色処理、プリセット、Coachカスタマイズ、動画上の描画書き出しを追加。
+
 - 再生操作を共通ジョグ式コントローラーに整理。
 
 - プロ向けスポーツ分析UIとしてdark/lightテーマ、開始画面、再生バー、Timeline、Playlist、Code Window、分析・設定のchromeを統一。主要ViewのStorybookと一括 `pnpm run verify` を追加。

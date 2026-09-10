@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded
 
 ## Date
 
@@ -11,7 +11,7 @@ Accepted
 ## Related ADRs
 
 - Supersedes: N/A
-- Superseded by: N/A
+- Superseded by: [0029 Tactics motion and plane contract](0029-tactics-motion-and-plane-contract.md)
 - [0025 Playlist document presentation order](0025-playlist-document-presentation-order.md)
 - [0027 Enforced design system foundation](0027-enforced-design-system-foundation.md)
 

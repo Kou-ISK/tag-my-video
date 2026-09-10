@@ -5,10 +5,12 @@ import type { StudioEditor } from './useStudioEditor';
 import { STUDIO_TOOLS } from './studioGeometry';
 
 export interface StudioCoachViewProps {
+  tools?: ReadonlyArray<string>;
+  colors?: string[];
   editor: StudioEditor['inspector'];
   onClearFrame: () => void;
 }
-const tools = new Set([
+const defaultTools = new Set([
   'select',
   'beam',
   'disc',
@@ -18,9 +20,11 @@ const tools = new Set([
   'spotlight',
   'text',
 ]);
-const colors = ['#FFD60A', '#FFFFFF', '#64A9FF', '#FF453A'];
+const defaultColors = ['#FFD60A', '#FFFFFF', '#64A9FF', '#FF453A'];
 export const StudioCoachView = ({
   editor,
+  tools,
+  colors = defaultColors,
   onClearFrame,
 }: StudioCoachViewProps): ReactElement => (
   <Stack
@@ -38,7 +42,11 @@ export const StudioCoachView = ({
       bgcolor: 'background.paper',
     }}
   >
-    {STUDIO_TOOLS.filter((tool) => tools.has(tool.id)).map((tool) => (
+    {STUDIO_TOOLS.filter(
+      (tool) =>
+        tool.id === 'select' ||
+        (tools ? tools.includes(tool.id) : defaultTools.has(tool.id)),
+    ).map((tool) => (
       <ToggleButton
         key={tool.id}
         value={tool.id}
@@ -52,10 +60,10 @@ export const StudioCoachView = ({
     ))}
     <Stack direction="row" sx={{ px: 1 }}>
       {colors.map((color, index) => (
-        <Tooltip key={color} title={['黄', '白', '青', '赤'][index]}>
+        <Tooltip key={color} title={`色${index + 1}`}>
           <ToggleButton
             value={color}
-            aria-label={`${['黄', '白', '青', '赤'][index]}の描画`}
+            aria-label={`${`色${index + 1}`}の描画`}
             selected={editor.color === color}
             disabled={!editor.enabled}
             onClick={() => editor.onColorChange(color)}

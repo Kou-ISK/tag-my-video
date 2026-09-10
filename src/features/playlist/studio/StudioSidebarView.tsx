@@ -1,3 +1,12 @@
+import { TacticsPresetsView } from './TacticsPresetsView';
+import type { TacticsPresetProps } from './useTacticsPresets';
+import { TacticsChromaView } from './TacticsChromaView';
+import type { TacticsChromaProps } from './useTacticsChroma';
+import { TacticsMotionView } from './TacticsMotionView';
+import { PitchCalibrationView } from './PitchCalibrationView';
+import type { PitchCalibrationControls } from './usePitchCalibration';
+import { TacticsTrackingView } from './TacticsTrackingView';
+import type { TacticsTrackingProps } from './tracking/useTacticsTracking';
 import type { ReactElement } from 'react';
 import {
   Box,
@@ -7,6 +16,8 @@ import {
   ListItem,
   ListItemButton,
   Stack,
+  Tabs,
+  Tab,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -24,7 +35,14 @@ import { StudioToolsView } from './StudioToolsView';
 import { StudioPropertiesView } from './StudioPropertiesView';
 import { STUDIO_TOOLS } from './studioGeometry';
 
+export type TacticsInspectorPanel = 'draw' | 'motion' | 'pitch' | 'presets';
 export type StudioSidebarViewProps = StudioEditor['inspector'] & {
+  panel: TacticsInspectorPanel;
+  onPanelChange: (panel: TacticsInspectorPanel) => void;
+  tracking?: TacticsTrackingProps;
+  pitch?: PitchCalibrationControls;
+  chroma?: TacticsChromaProps;
+  presets?: TacticsPresetProps;
   target: AnnotationTarget;
   hasSecondary: boolean;
   onTargetChange: (target: AnnotationTarget) => void;
@@ -38,7 +56,7 @@ export const StudioSidebarView = (
   return (
     <Box
       component="aside"
-      aria-label="Studio Inspector"
+      aria-label="Tactics Inspector"
       onKeyDown={props.onKeyDown}
       sx={{
         width: 292,
@@ -56,7 +74,7 @@ export const StudioSidebarView = (
           alignItems="center"
           justifyContent="space-between"
         >
-          <Typography variant="subtitle2">Studio</Typography>
+          <Typography variant="subtitle2">Tactics</Typography>
           <Stack direction="row">
             <IconAction
               label="元に戻す"
@@ -91,22 +109,73 @@ export const StudioSidebarView = (
             映像のあるクリップを選択し、プレビューを停止すると編集できます。
           </Typography>
         )}
-        <StudioToolsView
-          tool={props.tool}
-          onChange={props.onToolChange}
-          disabled={!props.enabled}
-        />
-        <Typography variant="caption" color="text.secondary">
-          ドラッグして描画。選択ツールで移動し、右下をドラッグするとサイズを変更できます。
-        </Typography>
-        <Divider />
-        <Box
-          component="fieldset"
-          disabled={!props.enabled}
-          sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+        {props.renderError && (
+          <Typography role="alert" color="error" variant="body2">
+            {props.renderError}
+          </Typography>
+        )}
+        <Tabs
+          value={props.panel}
+          onChange={(_, panel: TacticsInspectorPanel) =>
+            props.onPanelChange(panel)
+          }
+          variant="fullWidth"
+          aria-label="Tactics 編集パネル"
         >
-          <StudioPropertiesView {...props} />
-        </Box>
+          <Tab value="draw" label="描画" sx={{ minWidth: 0 }} />
+          <Tab value="motion" label="動き" sx={{ minWidth: 0 }} />
+          {(props.pitch || props.chroma) && (
+            <Tab value="pitch" label="平面" sx={{ minWidth: 0 }} />
+          )}
+          {props.presets && (
+            <Tab value="presets" label="保存済み" sx={{ minWidth: 0 }} />
+          )}
+        </Tabs>
+        {props.panel === 'draw' && (
+          <>
+            <StudioToolsView
+              tool={props.tool}
+              onChange={props.onToolChange}
+              disabled={!props.enabled}
+            />
+            <Typography variant="caption" color="text.secondary">
+              ドラッグで描画。選択ツールで移動・サイズ調整できます。
+            </Typography>
+            <Box
+              component="fieldset"
+              disabled={!props.enabled}
+              sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+            >
+              <StudioPropertiesView {...props} />
+            </Box>
+          </>
+        )}
+        {props.panel === 'motion' && (
+          <>
+            {!props.selected && (
+              <Typography variant="body2" color="text.secondary">
+                レイヤーから動かす描画を選択してください。
+              </Typography>
+            )}
+            <Box
+              component="fieldset"
+              disabled={!props.enabled}
+              sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+            >
+              <TacticsMotionView {...props.motion} />
+            </Box>
+            {props.tracking && <TacticsTrackingView {...props.tracking} />}
+          </>
+        )}
+        {props.panel === 'presets' && props.presets && (
+          <TacticsPresetsView {...props.presets} />
+        )}
+        {props.panel === 'pitch' && props.chroma && (
+          <TacticsChromaView {...props.chroma} />
+        )}
+        {props.panel === 'pitch' && props.pitch && (
+          <PitchCalibrationView {...props.pitch} disabled={!props.enabled} />
+        )}
         <Divider />
         <Stack
           direction="row"

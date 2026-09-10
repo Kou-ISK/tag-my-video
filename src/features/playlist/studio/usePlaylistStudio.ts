@@ -1,16 +1,30 @@
+import { useTacticsPresets } from './useTacticsPresets';
+import { useTacticsChroma } from './useTacticsChroma';
+import { usePitchCalibration } from './usePitchCalibration';
+import type { PitchCalibrationControls } from './usePitchCalibration';
+import type { StudioContentRect } from './useStudioGesture';
+import { useTacticsTracking } from './tracking/useTacticsTracking';
+import { useAnnotationFrameClock } from '../hooks/playlist/useAnnotationFrameClock';
+import type { TacticsTimelineProps } from './TacticsTimelineView';
 import { useMemo, useRef, useState } from 'react';
 import type { AnnotationTarget } from '../../../types/playlist/core';
 import type { PlaylistWorkspaceMode } from '../../../types/playlist/window';
 import type { PlaylistWindowRuntime } from '../hooks/playlist/usePlaylistWindowRuntime';
 import { useStudioEditor } from './useStudioEditor';
 import type { StudioEditor } from './useStudioEditor';
-import type { StudioSidebarViewProps } from './StudioSidebarView';
+import type {
+  TacticsInspectorPanel,
+  StudioSidebarViewProps,
+} from './StudioSidebarView';
 import type { StudioTransportViewProps } from './StudioTransportView';
 import type { StudioCoachViewProps } from './StudioCoachView';
 import type { StudioClipsViewProps } from './StudioClipsView';
 
 interface PlaylistStudio {
   active: boolean;
+  pitch: PitchCalibrationControls;
+  contentRect: StudioContentRect;
+  timeline: TacticsTimelineProps;
   coachMode: boolean;
   coach: StudioCoachViewProps;
   canvas: StudioEditor['canvas'];
@@ -23,6 +37,7 @@ export const usePlaylistStudio = (
   runtime: PlaylistWindowRuntime,
 ): PlaylistStudio => {
   const { core, annotations, currentItemState, history, playback } = runtime;
+  const [panel, setPanel] = useState<TacticsInspectorPanel>('draw');
   const [coachMode, setCoachMode] = useState(false);
   const previousView = useRef(core.viewMode);
   const active = core.workspaceMode === 'studio';
@@ -45,6 +60,8 @@ export const usePlaylistStudio = (
     core.setIsPlaying(false);
   };
   const editor = useStudioEditor({
+    chromaKey: annotations.currentAnnotation?.chromaKey?.[target],
+    videoRef: secondary ? core.videoRef2 : core.videoRef,
     documentKey: `${core.loadedFilePath}:${item?.id}:${target}`,
     enabled:
       active &&
@@ -53,6 +70,7 @@ export const usePlaylistStudio = (
       !core.isFrozen,
     objects,
     time: core.currentTime,
+    maxTime: currentItemState.sliderMax,
     target,
     ...(secondary ? core.secondaryCanvasSize : core.primaryCanvasSize),
     contentRect: secondary
@@ -65,6 +83,69 @@ export const usePlaylistStudio = (
     canUndo: history.canUndo,
     canRedo: history.canRedo,
   });
+  useAnnotationFrameClock(
+    core.videoRef,
+    core.isPlaying &&
+      !core.isFrozen &&
+      Boolean(
+        annotations.currentAnnotation?.objects.some(
+          (object) => object.motion,
+        ) ||
+        annotations.currentAnnotation?.chromaKey?.primary ||
+        annotations.currentAnnotation?.chromaKey?.secondary,
+      ),
+    core.setCurrentTime,
+  );
+  const contentRect = secondary
+    ? core.secondaryContentRect
+    : core.primaryContentRect;
+  const trackingSelection = editor.inspector.selected
+    ? {
+        ...editor.inspector.selected,
+        baseWidth: editor.inspector.selected.baseWidth ?? contentRect.width,
+        baseHeight: editor.inspector.selected.baseHeight ?? contentRect.height,
+      }
+    : null;
+  const tracking = useTacticsTracking({
+    documentKey: `${core.loadedFilePath}:${item?.id}:${target}`,
+    source: () =>
+      (secondary ? core.videoRef2 : core.videoRef).current?.currentSrc,
+    selected: trackingSelection,
+    time: core.currentTime,
+    endTime: currentItemState.sliderMax,
+    enabled: editor.inspector.enabled,
+    onApply: editor.inspector.onUpdate,
+  });
+  const pitch = usePitchCalibration({
+    documentKey: `${core.loadedFilePath}:${item?.id}:${target}`,
+    enabled: editor.inspector.enabled,
+    calibration: annotations.currentAnnotation?.pitchCalibration?.[target],
+    selected: editor.inspector.selected,
+    contentRect,
+    time: core.currentTime,
+    onSave: (value) => annotations.handlePitchCalibrationChange(value, target),
+    onAdd: (object) =>
+      annotations.handleAnnotationObjectsChange(
+        [...objects, { ...object, target }],
+        target,
+      ),
+  });
+  const chroma = useTacticsChroma(
+    annotations.currentAnnotation?.chromaKey?.[target],
+    !editor.inspector.enabled,
+    () => (secondary ? core.videoRef2 : core.videoRef).current,
+    (value) => annotations.handleChromaKeyChange(value, target),
+  );
+  const presets = useTacticsPresets(
+    editor.inspector.selected,
+    editor.inspector.enabled,
+    core.currentTime,
+    (object) =>
+      annotations.handleAnnotationObjectsChange(
+        [...objects, { ...object, target }],
+        target,
+      ),
+  );
   const onTargetChange = (value: AnnotationTarget): void => {
     if (value === 'secondary' && !currentItemState.currentVideoSource2) return;
     seek(core.currentTime);
@@ -73,8 +154,21 @@ export const usePlaylistStudio = (
   };
   return {
     active,
+    pitch,
+    contentRect,
+    timeline: {
+      objects,
+      time: core.currentTime,
+      min: currentItemState.sliderMin,
+      max: currentItemState.sliderMax,
+      selectedId: editor.inspector.selectedId,
+      onSelect: editor.inspector.onSelect,
+      onSeek: seek,
+    },
     coachMode,
     coach: {
+      tools: presets.preferences.coachTools,
+      colors: presets.preferences.coachColors,
       editor: editor.inspector,
       onClearFrame: () => {
         if (!editor.inspector.enabled) return;
@@ -86,9 +180,18 @@ export const usePlaylistStudio = (
         );
       },
     },
-    canvas: editor.canvas,
+    canvas: {
+      ...editor.canvas,
+      enabled: editor.canvas.enabled && !pitch.editing,
+    },
     sidebar: {
+      panel,
+      onPanelChange: setPanel,
       ...editor.inspector,
+      tracking,
+      pitch,
+      chroma,
+      presets,
       target,
       hasSecondary: Boolean(currentItemState.currentVideoSource2),
       onTargetChange,

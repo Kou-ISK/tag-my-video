@@ -1,3 +1,10 @@
+import {
+  annotationOffsetAt,
+  setAnnotationKeyframe,
+} from '../../../shared/tactics/annotationMotion';
+import type { ChromaKey } from '../../../shared/tactics/chromaKey';
+import { useTacticsMotion } from './useTacticsMotion';
+import type { TacticsMotionProps } from './useTacticsMotion';
 import { useRef, useState } from 'react';
 import type { KeyboardEvent, RefObject } from 'react';
 import type {
@@ -12,6 +19,9 @@ import { useStudioGesture } from './useStudioGesture';
 import type { StudioContentRect, StudioGesture } from './useStudioGesture';
 
 export interface StudioEditorParams {
+  chromaKey?: ChromaKey;
+  videoRef?: RefObject<HTMLVideoElement | null>;
+  maxTime?: number;
   documentKey: string;
   enabled: boolean;
   objects: DrawingObject[];
@@ -37,6 +47,8 @@ export interface StudioEditor {
     onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
   };
   inspector: {
+    renderError: string;
+    motion: TacticsMotionProps;
     enabled: boolean;
     objects: DrawingObject[];
     selected: DrawingObject | null;
@@ -94,7 +106,9 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     selectedId,
     onSelect: select,
   });
-  useAnnotationCanvasRendering({
+  const renderError = useAnnotationCanvasRendering({
+    chromaKey: params.chromaKey,
+    videoRef: params.videoRef,
     canvasRef,
     objects: gesture.displayObjects,
     currentObject: null,
@@ -113,6 +127,13 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       ),
     );
   };
+  const motion = useTacticsMotion(
+    selected,
+    params.time,
+    params.maxTime ?? params.time + 30,
+    update,
+    params.onSeek,
+  );
   const remove = (): void => {
     if (selected && params.enabled) {
       params.onCommit(
@@ -160,20 +181,22 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       event.preventDefault();
       event.stopPropagation();
       const step = event.shiftKey ? 10 : 1;
+      const dx =
+        event.key === 'ArrowLeft'
+          ? -step
+          : event.key === 'ArrowRight'
+            ? step
+            : 0;
+      const dy =
+        event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+      const offset = annotationOffsetAt(selected, params.time);
       update(
-        shiftObject(
-          selected,
-          event.key === 'ArrowLeft'
-            ? -step
-            : event.key === 'ArrowRight'
-              ? step
-              : 0,
-          event.key === 'ArrowUp'
-            ? -step
-            : event.key === 'ArrowDown'
-              ? step
-              : 0,
-        ),
+        selected.motion
+          ? setAnnotationKeyframe(selected, params.time, {
+              x: offset.x + dx,
+              y: offset.y + dy,
+            })
+          : shiftObject(selected, dx, dy),
       );
     }
   };
@@ -188,6 +211,8 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       onKeyDown,
     },
     inspector: {
+      renderError,
+      motion,
       enabled: params.enabled,
       objects: params.objects,
       selected,

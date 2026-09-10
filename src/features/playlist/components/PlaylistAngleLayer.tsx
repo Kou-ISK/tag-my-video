@@ -1,3 +1,4 @@
+import type { ChromaKey } from '../../../shared/tactics/chromaKey';
 import React from 'react';
 import { Box } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -17,6 +18,7 @@ type ContentRect = {
 type CanvasSize = { width: number; height: number };
 
 type PlaylistAngleLayerProps = {
+  chromaKey?: ChromaKey;
   annotationsVisible?: boolean;
   boxSx: SxProps<Theme>;
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -38,6 +40,7 @@ type PlaylistAngleLayerProps = {
 };
 
 export const PlaylistAngleLayer = ({
+  chromaKey,
   annotationsVisible = true,
   boxSx,
   videoRef,
@@ -59,6 +62,8 @@ export const PlaylistAngleLayer = ({
       <video ref={videoRef} style={videoStyle} />
       <Box sx={{ visibility: annotationsVisible ? 'visible' : 'hidden' }}>
         <AnnotationCanvas
+          chromaKey={chromaKey}
+          videoRef={videoRef}
           ref={annotationCanvasRef}
           width={canvasSize.width}
           height={canvasSize.height}

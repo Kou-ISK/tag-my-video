@@ -1,3 +1,4 @@
+import { validateTacticsAnnotation } from '../tactics/annotationValidation';
 import type {
   Playlist,
   PlaylistItem,
@@ -57,12 +58,14 @@ const normalizeItems = (
   const validRowIds = new Set(rows.map((row) => row.id));
   const fallbackRowId = rows[0].id;
   const counters = new Map<string, number>();
-  const grouped = new Map<string, Array<{ item: PlaylistItem; index: number }>>();
+  const grouped = new Map<
+    string,
+    Array<{ item: PlaylistItem; index: number }>
+  >();
 
   items.forEach((item, index) => {
-    const rowId = item.rowId && validRowIds.has(item.rowId)
-      ? item.rowId
-      : fallbackRowId;
+    const rowId =
+      item.rowId && validRowIds.has(item.rowId) ? item.rowId : fallbackRowId;
     const group = grouped.get(rowId) ?? [];
     group.push({ item, index });
     grouped.set(rowId, group);
@@ -89,9 +92,8 @@ const normalizeItems = (
   }
 
   return items.map((item) => {
-    const rowId = item.rowId && validRowIds.has(item.rowId)
-      ? item.rowId
-      : fallbackRowId;
+    const rowId =
+      item.rowId && validRowIds.has(item.rowId) ? item.rowId : fallbackRowId;
     const itemOrder = orderById.get(item.id) ?? counters.get(rowId) ?? 0;
     return { ...item, rowId, rowOrder: itemOrder };
   });
@@ -103,6 +105,7 @@ const normalizeItems = (
  */
 export const normalizePlaylistDocument = (playlist: Playlist): Playlist => {
   const rows = normalizeRows(playlist.id, playlist.rows);
+  playlist.items.forEach((item) => validateTacticsAnnotation(item.annotation));
   const items = normalizeItems(playlist.items, rows);
   return {
     ...playlist,
@@ -127,10 +130,12 @@ export const getPresentationItems = (playlist: Playlist): PlaylistItem[] => {
       const rowDelta =
         (rowOrder.get(a.item.rowId ?? '') ?? Number.MAX_SAFE_INTEGER) -
         (rowOrder.get(b.item.rowId ?? '') ?? Number.MAX_SAFE_INTEGER);
-      return rowDelta ||
+      return (
+        rowDelta ||
         (a.item.rowOrder ?? Number.MAX_SAFE_INTEGER) -
           (b.item.rowOrder ?? Number.MAX_SAFE_INTEGER) ||
-        a.index - b.index;
+        a.index - b.index
+      );
     })
     .map(({ item }) => item);
 };
@@ -207,10 +212,14 @@ export const reorderPlaylistRows = (
     toIndex < 0 ||
     toIndex >= rows.length ||
     fromIndex === toIndex
-  ) return normalized;
+  )
+    return normalized;
   const [row] = rows.splice(fromIndex, 1);
   rows.splice(toIndex, 0, row);
-  return { ...normalized, rows: rows.map((entry, order) => ({ ...entry, order })) };
+  return {
+    ...normalized,
+    rows: rows.map((entry, order) => ({ ...entry, order })),
+  };
 };
 
 export const moveItemsToRow = (
@@ -221,14 +230,14 @@ export const moveItemsToRow = (
   const normalized = normalizePlaylistDocument(playlist);
   if (!normalized.rows?.some((row) => row.id === rowId)) return normalized;
   const moved = new Set(itemIds);
-  const nextOrder = normalized.items.filter((item) => item.rowId === rowId).length;
+  const nextOrder = normalized.items.filter(
+    (item) => item.rowId === rowId,
+  ).length;
   let order = nextOrder;
   return {
     ...normalized,
     items: normalized.items.map((item) =>
-      moved.has(item.id)
-        ? { ...item, rowId, rowOrder: order++ }
-        : item,
+      moved.has(item.id) ? { ...item, rowId, rowOrder: order++ } : item,
     ),
   };
 };
@@ -249,7 +258,8 @@ export const reorderItemsWithinRow = (
     toIndex < 0 ||
     toIndex >= rowItems.length ||
     fromIndex === toIndex
-  ) return normalized;
+  )
+    return normalized;
   const [item] = rowItems.splice(fromIndex, 1);
   rowItems.splice(toIndex, 0, item);
   const orderById = new Map(rowItems.map((entry, order) => [entry.id, order]));

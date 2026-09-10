@@ -1,3 +1,9 @@
+import {
+  annotationAtTime,
+  annotationOffsetAt,
+  isAnnotationVisible,
+  setAnnotationKeyframe,
+} from '../../../shared/tactics/annotationMotion';
 import { useRef, useState } from 'react';
 import type { PointerEvent, RefObject } from 'react';
 import type {
@@ -100,9 +106,9 @@ export const useStudioGesture = (params: Params): StudioGesture => {
     const start = point(event);
     if (params.tool === 'select') {
       const display = params.objects
-        .filter((object) => Math.abs(object.timestamp - params.time) <= 0.12)
+        .filter((object) => isAnnotationVisible(object, params.time))
         .map((object) =>
-          scaleObjectForDisplay(object, {
+          scaleObjectForDisplay(annotationAtTime(object, params.time), {
             ...params.contentRect,
             offsetX: 0,
             offsetY: 0,
@@ -113,7 +119,9 @@ export const useStudioGesture = (params: Params): StudioGesture => {
       );
       const bounds = selected && getObjectBounds(selected);
       const nodeIndex =
-        selected?.type === 'linkedDiscs'
+        selected &&
+        (selected.type === 'linkedDiscs' ||
+          (selected.type === 'polygon' && (selected.path?.length ?? 0) <= 12))
           ? (selected.path?.findIndex(
               (node) => Math.hypot(start.x - node.x, start.y - node.y) < 12,
             ) ?? -1)
@@ -232,7 +240,16 @@ export const useStudioGesture = (params: Params): StudioGesture => {
                 bounds.maxX - bounds.minX + baseDx,
                 bounds.maxY - bounds.minY + baseDy,
               )
-            : shiftObject(current.original, baseDx, baseDy);
+            : current.original.motion
+              ? setAnnotationKeyframe(current.original, params.time, {
+                  x:
+                    annotationOffsetAt(current.original, params.time).x +
+                    baseDx,
+                  y:
+                    annotationOffsetAt(current.original, params.time).y +
+                    baseDy,
+                })
+              : shiftObject(current.original, baseDx, baseDy);
     }
     setPreview({
       key: current.key,

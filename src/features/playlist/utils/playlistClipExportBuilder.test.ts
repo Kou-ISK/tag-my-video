@@ -119,3 +119,63 @@ it('exports distinct Studio frames in timestamp order and handles embedded offse
     reference.freezeFrames,
   );
 });
+
+it('keeps moving/still layer order and keyframe offsets across embedded/reference exports', () => {
+  const first = sampleItems[0];
+  const base = first.annotation!.objects[0];
+  const create = (embedded: boolean) =>
+    buildPlaylistExportClips({
+      sourceItems: [
+        {
+          ...first,
+          videoSource: embedded ? './videos/clip.mp4' : 'match.mp4',
+          annotation: {
+            ...first.annotation!,
+            objects: [
+              { ...base, timestamp: embedded ? 1 : 11 },
+              {
+                ...base,
+                id: 'moving',
+                timestamp: embedded ? 0 : 10,
+                baseWidth: 800,
+                baseHeight: 450,
+                motion: {
+                  duration: 4,
+                  keyframes: [
+                    { time: 0, x: 0, y: 0 },
+                    { time: 4, x: 80, y: 20 },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+      itemAnnotations: {},
+      minFreezeDuration: 2,
+      primaryContentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
+      secondaryContentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
+      primarySourceSize: { width: 1600, height: 900 },
+      secondarySourceSize: { width: 1600, height: 900 },
+      renderAnnotationPng: (objects) => objects?.[0].id ?? null,
+    })[0];
+  const reference = create(false);
+  expect(reference.motionOverlays?.map((layer) => layer.png)).toEqual([
+    'draw-1',
+    'moving',
+  ]);
+  expect(reference.motionOverlays?.[1].keyframes[1]).toEqual({
+    time: 4,
+    x: 80,
+    y: 20,
+  });
+  expect(reference.freezeFrames).toEqual([
+    {
+      time: 1,
+      duration: 3,
+      annotationPngPrimary: null,
+      annotationPngSecondary: null,
+    },
+  ]);
+  expect(create(true).motionOverlays).toEqual(reference.motionOverlays);
+});

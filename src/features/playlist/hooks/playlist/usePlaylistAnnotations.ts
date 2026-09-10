@@ -1,9 +1,11 @@
+import type { ChromaKey } from '../../../../shared/tactics/chromaKey';
 import { useCallback, useMemo } from 'react';
 import type {
   AnnotationTarget,
   DrawingObject,
   ItemAnnotation,
   PlaylistItem,
+  PitchCalibration,
 } from '../../../../types/playlist/core';
 
 interface UsePlaylistAnnotationsParams {
@@ -20,6 +22,14 @@ interface UsePlaylistAnnotationsParams {
 
 interface UsePlaylistAnnotationsResult {
   currentAnnotation: ItemAnnotation | null;
+  handleChromaKeyChange: (
+    key: ChromaKey | undefined,
+    target: AnnotationTarget,
+  ) => void;
+  handlePitchCalibrationChange: (
+    calibration: PitchCalibration | undefined,
+    target: AnnotationTarget,
+  ) => void;
   handleAnnotationObjectsChange: (
     objects: DrawingObject[],
     target?: AnnotationTarget,
@@ -172,8 +182,67 @@ export const usePlaylistAnnotations = ({
     ],
   );
 
+  const handlePitchCalibrationChange = (
+    calibration: PitchCalibration | undefined,
+    target: AnnotationTarget,
+  ): void => {
+    if (!currentItem) return;
+    const currentAnn = itemAnnotations[currentItem.id] ||
+      currentItem.annotation || {
+        objects: [],
+        freezeDuration: defaultFreezeDuration,
+        freezeAt: 0,
+      };
+    const annotation = {
+      ...currentAnn,
+      pitchCalibration: {
+        ...currentAnn.pitchCalibration,
+        [target]: calibration,
+      },
+    };
+    setItemAnnotations((previous) => ({
+      ...previous,
+      [currentItem.id]: annotation,
+    }));
+    setItemsWithHistory((previous) =>
+      previous.map((item) =>
+        item.id === currentItem.id ? { ...item, annotation } : item,
+      ),
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  const handleChromaKeyChange = (
+    key: ChromaKey | undefined,
+    target: AnnotationTarget,
+  ): void => {
+    if (!currentItem) return;
+    const currentAnn = itemAnnotations[currentItem.id] ||
+      currentItem.annotation || {
+        objects: [],
+        freezeDuration: defaultFreezeDuration,
+        freezeAt: 0,
+      };
+    const annotation = {
+      ...currentAnn,
+      chromaKey: { ...currentAnn.chromaKey, [target]: key },
+    };
+    setItemAnnotations((previous) => ({
+      ...previous,
+      [currentItem.id]: annotation,
+    }));
+    setItemsWithHistory((previous) =>
+      previous.map((item) =>
+        item.id === currentItem.id ? { ...item, annotation } : item,
+      ),
+    );
+    setHasUnsavedChanges(true);
+  };
+
   return {
     currentAnnotation,
+    handleChromaKeyChange,
+    handlePitchCalibrationChange,
     handleAnnotationObjectsChange,
     handleFreezeDurationChange,
   };
