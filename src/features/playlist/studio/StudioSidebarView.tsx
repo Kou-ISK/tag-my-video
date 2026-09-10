@@ -1,3 +1,6 @@
+import { useId } from 'react';
+import { StudioInspectorHeaderView } from './StudioInspectorHeaderView';
+import { studioControlLayout } from './studioControlLayout';
 import { TacticsPresetsView } from './TacticsPresetsView';
 import type { TacticsPresetProps } from './useTacticsPresets';
 import { TacticsChromaView } from './TacticsChromaView';
@@ -22,8 +25,6 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import Undo from '@mui/icons-material/Undo';
-import Redo from '@mui/icons-material/Redo';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
@@ -49,6 +50,7 @@ export type StudioSidebarViewProps = StudioEditor['inspector'] & {
 export const StudioSidebarView = (
   props: StudioSidebarViewProps,
 ): ReactElement => {
+  const contentId = useId();
   const index = props.objects.findIndex(
     (object) => object.id === props.selectedId,
   );
@@ -57,38 +59,33 @@ export const StudioSidebarView = (
       component="aside"
       aria-label="Paint Inspector"
       onKeyDown={props.onKeyDown}
-      sx={{
-        width: 292,
-        minWidth: 260,
-        flexShrink: 0,
-        overflowY: 'auto',
-        bgcolor: 'background.paper',
-        borderLeft: 1,
-        borderColor: 'divider',
-      }}
+      sx={[
+        studioControlLayout,
+        {
+          width: props.inspectorCollapsed ? 40 : 292,
+          minWidth: props.inspectorCollapsed ? 40 : 292,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          bgcolor: 'background.paper',
+          borderLeft: 1,
+          borderColor: 'divider',
+        },
+      ]}
     >
-      <Stack spacing={2} sx={{ p: 2 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Typography variant="subtitle2">Paint</Typography>
-          <Stack direction="row">
-            <IconAction
-              label="元に戻す"
-              disabled={!props.canUndo || !props.enabled}
-              onClick={props.onUndo}
-              icon={<Undo fontSize="small" />}
-            />
-            <IconAction
-              label="やり直す"
-              disabled={!props.canRedo || !props.enabled}
-              onClick={props.onRedo}
-              icon={<Redo fontSize="small" />}
-            />
-          </Stack>
-        </Stack>
+      <StudioInspectorHeaderView {...props} contentId={contentId} />
+      <Stack
+        id={contentId}
+        spacing={2}
+        sx={{
+          p: 2,
+          pt: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          display: props.inspectorCollapsed ? 'none' : 'flex',
+        }}
+      >
         <ToggleButtonGroup
           size="small"
           exclusive
@@ -220,13 +217,21 @@ export const StudioSidebarView = (
                       flexShrink: 0,
                     }}
                   />
-                  <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    noWrap
+                    sx={{ flex: 1, minWidth: 0 }}
+                  >
                     {object.text ||
                       STUDIO_TOOLS.find((tool) => tool.id === object.type)
                         ?.label ||
                       object.type}
                   </Typography>
-                  <Typography variant="technical" color="text.secondary">
+                  <Typography
+                    variant="technical"
+                    color="text.secondary"
+                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
                     {object.timestamp.toFixed(1)}s
                   </Typography>
                 </ListItemButton>
@@ -234,7 +239,7 @@ export const StudioSidebarView = (
             ))}
           </List>
         )}
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
           <Button
             startIcon={<ContentCopy />}
             disabled={!props.enabled || !props.selected}

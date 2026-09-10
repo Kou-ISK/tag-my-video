@@ -46,7 +46,12 @@ export const TacticsMotionView = (
           <Typography variant="caption" color="text.secondary">
             再生位置を移して図形をドラッグすると、その時刻の位置を記録します。点の間は滑らかに移動します。
           </Typography>
-          <Stack direction="row" spacing={1}>
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={1}
+            sx={{ flexWrap: 'wrap' }}
+          >
             <Button
               disabled={
                 localTime < 0 ||

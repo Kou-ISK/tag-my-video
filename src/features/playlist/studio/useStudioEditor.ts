@@ -49,6 +49,8 @@ export interface StudioEditor {
     onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
   };
   inspector: {
+    inspectorCollapsed: boolean;
+    onToggleInspector: () => void;
     renderError: string;
     motion: TacticsMotionProps;
     enabled: boolean;
@@ -82,6 +84,7 @@ export interface StudioEditor {
   };
 }
 export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selection, setSelection] = useState<{
     key: string;
@@ -253,6 +256,8 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       onKeyDown,
     },
     inspector: {
+      inspectorCollapsed,
+      onToggleInspector: () => setInspectorCollapsed((value) => !value),
       playerCount,
       onPlayerCountChange: (count) => {
         gesture.cancel();

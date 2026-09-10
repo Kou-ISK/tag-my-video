@@ -35,9 +35,22 @@ export const TacticsPresetsView = (props: TacticsPresetProps): ReactElement => (
         <Button
           disabled={!props.enabled}
           onClick={() => props.onInsert(preset.id)}
-          sx={{ justifyContent: 'flex-start', flex: 1, minWidth: 0 }}
+          sx={{
+            justifyContent: 'flex-start',
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+          title={preset.name}
         >
-          {preset.name}
+          <Typography
+            component="span"
+            variant="inherit"
+            noWrap
+            sx={{ minWidth: 0 }}
+          >
+            {preset.name}
+          </Typography>
         </Button>
         <Button
           aria-label={`${preset.name}を削除`}

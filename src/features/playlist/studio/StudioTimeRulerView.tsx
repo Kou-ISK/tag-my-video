@@ -16,7 +16,14 @@ export const StudioTimeRulerView = ({
 }): ReactElement => {
   const input = useStudioRulerInput(time, onSeek);
   return (
-    <Box sx={{ position: 'relative', height: 42, minWidth: 0 }}>
+    <Box
+      sx={{
+        position: 'relative',
+        height: 42,
+        minWidth: 0,
+        containerType: 'inline-size',
+      }}
+    >
       {Array.from({ length: 5 }, (_, index) => (
         <Box
           key={index}
@@ -33,6 +40,8 @@ export const StudioTimeRulerView = ({
             component="span"
             sx={{
               position: 'absolute',
+              display: index === 0 || index === 4 ? 'block' : 'none',
+              '@container (min-width: 220px)': { display: 'block' },
               top: 12,
               whiteSpace: 'nowrap',
               fontSize: 10,

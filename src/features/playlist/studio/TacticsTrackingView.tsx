@@ -33,7 +33,7 @@ export const TacticsTrackingView = (
       </Typography>
     )}
     {props.hasResult && (
-      <Stack direction="row" spacing={1}>
+      <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
         <Button onClick={props.onApply}>追尾できた範囲を適用</Button>
         <Button onClick={props.onDiscard}>破棄</Button>
       </Stack>

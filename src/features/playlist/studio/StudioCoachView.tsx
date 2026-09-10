@@ -1,3 +1,4 @@
+import { studioControlLayout } from './studioControlLayout';
 import type { ReactElement } from 'react';
 import {
   Button,
@@ -36,17 +37,21 @@ export const StudioCoachView = ({
   <Stack
     direction="row"
     alignItems="center"
+    useFlexGap
     spacing={0.5}
     role="group"
     aria-label="プレゼン 描画操作"
-    sx={{
-      flexWrap: 'wrap',
-      rowGap: 0.5,
-      p: 1,
-      borderTop: 1,
-      borderColor: 'divider',
-      bgcolor: 'background.paper',
-    }}
+    sx={[
+      studioControlLayout,
+      {
+        flexWrap: 'wrap',
+        rowGap: 0.5,
+        p: 1,
+        borderTop: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      },
+    ]}
   >
     <Typography variant="caption" sx={{ width: '100%' }}>
       プレゼン：一時停止して描画し、再生して説明します。描画は編集モードと共有・保存されます。

@@ -45,7 +45,7 @@ export const PitchCalibrationView = (
             4点を交差しない順序で配置し、実寸を入力してください。
           </Typography>
         )}
-        <Stack direction="row">
+        <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
           <Button
             disabled={props.disabled || !props.valid}
             onClick={props.onApply}
@@ -57,7 +57,7 @@ export const PitchCalibrationView = (
       </>
     ) : (
       <>
-        <Stack direction="row">
+        <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
           <Button disabled={props.disabled} onClick={props.onBegin}>
             {props.calibrated ? '較正を編集' : '4点で較正'}
           </Button>

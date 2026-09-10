@@ -7,7 +7,7 @@ export const TacticsChromaView = (props: TacticsChromaProps): ReactElement => (
     <Typography variant="caption" color="text.secondary">
       映像から芝色を抽出し、描画をその色の範囲に限定します。ユニフォームが芝色に近い場合は範囲を調整してください。
     </Typography>
-    <Stack direction="row">
+    <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
       <Button disabled={props.disabled} onClick={props.onExtract}>
         芝色を抽出
       </Button>

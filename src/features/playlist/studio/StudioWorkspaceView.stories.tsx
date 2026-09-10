@@ -1,3 +1,4 @@
+import { studioInspectorFixture } from '../fixtures/studioInspector';
 import { StudioToolsView } from './StudioToolsView';
 import { TacticsVideoFixture } from '../fixtures/TacticsVideoFixture';
 import { TacticsTimelineView } from './TacticsTimelineView';
@@ -17,9 +18,11 @@ import type { DrawingObject } from '../../../types/playlist/core';
 
 const StudioFixture = ({
   empty = false,
+  inspectorStates = false,
   initialObjects = studioObjects,
 }: {
   empty?: boolean;
+  inspectorStates?: boolean;
   initialObjects?: DrawingObject[];
 }): ReactElement => {
   const root = useRef<HTMLDivElement>(null);
@@ -89,6 +92,7 @@ const StudioFixture = ({
         inspector={
           coachMode ? null : (
             <StudioSidebarView
+              {...(inspectorStates ? studioInspectorFixture : {})}
               panel={panel}
               onPanelChange={setPanel}
               {...{
@@ -196,4 +200,17 @@ export const VideoTracking: Story = { render: () => <TacticsVideoFixture /> };
 
 export const PlayerGraphics: Story = {
   render: () => <StudioFixture initialObjects={playerGraphics} />,
+};
+
+export const InspectorLayout: Story = {
+  render: () => <StudioFixture inspectorStates />,
+};
+export const CollapsedInspector: Story = {
+  play: ({ canvasElement }) => {
+    canvasElement
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Paintの編集パネルを折りたたむ"]',
+      )
+      ?.click();
+  },
 };

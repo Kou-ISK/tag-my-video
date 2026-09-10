@@ -1,3 +1,4 @@
+import { studioControlLayout } from './studioControlLayout';
 import { mediaChromeSx } from '../../../design-system/mediaChrome';
 import type { ReactElement } from 'react';
 import {
@@ -31,6 +32,7 @@ export const StudioTransportView = (
     spacing={1}
     sx={[
       mediaChromeSx,
+      studioControlLayout,
       {
         m: 0.75,
         px: 1,
@@ -58,6 +60,7 @@ export const StudioTransportView = (
     <Stack
       direction="row"
       alignItems="center"
+      useFlexGap
       spacing={1}
       sx={{ flexWrap: 'wrap', rowGap: 1 }}
     >
