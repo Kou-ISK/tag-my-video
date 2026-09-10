@@ -24,7 +24,15 @@ export const DEFAULT_CLIP_EXPORT_OVERLAY_SETTINGS: ClipExportOverlaySettings = {
   showMemo: true,
 };
 
+export interface ClipExportFreezeFrame {
+  time: number;
+  duration: number;
+  annotationPngPrimary?: string | null;
+  annotationPngSecondary?: string | null;
+}
+
 export interface ClipExportItem {
+  freezeFrames?: ClipExportFreezeFrame[];
   id: string;
   actionName: string;
   startTime: number;

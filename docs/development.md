@@ -289,3 +289,7 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 ## UI変更の一括検証
 
 `pnpm run verify` はRenderer/Electronの型検査、lint、architecture/design-system/ADR検査、unit tests、アプリbuild、Storybook buildを順に実行する。UI調整をまとめた後に実行できる。`pnpm run storybook` の `Design System/Foundation/Controls` と `Workspace/*` でdark/light、空状態、長い名称、無効操作、狭い幅を確認する。
+
+## Native UI / Studio の確認
+
+`pnpm run verify`で型、Electron型、lint、architecture、design-system、ADR、テスト、アプリbuild、Storybook buildを一括検証する。Storybookの `Workspace/Playlist/Studio` はElectron不要の描画fixture、`Workspace/Timeline/Continuous` はrulerと行の共有座標を確認するView story。Studioでは描画・移動・拡縮・レイヤー・Undo/Redoを、Timelineではズームと縦横スクロール後のシーク位置を確認する。映像の再生・ファイル保存・FFmpeg書き出しはElectron実機でも確認する。

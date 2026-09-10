@@ -277,3 +277,7 @@ GitHub Actions `quality-check` は `main` / `develop` / `feat**` 宛てpull requ
 ## 分析ワークスペースの表示境界
 
 UIのsemantic tokenとテーマは `src/design-system/` に集約する。開始画面のファイル選択とウィザードは `VideoPathSelector` が、ショートカットガイドは `VideoController` が組み立てる。表示Viewはpropsで再現し、Storybookの `Workspace/*` を実画面の視覚確認に使う。保存・IPC・分析モデルの契約は変更しない。
+
+## Playlist Studio
+
+Playlistに描画編集用のStudioモードを追加。通常レビューと同じ映像DOMを維持し、アングル別の注釈を既存Playlist履歴・保存経路に反映する。編集状態はwindow-onlyで、図形と静止時間だけを保存する。描画とPNG出力は共通レンダラーを使用し、書き出しは時刻別のfreezeFramesを扱う。設計理由は[ADR 0028](adr/0028-playlist-studio-annotation-contract.md)。

@@ -76,11 +76,13 @@ export const useAnnotationCanvasRendering = ({
     if (!selectedObject) return;
 
     ctx.save();
-    ctx.strokeStyle = '#00bcd4';
+    ctx.strokeStyle = '#64A9FF';
     ctx.setLineDash([6, 4]);
     ctx.lineWidth = 1;
     const bounds = getObjectBounds(selectedObject);
     if (bounds) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(bounds.maxX - 4, bounds.maxY - 4, 8, 8);
       ctx.strokeRect(
         bounds.minX - 4,
         bounds.minY - 4,

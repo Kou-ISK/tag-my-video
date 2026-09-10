@@ -78,3 +78,44 @@ describe('playlistClipExportBuilder', () => {
     });
   });
 });
+
+it('exports distinct Studio frames in timestamp order and handles embedded offsets', () => {
+  const first = sampleItems[0];
+  const object = first.annotation!.objects[0];
+  const render = vi.fn((objects) =>
+    JSON.stringify(objects?.map((entry: { id: string }) => entry.id)),
+  );
+  const build = (videoSource: string, times: number[]) =>
+    buildPlaylistExportClips({
+      sourceItems: [
+        {
+          ...first,
+          videoSource,
+          annotation: {
+            ...first.annotation!,
+            objects: times.map((timestamp, index) => ({
+              ...object,
+              id: `frame-${index}`,
+              timestamp,
+            })),
+          },
+        },
+      ],
+      itemAnnotations: {},
+      minFreezeDuration: 2,
+      primaryContentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
+      secondaryContentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
+      primarySourceSize: { width: 1920, height: 1080 },
+      secondarySourceSize: { width: 1920, height: 1080 },
+      renderAnnotationPng: render,
+    })[0];
+  const reference = build('match.mp4', [13, 11, 11.05]);
+  expect(reference.freezeFrames?.map((frame) => frame.time)).toEqual([1, 3]);
+  expect(reference.freezeFrames?.[0].annotationPngPrimary).toBe(
+    '["frame-1","frame-2"]',
+  );
+  expect(reference.freezeFrames?.[1].annotationPngPrimary).toBe('["frame-0"]');
+  expect(build('./videos/clip.mp4', [3, 1, 1.05]).freezeFrames).toEqual(
+    reference.freezeFrames,
+  );
+});

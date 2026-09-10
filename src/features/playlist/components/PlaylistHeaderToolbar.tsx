@@ -95,7 +95,7 @@ export const PlaylistHeaderToolbar = ({
         {hasUnsavedChanges ? (
           <Typography
             variant="caption"
-            color="warning.main"
+            color="text.secondary"
             sx={{
               border: 1,
               borderColor: 'divider',
@@ -122,6 +122,9 @@ export const PlaylistHeaderToolbar = ({
           <ToggleButton value="sorter" aria-label="Sorter">
             Sorter
           </ToggleButton>
+          <ToggleButton value="studio" aria-label="Studio">
+            Studio
+          </ToggleButton>
         </ToggleButtonGroup>
 
         <Tooltip
@@ -130,6 +133,7 @@ export const PlaylistHeaderToolbar = ({
           <IconButton
             size="small"
             onClick={onInspectorToggle}
+            disabled={workspaceMode === 'studio'}
             aria-label="Inspector"
             aria-pressed={inspectorVisible}
           >
@@ -216,7 +220,7 @@ export const PlaylistHeaderToolbar = ({
               onMenuClose();
               onViewModeChange('angle1');
             }}
-            disabled={!hasDualSources}
+            disabled={!hasDualSources || workspaceMode === 'studio'}
           >
             <ListItemIcon>
               <Typography variant="caption">⇧1</Typography>
@@ -228,7 +232,7 @@ export const PlaylistHeaderToolbar = ({
               onMenuClose();
               onViewModeChange('angle2');
             }}
-            disabled={!hasDualSources}
+            disabled={!hasDualSources || workspaceMode === 'studio'}
           >
             <ListItemIcon>
               <Typography variant="caption">⇧2</Typography>
@@ -240,7 +244,7 @@ export const PlaylistHeaderToolbar = ({
               onMenuClose();
               onViewModeChange('dual');
             }}
-            disabled={!hasDualSources}
+            disabled={!hasDualSources || workspaceMode === 'studio'}
           >
             <ListItemIcon>
               <Typography variant="caption"> </Typography>

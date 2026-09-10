@@ -28,7 +28,7 @@ export const buildThemeOptions = (mode: DesignSystemMode): ThemeOptions => {
       fontFamily: fontFamilies.ui,
       display: typographyScale.display,
       heading: typographyScale.heading,
-      fontSize: 13,
+      fontSize: 14,
       h4: { fontSize: '1.8rem', fontWeight: 750, letterSpacing: '-0.04em' },
       h5: { fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.025em' },
       h6: { fontSize: '1rem', fontWeight: 700 },

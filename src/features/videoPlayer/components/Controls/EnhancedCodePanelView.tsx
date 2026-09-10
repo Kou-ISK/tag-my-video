@@ -37,7 +37,12 @@ export interface EnhancedCodePanelViewProps {
     option: string,
   ) => void;
   handleCustomButtonClick: (button: CodeWindowButton) => void;
-  handleActionClick: (teamName: string, action: ActionDefinition) => void;
+  handleActionClick: (
+    teamName: string,
+    action: ActionDefinition,
+    originalName?: string,
+    color?: string,
+  ) => void;
   onOpenDetachedWindow?: () => void;
 }
 

@@ -89,9 +89,6 @@ export const usePlaylistWindowInteractionRuntime = (
     isDrawingMode: core.isDrawingMode,
     setIsDrawingMode: core.setIsDrawingMode,
     setIsPlaying: core.setIsPlaying,
-    persistCanvasObjects: runtime.annotations.persistCanvasObjects,
-    annotationCanvasRefPrimary: core.annotationCanvasRefPrimary,
-    annotationCanvasRefSecondary: core.annotationCanvasRefSecondary,
   });
 
   usePlaylistSaveRequest({
@@ -127,7 +124,9 @@ export const usePlaylistWindowInteractionRuntime = (
     loadedFilePath: core.loadedFilePath,
     setSaveDialogOpen: core.setSaveDialogOpen,
     setExportDialogOpen: exportState.setExportDialogOpen,
-    setViewMode: core.setViewMode,
+    setViewMode: (value) => {
+      if (core.workspaceMode !== 'studio') core.setViewMode(value);
+    },
     setIsPlaying: core.setIsPlaying,
     videoRef: core.videoRef,
     videoRef2: core.videoRef2,

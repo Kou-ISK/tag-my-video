@@ -294,3 +294,7 @@ docs/
 ### 作業画面のStorybook
 
 feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレクトリに配置する。共通controlの比較は `src/design-system/stories/Controls.stories.tsx`、開始画面は `VideoPathSelectorView.stories.tsx` が入口となる。
+
+### Playlist Studio
+
+`src/features/playlist/studio/` は描画gesture/editor hook、Playlist runtime adapter、描画ツール・プロパティ・レイヤー・transport・clip Viewを配置する。`components/annotationDrawing.ts` は編集とPNG出力で共通の描画処理。`fixtures/studio.ts` はStorybookとテスト専用データ。外部依存は既存Playlist controller/gatewayに閉じ込める。

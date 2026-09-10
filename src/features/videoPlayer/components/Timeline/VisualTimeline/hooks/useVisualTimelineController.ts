@@ -9,6 +9,7 @@ import { useTimelineGlobalShortcuts } from './useTimelineGlobalShortcuts';
 import { useTimelineInteractions } from './useTimelineInteractions';
 import { useTimelineRangeSelection } from './useTimelineRangeSelection';
 import { useTimelineRowInteractions } from './useTimelineRowInteractions';
+import { useTimelineSeek } from './useTimelineSeek';
 import { useTimelineViewport } from './useTimelineViewport';
 
 export const useVisualTimelineController = ({
@@ -52,6 +53,11 @@ export const useVisualTimelineController = ({
     currentTimePosition,
     scrollLeft,
   } = useTimelineViewport({ maxSec, currentTime });
+  const seekHandlers = useTimelineSeek(
+    clientXToContentX,
+    positionToTime,
+    onSeek,
+  );
   const axisRef = React.useRef<HTMLDivElement>(null);
   const rowInteractions = useTimelineRowInteractions({
     rows,
@@ -345,6 +351,7 @@ export const useVisualTimelineController = ({
   } satisfies VisualTimelineViewProps['dialogsProps'];
 
   return {
+    seekHandlers,
     zoomScale,
     canZoomOut,
     canZoomIn,

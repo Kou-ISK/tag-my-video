@@ -1,5 +1,12 @@
 export const fontFamilies = {
-  ui: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'].join(', '),
+  ui: [
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'system-ui',
+    'Inter',
+    'Noto Sans JP',
+    'sans-serif',
+  ].join(', '),
   mono: [
     'ui-monospace',
     'SFMono-Regular',

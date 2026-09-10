@@ -22,7 +22,10 @@ const hashName = (name: string): number => {
 export const getDefaultTimelineRowColor = (name: string): string =>
   ROW_COLORS[hashName(name) % ROW_COLORS.length];
 
-export const deriveTimelineRows = (timeline: TimelineData[]): TimelineRow[] => {
+export const deriveTimelineRows = (
+  timeline: TimelineData[],
+  buttonColors?: ReadonlyMap<string, string>,
+): TimelineRow[] => {
   const rows: TimelineRow[] = [];
   const seen = new Set<string>();
 
@@ -33,7 +36,10 @@ export const deriveTimelineRows = (timeline: TimelineData[]): TimelineRow[] => {
     rows.push({
       id: `legacy-row-${rows.length + 1}`,
       name,
-      color: item.color ?? getDefaultTimelineRowColor(name),
+      color:
+        buttonColors?.get(name) ??
+        item.color ??
+        getDefaultTimelineRowColor(name),
     });
   }
 
@@ -43,9 +49,10 @@ export const deriveTimelineRows = (timeline: TimelineData[]): TimelineRow[] => {
 export const ensureTimelineRows = (
   rows: TimelineRow[],
   timeline: TimelineData[],
+  buttonColors?: ReadonlyMap<string, string>,
 ): TimelineRow[] => {
   const names = new Set(rows.map((row) => row.name));
-  const missing = deriveTimelineRows(timeline).filter(
+  const missing = deriveTimelineRows(timeline, buttonColors).filter(
     (row) => !names.has(row.name),
   );
   if (missing.length === 0) return rows;

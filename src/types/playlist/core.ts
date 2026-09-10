@@ -2,6 +2,9 @@ import type { SCLabel } from '../timeline/sportscode';
 
 export type PlaylistType = 'reference' | 'embedded';
 export type DrawingToolType =
+  | 'ring'
+  | 'spotlight'
+  | 'polygon'
   | 'pen'
   | 'line'
   | 'arrow'
@@ -28,6 +31,8 @@ export interface DrawingObject {
   type: DrawingToolType;
   color: string;
   strokeWidth: number;
+  opacity?: number;
+  dashed?: boolean;
   fill?: boolean;
   startX: number;
   startY: number;

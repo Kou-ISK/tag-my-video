@@ -104,7 +104,7 @@ export const usePlaylistPlaybackEffects = ({
       const playbackTime = video.currentTime;
       setCurrentTime(playbackTime);
 
-      if (currentItemId && currentAnnotation) {
+      if (isPlayingRef.current && currentItemId && currentAnnotation) {
         const effectiveFreezeDuration =
           currentAnnotation.freezeDuration &&
           currentAnnotation.freezeDuration > 0
@@ -130,6 +130,7 @@ export const usePlaylistPlaybackEffects = ({
       }
 
       if (
+        isPlayingRef.current &&
         currentItemEndTime !== undefined &&
         video.currentTime >= currentItemEndTime
       ) {

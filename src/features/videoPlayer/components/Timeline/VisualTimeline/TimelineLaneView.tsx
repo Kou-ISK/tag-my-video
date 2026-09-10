@@ -33,7 +33,6 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
   isDraggingPlayhead,
   isEditModifierPressed,
   isTeam1,
-  laneLabelColor,
   draftRange,
   onLaneDragOver,
   onLaneDrop,
@@ -46,10 +45,11 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'stretch',
         gap: 0,
         position: 'relative',
-        minHeight: 34,
+        height: 32,
+        minHeight: 32,
         borderBottom: 1,
         borderColor: 'divider',
         width: '100%',
@@ -74,9 +74,9 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         title={actionName}
         variant="caption"
         sx={{
-          color: laneLabelColor,
-          fontWeight: 'bold',
-          fontSize: '0.7rem',
+          color: 'text.primary',
+          fontWeight: 600,
+          fontSize: '0.75rem',
           width: TIMELINE_ROW_HEADER_WIDTH_PX,
           flexShrink: 0,
           textAlign: 'left',
@@ -92,6 +92,7 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
           border: 0,
           borderRight: 1,
           borderColor: 'divider',
+          borderLeft: `3px solid ${rowColor}`,
           backgroundColor: isRowSelected
             ? alpha(theme.palette.primary.main, 0.18)
             : 'background.paper',
@@ -117,12 +118,12 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         data-testid={`timeline-lane-${actionName}`}
         sx={{
           position: 'relative',
-          height: 26,
+          height: '100%',
           flex: 1,
           flexShrink: 0,
           backgroundColor: alpha(rowColor, 0.06),
-          borderRadius: 0.5,
-          border: 1,
+          borderRadius: 0,
+          border: 0,
           borderColor: 'divider',
           boxSizing: 'border-box',
           userSelect: 'none',
@@ -185,22 +186,6 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         )}
 
         <Box
-          aria-hidden="true"
-          sx={{
-            position: 'absolute',
-            left: `${currentTimePosition}px`,
-            top: 0,
-            bottom: 0,
-            width: 2,
-            transform: 'translateX(-1px)',
-            backgroundColor: 'error.main',
-            pointerEvents: 'none',
-            zIndex: theme.custom.zIndex.stickyChrome,
-            transition: isDraggingPlayhead ? 'none' : 'left 80ms linear',
-          }}
-        />
-
-        <Box
           onMouseDown={onPlayheadMouseDown}
           data-testid={`timeline-playhead-${actionName}`}
           sx={{
@@ -220,7 +205,6 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
               : isDraggingPlayhead
                 ? 'grabbing'
                 : 'grab',
-            transition: isDraggingPlayhead ? 'none' : 'left 80ms linear',
           }}
         />
       </Box>

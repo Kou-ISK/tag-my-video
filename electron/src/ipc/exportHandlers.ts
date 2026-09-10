@@ -1,3 +1,4 @@
+import { isExportFreezeFrames } from './exportFreezeFramesValidation';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
@@ -65,6 +66,13 @@ const isAngleOption = (value: unknown): boolean => {
 };
 
 const isClipExportItem = (value: unknown): boolean => {
+  if (
+    !isPlainObject(value) ||
+    typeof value.startTime !== 'number' ||
+    typeof value.endTime !== 'number'
+  )
+    return false;
+  const duration = value.endTime - value.startTime;
   return (
     isPlainObject(value) &&
     isNonEmptyString(value.id) &&
@@ -73,7 +81,8 @@ const isClipExportItem = (value: unknown): boolean => {
     Number.isFinite(value.startTime) &&
     typeof value.endTime === 'number' &&
     Number.isFinite(value.endTime) &&
-    isOptionalNumber(value.freezeAt) &&
+    isExportFreezeFrames(value.freezeFrames, duration) &&
+    (value.freezeAt === null || isOptionalNumber(value.freezeAt)) &&
     isOptionalNumber(value.freezeDuration) &&
     isOptionalString(value.memo) &&
     isOptionalString(value.videoSource) &&

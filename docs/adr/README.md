@@ -34,6 +34,8 @@ ADR は長期的な設計判断を残すための記録です。実装規約の�
 | [0026](0026-package-session-window-ownership.md)                   | Package session window ownership                    | Accepted   | 2026-08-30 |
 | [0027](0027-enforced-design-system-foundation.md)                   | Enforced design system foundation                   | Accepted   | 2026-08-30 |
 
+| [0028](0028-playlist-studio-annotation-contract.md) | Playlist Studio annotation contract | Accepted | 2026-09-10 |
+
 ## Status Values
 
 - `Proposed`: 提案中。実装前または合意前。

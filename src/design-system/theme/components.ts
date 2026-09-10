@@ -43,7 +43,7 @@ export const buildComponents = (
     },
   },
   MuiButton: {
-    defaultProps: { disableElevation: true, size: 'small' },
+    defaultProps: { disableElevation: true },
     styleOverrides: {
       root: {
         borderRadius: primitiveShape.radiusLg,
@@ -91,7 +91,7 @@ export const buildComponents = (
     defaultProps: { size: 'small' },
     styleOverrides: {
       root: {
-        backgroundColor: tokens.surface.canvas,
+        backgroundColor: tokens.surface.work,
         borderRadius: primitiveShape.radiusMd,
       },
       notchedOutline: { borderColor: tokens.border.strong },
@@ -119,11 +119,11 @@ export const buildComponents = (
         borderColor: tokens.border.subtle,
         color: tokens.content.secondary,
         '&.Mui-selected': {
-          color: tokens.interactive.primary,
-          backgroundColor: tokens.surface.selected,
-          borderColor: tokens.border.focus,
+          color: tokens.content.primary,
+          backgroundColor: tokens.surface.raised,
+          borderColor: tokens.border.strong,
         },
-        '&.Mui-selected:hover': { backgroundColor: tokens.interactive.hover },
+        '&.Mui-selected:hover': { backgroundColor: tokens.surface.hover },
       },
     },
   },

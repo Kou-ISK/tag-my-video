@@ -1,4 +1,4 @@
-# SporTagLytics Design System (Professional Analysis / Dark-first)
+# SporTagLytics Design System (Native Analysis / Dark-first)
 
 このドキュメントは SporTagLytics の UI 実装における単一の参照点です。実装上の色・タイポグラフィ・spacing の正本は semantic token と MUI theme (`src/design-system/`; `src/theme.ts` は互換export) とし、本書は「どのトークンを、どの意味で使うか」を定義します。
 
@@ -26,23 +26,23 @@ SporTagLytics はスポーツ分析者が長時間操作する desktop applicati
 
 ### Palette (dark)
 
-- `primary`: `#62C8FF` (Signal Blue; light は `#00649A`)
+- `primary`: `#64A9FF` (Signal Blue; light は `#0067CE`)
 - `secondary`: `#00FF85` (Neon Green)
 - `team1`: `#1E90FF`
 - `team2`: `#FF6F61`
-- `background.default`: `#090F18`
-- `background.paper`: `#111C2A`
-- `text.primary`: `#E8EFF7`
-- `text.secondary`: `#A7B8CB`
+- `background.default`: `#18181B`
+- `background.paper`: `#242426`
+- `text.primary`: `#F5F5F7`
+- `text.secondary`: `#B3B3BA`
 - `text.disabled`: `rgba(255,255,255,0.5)`
 - `divider`: `rgba(255,255,255,0.12)`
 
-- `surface.raised`: `#19283A`。canvas → work → raised の明度を段階的に上げる。
+- `surface.raised`: `#303034`。canvas → work → raised の明度を段階的に上げる。
 - チームのデータ色は従来どおり。操作のSignal Blueと分離する。
 
 ### Typography
 
-- Font: `Inter`, `Noto Sans JP`, `system-ui`, `sans-serif`
+- Font: `-apple-system`, `BlinkMacSystemFont`, `system-ui`, `Inter`, `Noto Sans JP`, `sans-serif`
 - 本文・UIラベルは日本語を基本とする。
 - `button` は `textTransform: none`, `fontWeight: 700`。
 - 数値を連続比較する Timeline 時刻・倍率などは tabular numerals を優先する。
@@ -195,9 +195,9 @@ Storybook を導入・利用する場合は `ThemeProvider` + `CssBaseline` を�
 - UI から意図的に隠す高度操作を追加・変更した場合は同じ変更で Help を更新する。
 - ダークモードを基準に設計し、ライトモードでも foreground / background / divider が theme 依存で成立することを確認する。
 
-## Professional Analysis の作業画面
+## Native Analysis の作業画面
 
-Sportscodeの映像・コード・Timeline中心の作業モデルを参考に、角を抑えたパネル、細い境界、コンパクトな操作列で構成する。近未来的な印象は青みのあるsurfaceと選択色で表現し、常時発光や装飾的アニメーションを増やさない。
+Sportscodeの映像・コード・Timeline中心の作業モデルを参考に、角を抑えたパネル、細い境界、コンパクトな操作列で構成する。macOSに馴染むニュートラルなsurfaceとシステムフォントを使用し、常時発光や装飾的アニメーションを増やさない。
 
 - 開始画面は開始操作と最近のパッケージを横並びにし、狭い幅では縦並びにする。履歴なし・有効／無効dropも明示する。
 - 再生時刻は等幅の専用領域、速度presetは選択状態を明示する。ライトモードでも固定白文字を使わない。
@@ -205,3 +205,11 @@ Sportscodeの映像・コード・Timeline中心の作業モデルを参考に�
 - Playlistは未保存を文字で表示し、長い名称を省略、操作列は必要に応じて折り返す。
 - `Workspace/*` storiesで開始画面、再生バー、Timeline行とFooter、Code Window、分析Toolbar、Playlist、設定Headerを確認する。
 - ファイル選択・ウィザードとShortcutGuideの外部イベント購読は組み立て側が所有し、対象Viewへcallbackまたはslotを渡す。
+
+## Native Playlist と Studio
+
+- ニュートラルなグレー、システムフォント、控えめな角丸、連続した分割ペインを使用する。青は操作・選択・focusに限定し、ネオンや色付きの背景で分析対象を競わせない。
+- Playlist の Organizer / Sorter / Studio は同じツールバーから切り替える。Studio は映像、編集インスペクタ、下部クリップ列で構成する。
+- Timeline の行間余白は0。rulerと行を同じスクロールコンテンツに配置し、再生位置線はコンテンツ全体に1本だけ描画する。ドラッグ領域は各行に残し、修飾キーによるインスタンス作成を維持する。
+- 初期行色はアクションボタンの色を引き継ぐ。既存の行色は行モデルが所有する。
+- Studio の図形色・線幅・不透明度は注釈データであり、UI chromeのsemantic tokenとは区別する。描画ツール、プロパティ、レイヤー、再生操作は独立したprops-only Viewで構成する。

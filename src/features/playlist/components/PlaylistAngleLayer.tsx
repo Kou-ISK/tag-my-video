@@ -17,6 +17,7 @@ type ContentRect = {
 type CanvasSize = { width: number; height: number };
 
 type PlaylistAngleLayerProps = {
+  annotationsVisible?: boolean;
   boxSx: SxProps<Theme>;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   videoStyle: React.CSSProperties;
@@ -37,6 +38,7 @@ type PlaylistAngleLayerProps = {
 };
 
 export const PlaylistAngleLayer = ({
+  annotationsVisible = true,
   boxSx,
   videoRef,
   videoStyle,
@@ -55,19 +57,21 @@ export const PlaylistAngleLayer = ({
   return (
     <Box sx={boxSx}>
       <video ref={videoRef} style={videoStyle} />
-      <AnnotationCanvas
-        ref={annotationCanvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        isActive={isDrawingMode && drawingTarget === target}
-        target={target}
-        initialObjects={initialObjects}
-        freezeDuration={freezeDuration}
-        contentRect={contentRect}
-        onObjectsChange={(objects) => onObjectsChange(objects, target)}
-        onFreezeDurationChange={onFreezeDurationChange}
-        currentTime={currentTime}
-      />
+      <Box sx={{ visibility: annotationsVisible ? 'visible' : 'hidden' }}>
+        <AnnotationCanvas
+          ref={annotationCanvasRef}
+          width={canvasSize.width}
+          height={canvasSize.height}
+          isActive={isDrawingMode && drawingTarget === target}
+          target={target}
+          initialObjects={initialObjects}
+          freezeDuration={freezeDuration}
+          contentRect={contentRect}
+          onObjectsChange={(objects) => onObjectsChange(objects, target)}
+          onFreezeDurationChange={onFreezeDurationChange}
+          currentTime={currentTime}
+        />
+      </Box>
     </Box>
   );
 };

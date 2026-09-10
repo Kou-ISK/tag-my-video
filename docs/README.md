@@ -64,3 +64,5 @@ AI agent は次の順で参照してください。
 7. [ADR Operations](documentation-guide.md#adr-operations): ADR の採番、命名、更新 lifecycle。
 
 設計・ユーザー影響・ドキュメント運用が変わる変更では、[Docs Impact Matrix](documentation-guide.md#docs-impact-matrix) に従って同期してください。
+
+- [Playlist Studio annotation contract (ADR 0028)](adr/0028-playlist-studio-annotation-contract.md)

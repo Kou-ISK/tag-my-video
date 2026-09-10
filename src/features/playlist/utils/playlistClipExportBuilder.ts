@@ -61,47 +61,68 @@ export const buildPlaylistExportClips = ({
 
   return sourceItems.map((item) => {
     const annotation = itemAnnotations[item.id] || item.annotation;
-    const allTimestamps =
-      annotation?.objects
-        ?.map((object) => object.timestamp)
-        .filter((timestamp) => timestamp !== undefined) || [];
-    const freezeAtAbsolute =
-      allTimestamps.length > 0 ? Math.min(...allTimestamps) : null;
-    const freezeAt =
-      freezeAtAbsolute !== null
-        ? Math.max(0, freezeAtAbsolute - item.startTime)
-        : null;
-    const freezeDuration =
-      annotation?.freezeDuration && annotation.freezeDuration > 0
-        ? Math.max(minFreezeDuration, annotation.freezeDuration)
-        : minFreezeDuration;
-
+    const freezeDuration = Math.max(
+      minFreezeDuration,
+      annotation?.freezeDuration || minFreezeDuration,
+    );
+    // Embedded annotations are clip-relative; reference annotations use source time.
+    const embedded = item.videoSource?.startsWith('./videos/');
+    const objects = (annotation?.objects ?? []).filter((object) => {
+      const time = embedded
+        ? object.timestamp
+        : object.timestamp - item.startTime;
+      return (
+        Number.isFinite(time) &&
+        time >= 0 &&
+        time <= item.endTime - item.startTime
+      );
+    });
+    const timestamps = [
+      ...new Set(objects.map((object) => object.timestamp)),
+    ].sort((a, b) => a - b);
+    // Match playback's frame tolerance, preserving each frame's layer order.
+    const frames: number[] = [];
+    for (const timestamp of timestamps) {
+      if (!frames.some((time) => Math.abs(time - timestamp) <= 0.12))
+        frames.push(timestamp);
+    }
+    const freezeFrames = frames.map((timestamp) => {
+      const frameObjects = objects.filter(
+        (object) => Math.abs(object.timestamp - timestamp) <= 0.12,
+      );
+      return {
+        time: embedded ? timestamp : timestamp - item.startTime,
+        duration: freezeDuration,
+        annotationPngPrimary: renderAnnotationPng(
+          frameObjects,
+          'primary',
+          primaryContentRect,
+          primarySourceSize,
+        ),
+        annotationPngSecondary: renderAnnotationPng(
+          frameObjects,
+          'secondary',
+          secondaryContentRect,
+          secondarySourceSize,
+        ),
+      };
+    });
     return {
       id: item.id,
       actionName: item.actionName,
       startTime: item.startTime,
       endTime: item.endTime,
-      freezeAt,
+      freezeFrames,
+      freezeAt: freezeFrames[0]?.time ?? null,
       freezeDuration,
-      labels:
-        item.labels?.map((label) => ({
-          group: label.group || '',
-          name: label.name,
-        })) || undefined,
+      labels: item.labels?.map((label) => ({
+        group: label.group || '',
+        name: label.name,
+      })),
       memo: item.memo || undefined,
       actionIndex: actionIndexLookup.get(item.id) ?? 1,
-      annotationPngPrimary: renderAnnotationPng(
-        annotation?.objects,
-        'primary',
-        primaryContentRect,
-        primarySourceSize,
-      ),
-      annotationPngSecondary: renderAnnotationPng(
-        annotation?.objects,
-        'secondary',
-        secondaryContentRect,
-        secondarySourceSize,
-      ),
+      annotationPngPrimary: freezeFrames[0]?.annotationPngPrimary ?? null,
+      annotationPngSecondary: freezeFrames[0]?.annotationPngSecondary ?? null,
       videoSource: item.videoSource || undefined,
       videoSource2: item.videoSource2 || undefined,
     };

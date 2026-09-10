@@ -1,0 +1,254 @@
+import { useRef, useState } from 'react';
+import type { KeyboardEvent, RefObject } from 'react';
+import type {
+  AnnotationTarget,
+  DrawingObject,
+  DrawingToolType,
+} from '../../../types/playlist/core';
+import { shiftObject } from '../components/annotationCanvasUtils';
+import { useAnnotationCanvasRendering } from '../hooks/annotation/useAnnotationCanvasRendering';
+import { moveStudioLayer } from './studioGeometry';
+import { useStudioGesture } from './useStudioGesture';
+import type { StudioContentRect, StudioGesture } from './useStudioGesture';
+
+export interface StudioEditorParams {
+  documentKey: string;
+  enabled: boolean;
+  objects: DrawingObject[];
+  time: number;
+  target: AnnotationTarget;
+  width: number;
+  height: number;
+  contentRect: StudioContentRect;
+  onCommit: (objects: DrawingObject[]) => void;
+  onSeek: (time: number) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+export interface StudioEditor {
+  canvas: StudioGesture['handlers'] & {
+    canvasRef: RefObject<HTMLCanvasElement | null>;
+    width: number;
+    height: number;
+    enabled: boolean;
+    tool: DrawingToolType;
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+  };
+  inspector: {
+    enabled: boolean;
+    objects: DrawingObject[];
+    selected: DrawingObject | null;
+    selectedId: string | null;
+    tool: DrawingToolType;
+    color: string;
+    strokeWidth: number;
+    opacity: number;
+    fill: boolean;
+    dashed: boolean;
+    onToolChange: (tool: DrawingToolType) => void;
+    onColorChange: (color: string) => void;
+    onStrokeWidthChange: (width: number) => void;
+    onOpacityChange: (opacity: number) => void;
+    onFillChange: (fill: boolean) => void;
+    onDashedChange: (dashed: boolean) => void;
+    onSelect: (id: string) => void;
+    onUpdate: (patch: Partial<DrawingObject>) => void;
+    onDelete: () => void;
+    onDuplicate: () => void;
+    onMoveLayer: (direction: -1 | 1) => void;
+    onUndo: () => void;
+    onRedo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+  };
+}
+export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [selection, setSelection] = useState<{
+    key: string;
+    id: string | null;
+  }>({ key: '', id: null });
+  const [tool, setTool] = useState<DrawingToolType>('select');
+  const [color, setColor] = useState('#FFD60A');
+  const [strokeWidth, setStrokeWidth] = useState(4);
+  const [opacity, setOpacity] = useState(1);
+  const [fill, setFill] = useState(false);
+  const [dashed, setDashed] = useState(false);
+  const selectedId = selection.key === params.documentKey ? selection.id : null;
+  const selected =
+    params.objects.find((object) => object.id === selectedId) ?? null;
+  const select = (id: string | null): void =>
+    setSelection({ key: params.documentKey, id });
+  const gesture = useStudioGesture({
+    ...params,
+    canvasRef,
+    tool,
+    color,
+    strokeWidth,
+    opacity,
+    fill,
+    dashed,
+    selectedId,
+    onSelect: select,
+  });
+  useAnnotationCanvasRendering({
+    canvasRef,
+    objects: gesture.displayObjects,
+    currentObject: null,
+    currentTime: params.time,
+    contentRect: params.contentRect,
+    width: params.width,
+    height: params.height,
+    selectedObjectId: selectedId,
+    timestampTolerance: 0.12,
+  });
+  const update = (patch: Partial<DrawingObject>): void => {
+    if (!selected || !params.enabled) return;
+    params.onCommit(
+      params.objects.map((object) =>
+        object.id === selected.id ? { ...object, ...patch } : object,
+      ),
+    );
+  };
+  const remove = (): void => {
+    if (selected && params.enabled) {
+      params.onCommit(
+        params.objects.filter((object) => object.id !== selected.id),
+      );
+      select(null);
+    }
+  };
+  const duplicate = (): void => {
+    if (!selected || !params.enabled) return;
+    const copy = { ...shiftObject(selected, 20, 20), id: crypto.randomUUID() };
+    params.onCommit([...params.objects, copy]);
+    select(copy.id);
+  };
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+    const element = event.target;
+    if (
+      element instanceof HTMLElement &&
+      element.closest('input,textarea,select,[contenteditable="true"]')
+    )
+      return;
+    if (!params.enabled) return;
+    const command = event.metaKey || event.ctrlKey;
+    if (command && event.key.toLowerCase() === 'z') {
+      event.preventDefault();
+      event.stopPropagation();
+      gesture.cancel();
+      (event.shiftKey ? params.onRedo : params.onUndo)();
+    } else if (command && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      event.stopPropagation();
+      duplicate();
+    } else if (['Delete', 'Backspace'].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      remove();
+    } else if (event.key === 'Escape') {
+      event.stopPropagation();
+      gesture.cancel();
+      select(null);
+    } else if (
+      selected &&
+      ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      const step = event.shiftKey ? 10 : 1;
+      update(
+        shiftObject(
+          selected,
+          event.key === 'ArrowLeft'
+            ? -step
+            : event.key === 'ArrowRight'
+              ? step
+              : 0,
+          event.key === 'ArrowUp'
+            ? -step
+            : event.key === 'ArrowDown'
+              ? step
+              : 0,
+        ),
+      );
+    }
+  };
+  return {
+    canvas: {
+      canvasRef,
+      width: params.width,
+      height: params.height,
+      enabled: params.enabled,
+      tool,
+      ...gesture.handlers,
+      onKeyDown,
+    },
+    inspector: {
+      enabled: params.enabled,
+      objects: params.objects,
+      selected,
+      selectedId,
+      tool,
+      color,
+      strokeWidth,
+      opacity,
+      fill,
+      dashed,
+      onToolChange: (value: DrawingToolType): void => {
+        gesture.cancel();
+        setTool(value);
+      },
+      onColorChange: (value: string): void => {
+        setColor(value);
+        update({ color: value });
+      },
+      onStrokeWidthChange: (value: number): void => {
+        setStrokeWidth(value);
+        update({ strokeWidth: value });
+      },
+      onOpacityChange: (value: number): void => {
+        setOpacity(value);
+        update({ opacity: value });
+      },
+      onFillChange: (value: boolean): void => {
+        setFill(value);
+        update({ fill: value });
+      },
+      onDashedChange: (value: boolean): void => {
+        setDashed(value);
+        update({ dashed: value });
+      },
+      onSelect: (id: string): void => {
+        gesture.cancel();
+        select(id);
+        setTool('select');
+        const object = params.objects.find((entry) => entry.id === id);
+        if (object) params.onSeek(object.timestamp);
+      },
+      onUpdate: update,
+      onDelete: remove,
+      onDuplicate: duplicate,
+      onMoveLayer: (direction: -1 | 1): void => {
+        if (selected && params.enabled)
+          params.onCommit(
+            moveStudioLayer(params.objects, selected.id, direction),
+          );
+      },
+      onUndo: (): void => {
+        gesture.cancel();
+        params.onUndo();
+      },
+      onRedo: (): void => {
+        gesture.cancel();
+        params.onRedo();
+      },
+      canUndo: params.canUndo,
+      canRedo: params.canRedo,
+      onKeyDown,
+    },
+  };
+};

@@ -2,6 +2,15 @@ const { readFile } = require('node:fs/promises');
 const { resolve } = require('node:path');
 
 const targets = [
+  'src/features/videoPlayer/components/Timeline/VisualTimeline/TimelineAxis.tsx',
+  'src/features/videoPlayer/components/Timeline/VisualTimeline/TimelinePlayhead.tsx',
+  'src/features/playlist/components/PlaylistReviewView.tsx',
+  'src/features/playlist/studio/StudioCanvasView.tsx',
+  'src/features/playlist/studio/StudioClipsView.tsx',
+  'src/features/playlist/studio/StudioSidebarView.tsx',
+  'src/features/playlist/studio/StudioToolsView.tsx',
+  'src/features/playlist/studio/StudioPropertiesView.tsx',
+  'src/features/playlist/studio/StudioTransportView.tsx',
   'src/features/videoPlayer/components/Setup/VideoPathSelectorView.tsx',
   'src/features/videoPlayer/components/Setup/VideoPathSelector/components/ActionButtonsRow.tsx',
   'src/features/videoPlayer/components/Setup/VideoPathSelector/components/WelcomeHeader.tsx',
