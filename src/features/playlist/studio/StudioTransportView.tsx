@@ -1,9 +1,17 @@
 import type { ReactElement } from 'react';
-import { Button, Slider, Stack, TextField, Typography } from '@mui/material';
-import PlayArrow from '@mui/icons-material/PlayArrow';
-import Pause from '@mui/icons-material/Pause';
+import {
+  Slider,
+  ToggleButton,
+  ToggleButtonGroup,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { MovieTransportView } from '../../../components/ui';
 
 export interface StudioTransportViewProps {
+  coachMode?: boolean;
+  onCoachModeChange?: (value: boolean) => void;
   time: number;
   min: number;
   max: number;
@@ -40,15 +48,43 @@ export const StudioTransportView = (
         if (typeof value === 'number') props.onSeek(value);
       }}
     />
-    <Stack direction="row" alignItems="center" spacing={2}>
-      <Button
-        size="small"
-        startIcon={props.playing ? <Pause /> : <PlayArrow />}
-        onClick={props.onTogglePlay}
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={2}
+      sx={{ flexWrap: 'wrap', rowGap: 1 }}
+    >
+      {props.onCoachModeChange && (
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={props.coachMode ? 'coach' : 'edit'}
+          aria-label="Studio 表示モード"
+          onChange={(_, value: string | null) => {
+            if (value) props.onCoachModeChange?.(value === 'coach');
+          }}
+        >
+          <ToggleButton value="edit">編集</ToggleButton>
+          <ToggleButton value="coach">Coach</ToggleButton>
+        </ToggleButtonGroup>
+      )}
+      <MovieTransportView
+        playing={props.playing}
         disabled={props.disabled}
-      >
-        {props.playing ? '停止して編集' : 'プレビュー'}
-      </Button>
+        onTogglePlay={props.onTogglePlay}
+        backwardLabel="0.1秒戻る"
+        forwardLabel="0.1秒進む"
+        onBackward={() => props.onSeek(Math.max(props.min, props.time - 0.1))}
+        onForward={() => props.onSeek(Math.min(props.max, props.time + 0.1))}
+        outerBackward={{
+          label: 'クリップの先頭',
+          onClick: () => props.onSeek(props.min),
+        }}
+        outerForward={{
+          label: 'クリップの末尾',
+          onClick: () => props.onSeek(props.max),
+        }}
+      />
       <Typography variant="technical" sx={{ flex: 1 }}>
         {props.time.toFixed(2)} s
       </Typography>

@@ -1,26 +1,23 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 import {
   Box,
-  Divider,
   IconButton,
   Paper,
   Slider,
   Stack,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import {
   Brush,
   Fullscreen,
   FullscreenExit,
   Loop,
-  Pause,
-  PlayArrow,
   PlaylistPlay,
-  SkipNext,
-  SkipPrevious,
   VolumeOff,
   VolumeUp,
 } from '@mui/icons-material';
+import { MovieTransportView } from '../../../components/ui';
 import { PLAYLIST_CONTROL_LABELS } from '../constants/playlistControls';
 
 type SliderMark = { value: number; label: string };
@@ -52,176 +49,153 @@ type PlaylistVideoControlsOverlayProps = {
   onToggleFullscreen: () => void;
 };
 
-export const PlaylistVideoControlsOverlay = ({
-  visible,
-  currentTime,
-  sliderMin,
-  sliderMax,
-  marks,
-  isPlaying,
-  isFrozen,
-  autoAdvance,
-  loopPlaylist,
-  isDrawingMode,
-  isMuted,
-  volume,
-  isFullscreen,
-  onSeek,
-  onSeekCommitted,
-  onPrevious,
-  onTogglePlay,
-  onNext,
-  onToggleAutoAdvance,
-  onToggleLoop,
-  onToggleDrawingMode,
-  onToggleMute,
-  onVolumeChange,
-  onToggleFullscreen,
-}: PlaylistVideoControlsOverlayProps) => {
+export const PlaylistVideoControlsOverlay = (
+  props: PlaylistVideoControlsOverlayProps,
+): ReactElement => {
+  const action = (
+    label: string,
+    icon: ReactElement,
+    onClick: () => void,
+    active = false,
+  ): ReactElement => (
+    <Tooltip title={label}>
+      <IconButton
+        aria-label={label}
+        aria-pressed={active}
+        size="small"
+        onClick={onClick}
+        color={active ? 'primary' : 'default'}
+      >
+        {icon}
+      </IconButton>
+    </Tooltip>
+  );
+  const seek = (time: number): void => {
+    props.onSeek(
+      new Event('playlist-jog'),
+      Math.min(props.sliderMax, Math.max(props.sliderMin, time)),
+    );
+    props.onSeekCommitted();
+  };
   return (
     <Paper
       sx={{
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        p: 1,
-        bgcolor: 'rgba(0,0,0,0.75)',
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.35s ease',
-        pointerEvents: visible ? 'auto' : 'none',
-        zIndex: 10,
+        bottom: 12,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'min(640px, calc(100% - 24px))',
+        px: 1.5,
+        pb: 0.75,
+        bgcolor: (theme) => theme.custom.tokens.surface.overlay,
+        backdropFilter: 'blur(16px)',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 2,
+        opacity: props.visible ? 1 : 0,
+        transition: 'opacity 0.2s ease',
+        pointerEvents: props.visible ? 'auto' : 'none',
+        zIndex: (theme) => theme.custom.zIndex.stickyChrome,
+        '&:focus-within': { opacity: 1, pointerEvents: 'auto' },
       }}
     >
       <Slider
+        aria-label="映像の再生位置"
         size="small"
-        value={currentTime}
-        min={sliderMin}
-        max={sliderMax}
-        step={0.1}
-        onChange={onSeek}
-        onChangeCommitted={onSeekCommitted}
-        sx={{
-          mb: 0.5,
-          height: 4,
-          '& .MuiSlider-thumb': { width: 10, height: 10 },
-          '& .MuiSlider-track': { bgcolor: 'primary.main' },
-          // Drawing timestamps are intentionally quiet reference markers.
-          '& .MuiSlider-mark': {
-            width: 2,
-            height: 8,
-            marginTop: -2,
-            borderRadius: 1,
-            bgcolor: 'info.light',
-            opacity: 0.65,
-          },
-          '& .MuiSlider-markActive': {
-            bgcolor: 'info.main',
-            opacity: 0.85,
-          },
-        }}
-        marks={marks}
+        value={props.currentTime}
+        min={props.sliderMin}
+        max={Math.max(props.sliderMin + 0.001, props.sliderMax)}
+        step={0.01}
+        onChange={props.onSeek}
+        onChangeCommitted={props.onSeekCommitted}
+        marks={props.marks}
+        sx={{ height: 2, py: 1, '& .MuiSlider-thumb': { width: 8, height: 8 } }}
       />
-      <Stack direction="row" spacing={0.4} alignItems="center">
-        <IconButton size="small" onClick={onPrevious}>
-          <SkipPrevious sx={{ fontSize: 18 }} />
-        </IconButton>
-        <IconButton size="small" onClick={onTogglePlay} color="primary">
-          {isPlaying && !isFrozen ? (
-            <Pause sx={{ fontSize: 20 }} />
-          ) : (
-            <PlayArrow sx={{ fontSize: 20 }} />
-          )}
-        </IconButton>
-        <IconButton size="small" onClick={onNext}>
-          <SkipNext sx={{ fontSize: 18 }} />
-        </IconButton>
-
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 0.5, bgcolor: 'grey.700' }}
-        />
-
-        <Tooltip
-          title={
-            autoAdvance
-              ? PLAYLIST_CONTROL_LABELS.autoAdvance.on
-              : PLAYLIST_CONTROL_LABELS.autoAdvance.off
-          }
-        >
-          <IconButton
-            size="small"
-            onClick={onToggleAutoAdvance}
-            color={autoAdvance ? 'primary' : 'default'}
-          >
-            <PlaylistPlay sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-        <Tooltip
-          title={
-            loopPlaylist
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={1}
+        sx={{ flexWrap: 'wrap', rowGap: 1 }}
+      >
+        <Stack direction="row" sx={{ flex: 1 }}>
+          {action(
+            props.loopPlaylist
               ? PLAYLIST_CONTROL_LABELS.loop.on
-              : PLAYLIST_CONTROL_LABELS.loop.off
-          }
-        >
-          <IconButton
-            size="small"
-            onClick={onToggleLoop}
-            color={loopPlaylist ? 'primary' : 'default'}
-          >
-            <Loop sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 0.5, bgcolor: 'grey.700' }}
+              : PLAYLIST_CONTROL_LABELS.loop.off,
+            <Loop fontSize="small" />,
+            props.onToggleLoop,
+            props.loopPlaylist,
+          )}
+          {action(
+            props.autoAdvance
+              ? PLAYLIST_CONTROL_LABELS.autoAdvance.on
+              : PLAYLIST_CONTROL_LABELS.autoAdvance.off,
+            <PlaylistPlay fontSize="small" />,
+            props.onToggleAutoAdvance,
+            props.autoAdvance,
+          )}
+        </Stack>
+        <MovieTransportView
+          playing={props.isPlaying && !props.isFrozen}
+          onTogglePlay={props.onTogglePlay}
+          backwardLabel="1秒戻る"
+          forwardLabel="1秒進む"
+          onBackward={() => seek(props.currentTime - 1)}
+          onForward={() => seek(props.currentTime + 1)}
+          outerBackward={{ label: '前のクリップ', onClick: props.onPrevious }}
+          outerForward={{ label: '次のクリップ', onClick: props.onNext }}
         />
-
-        <Tooltip
-          title={
-            isDrawingMode
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="flex-end"
+          sx={{ flex: 1 }}
+        >
+          {action(
+            props.isMuted ? 'ミュート解除' : 'ミュート',
+            props.isMuted ? (
+              <VolumeOff fontSize="small" />
+            ) : (
+              <VolumeUp fontSize="small" />
+            ),
+            props.onToggleMute,
+            props.isMuted,
+          )}
+          <Slider
+            aria-label="音量"
+            size="small"
+            value={props.volume}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={props.onVolumeChange}
+            sx={{ width: 44, mx: 1 }}
+          />
+          {action(
+            props.isDrawingMode
               ? PLAYLIST_CONTROL_LABELS.drawing.on
-              : PLAYLIST_CONTROL_LABELS.drawing.off
-          }
-        >
-          <IconButton
-            size="small"
-            onClick={onToggleDrawingMode}
-            color={isDrawingMode ? 'warning' : 'default'}
-          >
-            <Brush sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-
-        <Box sx={{ flex: 1 }} />
-
-        <IconButton size="small" onClick={onToggleMute}>
-          {isMuted ? (
-            <VolumeOff sx={{ fontSize: 18 }} />
-          ) : (
-            <VolumeUp sx={{ fontSize: 18 }} />
+              : PLAYLIST_CONTROL_LABELS.drawing.off,
+            <Brush fontSize="small" />,
+            props.onToggleDrawingMode,
+            props.isDrawingMode,
           )}
-        </IconButton>
-        <Slider
-          size="small"
-          value={volume}
-          min={0}
-          max={1}
-          step={0.1}
-          onChange={onVolumeChange}
-          sx={{ width: 50, height: 3 }}
-        />
-        <IconButton size="small" onClick={onToggleFullscreen}>
-          {isFullscreen ? (
-            <FullscreenExit sx={{ fontSize: 18 }} />
-          ) : (
-            <Fullscreen fontSize="small" />
+          {action(
+            props.isFullscreen ? '全画面を終了' : '全画面',
+            props.isFullscreen ? (
+              <FullscreenExit fontSize="small" />
+            ) : (
+              <Fullscreen fontSize="small" />
+            ),
+            props.onToggleFullscreen,
           )}
-        </IconButton>
+        </Stack>
       </Stack>
+      <Box sx={{ textAlign: 'center', mt: 0.5 }}>
+        <Typography variant="technical" color="text.secondary">
+          {props.currentTime.toFixed(2)} / {props.sliderMax.toFixed(2)}
+        </Typography>
+      </Box>
     </Paper>
   );
 };

@@ -97,3 +97,56 @@ describe('Studio gesture transactions', () => {
     expect(commit).not.toHaveBeenCalled();
   });
 });
+
+it('moves only the selected player node in stored coordinates and commits once', () => {
+  const commit = vi.fn();
+  const { result } = renderHook(() =>
+    useStudioGesture({
+      documentKey: 'linked',
+      enabled: true,
+      canvasRef: { current: canvas },
+      contentRect: { width: 400, height: 225, offsetX: 50, offsetY: 20 },
+      objects: [
+        {
+          id: 'link',
+          type: 'linkedDiscs',
+          startX: 100,
+          startY: 100,
+          endX: 300,
+          endY: 200,
+          path: [
+            { x: 100, y: 100 },
+            { x: 200, y: 120 },
+            { x: 300, y: 200 },
+          ],
+          color: '#ffffff',
+          strokeWidth: 4,
+          timestamp: 10,
+          baseWidth: 800,
+          baseHeight: 450,
+        },
+      ],
+      tool: 'select',
+      color: '#ffffff',
+      strokeWidth: 4,
+      opacity: 1,
+      fill: false,
+      dashed: false,
+      time: 10,
+      target: 'primary',
+      selectedId: 'link',
+      onSelect: vi.fn(),
+      onCommit: commit,
+    }),
+  );
+  act(() => result.current.handlers.onPointerDown(pointer(150, 80)));
+  act(() => result.current.handlers.onPointerMove(pointer(170, 100)));
+  expect(commit).not.toHaveBeenCalled();
+  act(() => result.current.handlers.onPointerUp(pointer(170, 100)));
+  expect(commit).toHaveBeenCalledTimes(1);
+  expect(commit.mock.calls[0][0][0].path).toEqual([
+    { x: 100, y: 100 },
+    { x: 240, y: 160 },
+    { x: 300, y: 200 },
+  ]);
+});

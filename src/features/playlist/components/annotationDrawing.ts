@@ -1,3 +1,4 @@
+import { renderTacticalObject } from './tacticalDrawing';
 import type { DrawingObject } from '../../../types/playlist/core';
 
 const drawArrowHead = (
@@ -37,6 +38,12 @@ export const renderObject = (
   ctx.lineJoin = 'round';
 
   switch (obj.type) {
+    case 'beam':
+    case 'disc':
+    case 'linkedDiscs':
+    case 'curvedArrow':
+      renderTacticalObject(ctx, obj);
+      break;
     case 'polygon':
     case 'pen':
       if (obj.path && obj.path.length > 1) {

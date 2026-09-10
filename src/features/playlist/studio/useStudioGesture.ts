@@ -39,7 +39,8 @@ interface Params {
 }
 interface Gesture {
   key: string;
-  kind: 'draw' | 'move' | 'resize';
+  kind: 'draw' | 'move' | 'resize' | 'node';
+  nodeIndex?: number;
   start: { x: number; y: number };
   original: DrawingObject;
   latest: DrawingObject;
@@ -111,17 +112,25 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         (object) => object.id === params.selectedId,
       );
       const bounds = selected && getObjectBounds(selected);
+      const nodeIndex =
+        selected?.type === 'linkedDiscs'
+          ? (selected.path?.findIndex(
+              (node) => Math.hypot(start.x - node.x, start.y - node.y) < 12,
+            ) ?? -1)
+          : -1;
       const resize =
         bounds && Math.hypot(start.x - bounds.maxX, start.y - bounds.maxY) < 14;
-      const hit = resize
-        ? selected
-        : findObjectAtPoint(display, start.x, start.y, 6);
+      const hit =
+        nodeIndex >= 0 || resize
+          ? selected
+          : findObjectAtPoint(display, start.x, start.y, 6);
       params.onSelect(hit?.id ?? null);
       const original = params.objects.find((object) => object.id === hit?.id);
       if (!original) return;
       gesture.current = {
         key: params.documentKey,
-        kind: resize ? 'resize' : 'move',
+        kind: nodeIndex >= 0 ? 'node' : resize ? 'resize' : 'move',
+        nodeIndex,
         start,
         original,
         latest: original,
@@ -141,7 +150,11 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         startY: start.y,
         endX: start.x,
         endY: start.y,
-        path: ['pen', 'polygon'].includes(params.tool) ? [start] : undefined,
+        path: ['pen', 'polygon', 'linkedDiscs'].includes(params.tool)
+          ? [start]
+          : undefined,
+        curvature: params.tool === 'curvedArrow' ? -0.3 : undefined,
+        discRadius: params.tool === 'linkedDiscs' ? 22 : undefined,
         text: params.tool === 'text' ? 'テキスト' : undefined,
         fontSize: 28,
         timestamp: params.time,
@@ -181,7 +194,19 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         ...current.latest,
         endX: at.x,
         endY: at.y,
-        path: current.latest.path ? [...current.latest.path, at] : undefined,
+        path:
+          current.latest.type === 'linkedDiscs'
+            ? [
+                current.start,
+                {
+                  x: (current.start.x + at.x) / 2,
+                  y: (current.start.y + at.y) / 2,
+                },
+                at,
+              ]
+            : current.latest.path
+              ? [...current.latest.path, at]
+              : undefined,
       };
     } else {
       const baseDx =
@@ -192,13 +217,22 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         params.contentRect.height;
       const bounds = getObjectBounds(current.original);
       current.latest =
-        current.kind === 'resize' && bounds
-          ? resizeStudioObject(
-              current.original,
-              bounds.maxX - bounds.minX + baseDx,
-              bounds.maxY - bounds.minY + baseDy,
-            )
-          : shiftObject(current.original, baseDx, baseDy);
+        current.kind === 'node'
+          ? {
+              ...current.original,
+              path: current.original.path?.map((node, index) =>
+                index === current.nodeIndex
+                  ? { x: node.x + baseDx, y: node.y + baseDy }
+                  : node,
+              ),
+            }
+          : current.kind === 'resize' && bounds
+            ? resizeStudioObject(
+                current.original,
+                bounds.maxX - bounds.minX + baseDx,
+                bounds.maxY - bounds.minY + baseDy,
+              )
+            : shiftObject(current.original, baseDx, baseDy);
     }
     setPreview({
       key: current.key,

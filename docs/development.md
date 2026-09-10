@@ -293,3 +293,7 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 ## Native UI / Studio の確認
 
 `pnpm run verify`で型、Electron型、lint、architecture、design-system、ADR、テスト、アプリbuild、Storybook buildを一括検証する。Storybookの `Workspace/Playlist/Studio` はElectron不要の描画fixture、`Workspace/Timeline/Continuous` はrulerと行の共有座標を確認するView story。Studioでは描画・移動・拡縮・レイヤー・Undo/Redoを、Timelineではズームと縦横スクロール後のシーク位置を確認する。映像の再生・ファイル保存・FFmpeg書き出しはElectron実機でも確認する。
+
+### Movie Controller / Tactical Studio の確認
+
+Storybook `Design System/Composites/Movie Transport`、`Workspace/Transport`、`Workspace/Playlist/Studio` で確認する。Studio storyは戦術図のfixtureで、実映像の自動追跡デモではない。ビームの高さ、曲線の曲がり、リンク各点のドラッグと選手数、Coachの消去→Undo、明暗テーマと狭い幅を確認する。図形の変更時は `tacticalGeometry.test.ts` と `useStudioGesture.test.tsx` の保存座標・letterbox・1操作1履歴の検証も維持する。

@@ -1,10 +1,52 @@
 import { describe, expect, it } from 'vitest';
-import { studioObjects } from '../fixtures/studio';
+import type { DrawingObject } from '../../../types/playlist/core';
 import { moveStudioLayer, resizeStudioObject } from './studioGeometry';
 import {
   scaleObjectForDisplay,
   shiftObject,
 } from '../components/annotationCanvasUtils';
+
+// Geometry expectations use fixed coordinates rather than the visual demo's composition.
+const studioObjects: DrawingObject[] = [
+  {
+    id: 'run',
+    type: 'arrow',
+    startX: 270,
+    startY: 270,
+    endX: 490,
+    endY: 165,
+    color: '#ffffff',
+    strokeWidth: 4,
+    timestamp: 12,
+    baseWidth: 800,
+    baseHeight: 450,
+  },
+  {
+    id: 'player',
+    type: 'ring',
+    startX: 237,
+    startY: 270,
+    endX: 307,
+    endY: 295,
+    color: '#ffffff',
+    strokeWidth: 3,
+    timestamp: 12,
+    baseWidth: 800,
+    baseHeight: 450,
+  },
+  {
+    id: 'label',
+    type: 'text',
+    startX: 430,
+    startY: 110,
+    text: 'label',
+    color: '#ffffff',
+    strokeWidth: 2,
+    timestamp: 12,
+    baseWidth: 800,
+    baseHeight: 450,
+  },
+];
 
 describe('Studio geometry', () => {
   it('preserves source coordinates when scaling and moving a ring', () => {

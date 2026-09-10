@@ -1,3 +1,4 @@
+import { getCurveControl } from './tacticalGeometry';
 import type { DrawingObject } from '../../../types/playlist/core';
 
 export const generateAnnotationId = (): string =>
@@ -15,50 +16,26 @@ export const scaleObjectForDisplay = (
     x: p.x * scaleX + target.offsetX,
     y: p.y * scaleY + target.offsetY,
   });
-  switch (obj.type) {
-    case 'polygon':
-    case 'pen':
-      return {
-        ...obj,
-        path: obj.path?.map(transformPoint),
-        strokeWidth: obj.strokeWidth * ((scaleX + scaleY) / 2),
-      };
-    case 'line':
-    case 'arrow':
-    case 'rectangle':
-    case 'ring':
-    case 'spotlight':
-    case 'circle':
-      return {
-        ...obj,
-        startX: obj.startX * scaleX + target.offsetX,
-        startY: obj.startY * scaleY + target.offsetY,
-        endX:
-          obj.endX !== undefined
-            ? obj.endX * scaleX + target.offsetX
-            : obj.endX,
-        endY:
-          obj.endY !== undefined
-            ? obj.endY * scaleY + target.offsetY
-            : obj.endY,
-        strokeWidth: obj.strokeWidth * ((scaleX + scaleY) / 2),
-      };
-    case 'text':
-      return {
-        ...obj,
-        startX: obj.startX * scaleX + target.offsetX,
-        startY: obj.startY * scaleY + target.offsetY,
-        fontSize: obj.fontSize ? obj.fontSize * ((scaleX + scaleY) / 2) : 24,
-      };
-    case 'select':
-      return obj;
-  }
+  return {
+    ...obj,
+    startX: obj.startX * scaleX + target.offsetX,
+    startY: obj.startY * scaleY + target.offsetY,
+    endX:
+      obj.endX === undefined ? undefined : obj.endX * scaleX + target.offsetX,
+    endY:
+      obj.endY === undefined ? undefined : obj.endY * scaleY + target.offsetY,
+    path: obj.path?.map(transformPoint),
+    strokeWidth: obj.strokeWidth * ((scaleX + scaleY) / 2),
+    fontSize: (obj.fontSize ?? 24) * ((scaleX + scaleY) / 2),
+    discRadius: (obj.discRadius ?? 22) * ((scaleX + scaleY) / 2),
+  };
 };
 
 export const getObjectBounds = (
   obj: DrawingObject,
 ): { minX: number; minY: number; maxX: number; maxY: number } | null => {
   switch (obj.type) {
+    case 'linkedDiscs':
     case 'polygon':
     case 'pen': {
       if (!obj.path || obj.path.length === 0) {
@@ -73,6 +50,36 @@ export const getObjectBounds = (
         maxY: Math.max(...ys),
       };
     }
+    case 'curvedArrow': {
+      const endX = obj.endX ?? obj.startX;
+      const endY = obj.endY ?? obj.startY;
+      const { x: cx, y: cy } = getCurveControl(obj);
+      const extent = (
+        start: number,
+        control: number,
+        end: number,
+      ): number[] => {
+        const denominator = start - 2 * control + end;
+        const t = denominator === 0 ? -1 : (start - control) / denominator;
+        return t > 0 && t < 1
+          ? [
+              start,
+              end,
+              (1 - t) ** 2 * start + 2 * (1 - t) * t * control + t ** 2 * end,
+            ]
+          : [start, end];
+      };
+      const xs = extent(obj.startX, cx, endX);
+      const ys = extent(obj.startY, cy, endY);
+      return {
+        minX: Math.min(...xs),
+        minY: Math.min(...ys),
+        maxX: Math.max(...xs),
+        maxY: Math.max(...ys),
+      };
+    }
+    case 'beam':
+    case 'disc':
     case 'line':
     case 'arrow':
     case 'rectangle':
@@ -136,28 +143,12 @@ export const shiftObject = (
   dx: number,
   dy: number,
 ): DrawingObject => {
-  switch (obj.type) {
-    case 'polygon':
-    case 'pen':
-      return {
-        ...obj,
-        path: obj.path?.map((p) => ({ x: p.x + dx, y: p.y + dy })),
-      };
-    case 'text':
-      return {
-        ...obj,
-        startX: obj.startX + dx,
-        startY: obj.startY + dy,
-      };
-    default:
-      return {
-        ...obj,
-        startX: obj.startX + dx,
-        startY: obj.startY + dy,
-        endX: obj.endX !== undefined ? obj.endX + dx : obj.endX,
-        endY: obj.endY !== undefined ? obj.endY + dy : obj.endY,
-      };
-    case 'select':
-      return obj;
-  }
+  return {
+    ...obj,
+    startX: obj.startX + dx,
+    startY: obj.startY + dy,
+    endX: obj.endX === undefined ? undefined : obj.endX + dx,
+    endY: obj.endY === undefined ? undefined : obj.endY + dy,
+    path: obj.path?.map((point) => ({ x: point.x + dx, y: point.y + dy })),
+  };
 };

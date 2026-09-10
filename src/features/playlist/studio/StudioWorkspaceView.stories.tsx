@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { PlaylistReviewView } from '../components/PlaylistReviewView';
+import { StudioCoachView } from './StudioCoachView';
 import { StudioCanvasView } from './StudioCanvasView';
 import { StudioSidebarView } from './StudioSidebarView';
 import { StudioTransportView } from './StudioTransportView';
@@ -22,6 +23,7 @@ const StudioFixture = ({
   ]);
   const [cursor, setCursor] = useState(0);
   const [time, setTime] = useState(12);
+  const [coachMode, setCoachMode] = useState(false);
   const [freeze, setFreeze] = useState(3);
   useLayoutEffect(() => {
     const media = root.current?.querySelector('[data-studio-media]');
@@ -54,29 +56,49 @@ const StudioFixture = ({
     <Box ref={root} sx={{ height: '100vh', minHeight: 480 }}>
       <PlaylistReviewView
         inspector={
-          <StudioSidebarView
-            {...{
-              ...editor.inspector,
-              target: 'primary',
-              hasSecondary: false,
-              onTargetChange: () => {},
-            }}
-          />
+          coachMode ? null : (
+            <StudioSidebarView
+              {...{
+                ...editor.inspector,
+                target: 'primary',
+                hasSecondary: false,
+                onTargetChange: () => {},
+              }}
+            />
+          )
         }
         transport={
-          <StudioTransportView
-            {...{
-              time,
-              min: 0,
-              max: 30,
-              freezeDuration: freeze,
-              onFreezeDurationChange: setFreeze,
-              playing: false,
-              disabled: empty,
-              onSeek: setTime,
-              onTogglePlay: () => setTime(time === 12 ? 13 : 12),
-            }}
-          />
+          <>
+            {coachMode && (
+              <StudioCoachView
+                editor={editor.inspector}
+                onClearFrame={() => {
+                  setHistory([
+                    ...history.slice(0, cursor + 1),
+                    history[cursor].filter(
+                      (object) => Math.abs(object.timestamp - time) > 0.12,
+                    ),
+                  ]);
+                  setCursor(cursor + 1);
+                }}
+              />
+            )}
+            <StudioTransportView
+              coachMode={coachMode}
+              onCoachModeChange={setCoachMode}
+              {...{
+                time,
+                min: 0,
+                max: 30,
+                freezeDuration: freeze,
+                onFreezeDurationChange: setFreeze,
+                playing: false,
+                disabled: empty,
+                onSeek: setTime,
+                onTogglePlay: () => setTime(time === 12 ? 13 : 12),
+              }}
+            />
+          </>
         }
         media={
           <>

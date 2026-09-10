@@ -1,3 +1,4 @@
+import { getCurveControl } from '../components/tacticalGeometry';
 import type { DrawingObject } from '../../../types/playlist/core';
 import { getObjectBounds } from '../components/annotationCanvasUtils';
 
@@ -20,7 +21,10 @@ export const resizeStudioObject = (
     startY: y(object.startY),
     endX: object.endX === undefined ? undefined : x(object.endX),
     endY: object.endY === undefined ? undefined : y(object.endY),
-    path: object.path?.map((point) => ({ x: x(point.x), y: y(point.y) })),
+    path: (object.type === 'curvedArrow'
+      ? [getCurveControl(object)]
+      : object.path
+    )?.map((point) => ({ x: x(point.x), y: y(point.y) })),
     fontSize:
       object.type === 'text'
         ? (object.fontSize ?? 24) * scaleY
@@ -43,6 +47,10 @@ export const moveStudioLayer = (
 
 export const STUDIO_TOOLS = [
   { id: 'select', label: '選択・移動' },
+  { id: 'beam', label: '選手ビーム' },
+  { id: 'disc', label: '選手ディスク' },
+  { id: 'linkedDiscs', label: '選手間リンク' },
+  { id: 'curvedArrow', label: '曲線矢印' },
   { id: 'arrow', label: '矢印' },
   { id: 'line', label: 'ライン' },
   { id: 'pen', label: 'ペン' },

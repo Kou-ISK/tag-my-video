@@ -1,19 +1,11 @@
-import React, { useMemo } from 'react';
-import { Box, Divider, Stack, Typography } from '@mui/material';
+import type { ReactElement, ReactNode } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import Forward10Icon from '@mui/icons-material/Forward10';
-import Forward30Icon from '@mui/icons-material/Forward30';
-import Replay10Icon from '@mui/icons-material/Replay10';
-import Replay30Icon from '@mui/icons-material/Replay30';
-import { ControlButton } from './toolbar/ControlButton';
-import { SpeedPresetButton } from './toolbar/SpeedPresetButton';
+import { MovieTransportView } from '../../../../../components/ui';
 import { SpeedSelector } from './toolbar/SpeedSelector';
-import { SPEED_PRESETS } from './toolbar/constants';
 
 interface VideoControllerToolbarProps {
-  shortcutGuide?: React.ReactNode;
+  shortcutGuide?: ReactNode;
   hasVideos: boolean;
   isVideoPlaying: boolean;
   playbackRate: number;
@@ -29,177 +21,81 @@ interface VideoControllerToolbarProps {
   largeSkipSeconds: number;
 }
 
-interface ControlButtonConfig {
-  title: string;
-  actionKey: string;
-  onClick: () => void;
-  icon: React.ReactNode;
-  emphasize?: boolean;
-  active?: boolean;
-}
-
-export const VideoControllerToolbar: React.FC<VideoControllerToolbarProps> = ({
-  shortcutGuide,
-  hasVideos,
-  isVideoPlaying,
-  playbackRate,
-  speedOptions,
-  flashStates,
-  onTogglePlayback,
-  onSeekAdjust,
-  onSpeedPresetSelect,
-  onSpeedChange,
-  triggerFlash,
-  currentTimeLabel,
-  smallSkipSeconds,
-  largeSkipSeconds,
-}) => {
-  const controlButtons: ControlButtonConfig[] = useMemo(
-    () => [
-      {
-        title: `${largeSkipSeconds}秒戻る`,
-        actionKey: 'rewind-30',
-        onClick: () => onSeekAdjust(-largeSkipSeconds),
-        icon: <Replay30Icon />,
-      },
-      {
-        title: `${smallSkipSeconds}秒戻る`,
-        actionKey: 'rewind-10',
-        onClick: () => onSeekAdjust(-smallSkipSeconds),
-        icon: <Replay10Icon />,
-      },
-      {
-        title: isVideoPlaying ? '一時停止' : '再生',
-        actionKey: 'toggle-play',
-        onClick: onTogglePlayback,
-        icon: isVideoPlaying ? <PauseIcon /> : <PlayArrowIcon />,
-        emphasize: true,
-        active: isVideoPlaying,
-      },
-      {
-        title: `${smallSkipSeconds}秒進む`,
-        actionKey: 'forward-10',
-        onClick: () => onSeekAdjust(smallSkipSeconds),
-        icon: <Forward10Icon />,
-      },
-      {
-        title: `${largeSkipSeconds}秒進む`,
-        actionKey: 'forward-30',
-        onClick: () => onSeekAdjust(largeSkipSeconds),
-        icon: <Forward30Icon />,
-      },
-    ],
-    [
-      isVideoPlaying,
-      largeSkipSeconds,
-      smallSkipSeconds,
-      onSeekAdjust,
-      onTogglePlayback,
-    ],
-  );
-
+export const VideoControllerToolbar = (
+  props: VideoControllerToolbarProps,
+): ReactElement => {
+  const seek = (delta: number, key: string): void => {
+    props.onSeekAdjust(delta);
+    props.triggerFlash(key);
+  };
   return (
-    <Box
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="center"
       sx={{
         width: '100%',
-        backgroundColor: (theme) => theme.custom.tokens.surface.work,
-        border: 1,
+        minHeight: 56,
+        px: 1.5,
+        gap: 2,
+        flexWrap: 'wrap',
+        bgcolor: (theme) => theme.custom.tokens.surface.work,
+        borderTop: 1,
+        borderBottom: 1,
         borderColor: 'divider',
-        borderRadius: 1,
         pointerEvents: 'auto',
-        p: 0.75,
       }}
     >
       <Box
         sx={{
+          flex: '1 1 100px',
           display: 'flex',
-          flexWrap: 'wrap',
           alignItems: 'center',
           gap: 1,
         }}
       >
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          {controlButtons.map((button) => (
-            <ControlButton
-              key={button.actionKey}
-              title={button.title}
-              icon={button.icon}
-              actionKey={button.actionKey}
-              disabled={!hasVideos}
-              flashing={!!flashStates[button.actionKey]}
-              active={button.active}
-              emphasize={button.emphasize}
-              onClick={button.onClick}
-              onTriggerFlash={triggerFlash}
-            />
-          ))}
-        </Stack>
-
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{
-            borderColor: 'divider',
-            display: { xs: 'none', md: 'block' },
-          }}
-        />
-
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          {SPEED_PRESETS.map((preset) => (
-            <SpeedPresetButton
-              key={preset.label}
-              label={preset.label}
-              value={preset.value}
-              icon={preset.icon}
-              playbackRate={playbackRate}
-              disabled={!hasVideos}
-              flashing={!!flashStates[`speed-${preset.value}`]}
-              onSelect={onSpeedPresetSelect}
-              onTriggerFlash={triggerFlash}
-            />
-          ))}
-        </Stack>
-
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{
-            borderColor: 'divider',
-            display: { xs: 'none', md: 'block' },
-          }}
-        />
-
+        {props.shortcutGuide}
         <SpeedSelector
-          playbackRate={playbackRate}
-          speedOptions={speedOptions}
-          disabled={!hasVideos}
-          onSpeedChange={onSpeedChange}
+          playbackRate={props.playbackRate}
+          speedOptions={props.speedOptions}
+          disabled={!props.hasVideos}
+          onSpeedChange={props.onSpeedChange}
         />
-
-        {shortcutGuide}
-        <Box sx={{ flexGrow: 1 }} />
-
-        <Typography
-          variant="body2"
-          sx={{
-            textAlign: { xs: 'left', md: 'right' },
-            color: 'primary.main',
-            fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
-            fontVariantNumeric: 'tabular-nums',
-            bgcolor: 'background.default',
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 0.5,
-            px: 1.5,
-            py: 1,
-            fontWeight: 'bold',
-            minWidth: { xs: 'auto', md: 140 },
-            lineHeight: 1.2,
-          }}
-        >
-          {currentTimeLabel}
-        </Typography>
       </Box>
-    </Box>
+      <MovieTransportView
+        playing={props.isVideoPlaying}
+        disabled={!props.hasVideos}
+        onTogglePlay={() => {
+          props.onTogglePlayback();
+          props.triggerFlash('toggle-play');
+        }}
+        onBackward={() => seek(-props.smallSkipSeconds, 'rewind-10')}
+        onForward={() => seek(props.smallSkipSeconds, 'forward-10')}
+        backwardLabel={`${props.smallSkipSeconds}秒戻る`}
+        forwardLabel={`${props.smallSkipSeconds}秒進む`}
+        outerBackward={{
+          label: `${props.largeSkipSeconds}秒戻る`,
+          onClick: () => seek(-props.largeSkipSeconds, 'rewind-30'),
+        }}
+        outerForward={{
+          label: `${props.largeSkipSeconds}秒進む`,
+          onClick: () => seek(props.largeSkipSeconds, 'forward-30'),
+        }}
+      />
+      <Typography
+        variant="body2"
+        sx={{
+          flex: '1 1 100px',
+          textAlign: 'right',
+          color: 'text.secondary',
+          whiteSpace: 'nowrap',
+          fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 12,
+        }}
+      >
+        {props.currentTimeLabel}
+      </Typography>
+    </Stack>
   );
 };

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { AnnotationTarget } from '../../../types/playlist/core';
 import type { PlaylistWorkspaceMode } from '../../../types/playlist/window';
 import type { PlaylistWindowRuntime } from '../hooks/playlist/usePlaylistWindowRuntime';
@@ -6,10 +6,13 @@ import { useStudioEditor } from './useStudioEditor';
 import type { StudioEditor } from './useStudioEditor';
 import type { StudioSidebarViewProps } from './StudioSidebarView';
 import type { StudioTransportViewProps } from './StudioTransportView';
+import type { StudioCoachViewProps } from './StudioCoachView';
 import type { StudioClipsViewProps } from './StudioClipsView';
 
 interface PlaylistStudio {
   active: boolean;
+  coachMode: boolean;
+  coach: StudioCoachViewProps;
   canvas: StudioEditor['canvas'];
   sidebar: StudioSidebarViewProps;
   transport: StudioTransportViewProps;
@@ -20,6 +23,7 @@ export const usePlaylistStudio = (
   runtime: PlaylistWindowRuntime,
 ): PlaylistStudio => {
   const { core, annotations, currentItemState, history, playback } = runtime;
+  const [coachMode, setCoachMode] = useState(false);
   const previousView = useRef(core.viewMode);
   const active = core.workspaceMode === 'studio';
   const target = core.drawingTarget;
@@ -69,6 +73,19 @@ export const usePlaylistStudio = (
   };
   return {
     active,
+    coachMode,
+    coach: {
+      editor: editor.inspector,
+      onClearFrame: () => {
+        if (!editor.inspector.enabled) return;
+        annotations.handleAnnotationObjectsChange(
+          objects.filter(
+            (object) => Math.abs(object.timestamp - core.currentTime) > 0.12,
+          ),
+          target,
+        );
+      },
+    },
     canvas: editor.canvas,
     sidebar: {
       ...editor.inspector,
@@ -77,6 +94,8 @@ export const usePlaylistStudio = (
       onTargetChange,
     },
     transport: {
+      coachMode,
+      onCoachModeChange: setCoachMode,
       time: core.currentTime,
       min: currentItemState.sliderMin,
       max: currentItemState.sliderMax,

@@ -281,3 +281,7 @@ UIのsemantic tokenとテーマは `src/design-system/` に集約する。開始
 ## Playlist Studio
 
 Playlistに描画編集用のStudioモードを追加。通常レビューと同じ映像DOMを維持し、アングル別の注釈を既存Playlist履歴・保存経路に反映する。編集状態はwindow-onlyで、図形と静止時間だけを保存する。描画とPNG出力は共通レンダラーを使用し、書き出しは時刻別のfreezeFramesを扱う。設計理由は[ADR 0028](adr/0028-playlist-studio-annotation-contract.md)。
+
+### Tactical Studio と再生操作の共有
+
+`MovieTransportView` はprops-onlyなshared UIで、再生・送りのコールバックとラベルだけを受け取る。メイン映像、Playlist overlay、Studio transportが合成する。Studioの `tacticalDrawing.ts` はビーム・ディスク・リンク・曲線の純粋canvas rendererで、通常レビューとPNG出力からも共通利用する。リンクの選手座標はDrawingObject.pathに保持し、表示サイズへの変換とジェスチャー完了時の保存を分ける。Coach表示はadapter hookのwindow-only状態で、文書・順序・映像DOMを複製しない。

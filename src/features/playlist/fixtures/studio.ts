@@ -1,8 +1,29 @@
 import type { DrawingObject } from '../../../types/playlist/core';
 export const studioObjects: DrawingObject[] = [
   {
+    id: 'defence',
+    type: 'linkedDiscs',
+    startX: 500,
+    startY: 270,
+    endX: 690,
+    endY: 320,
+    path: [
+      { x: 500, y: 270 },
+      { x: 595, y: 300 },
+      { x: 690, y: 320 },
+    ],
+    color: '#64A9FF',
+    discRadius: 24,
+    strokeWidth: 3,
+    timestamp: 12,
+    target: 'primary',
+    baseWidth: 800,
+    baseHeight: 450,
+  },
+  {
     id: 'run',
-    type: 'arrow',
+    type: 'curvedArrow',
+    curvature: -0.45,
     startX: 270,
     startY: 270,
     endX: 490,
@@ -16,9 +37,9 @@ export const studioObjects: DrawingObject[] = [
   },
   {
     id: 'player',
-    type: 'ring',
+    type: 'beam',
     startX: 237,
-    startY: 270,
+    startY: 170,
     endX: 307,
     endY: 295,
     strokeWidth: 3,

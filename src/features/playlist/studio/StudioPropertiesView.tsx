@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import type { StudioEditor } from './useStudioEditor';
 import { getObjectBounds } from '../components/annotationCanvasUtils';
+import { StudioTacticalPropertiesView } from './StudioTacticalPropertiesView';
 import { resizeStudioObject } from './studioGeometry';
 
 type Props = StudioEditor['inspector'];
@@ -73,6 +74,12 @@ export const StudioPropertiesView = (props: Props): ReactElement => {
           label="破線"
         />
       </Box>
+      {object && (
+        <StudioTacticalPropertiesView
+          object={object}
+          onUpdate={props.onUpdate}
+        />
+      )}
       {object?.type === 'text' && (
         <>
           <TextField

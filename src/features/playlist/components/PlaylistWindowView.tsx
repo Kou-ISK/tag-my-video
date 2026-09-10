@@ -1,4 +1,5 @@
 import { PlaylistReviewView } from './PlaylistReviewView';
+import { StudioCoachView } from '../studio/StudioCoachView';
 import { StudioCanvasView } from '../studio/StudioCanvasView';
 import { StudioSidebarView } from '../studio/StudioSidebarView';
 import { StudioTransportView } from '../studio/StudioTransportView';
@@ -61,12 +62,19 @@ export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
           }
           transport={
             controller.studio.active ? (
-              <StudioTransportView {...controller.studio.transport} />
+              <>
+                {controller.studio.coachMode && (
+                  <StudioCoachView {...controller.studio.coach} />
+                )}
+                <StudioTransportView {...controller.studio.transport} />
+              </>
             ) : undefined
           }
           inspector={
             controller.studio.active ? (
-              <StudioSidebarView {...controller.studio.sidebar} />
+              controller.studio.coachMode ? null : (
+                <StudioSidebarView {...controller.studio.sidebar} />
+              )
             ) : controller.shell.inspectorVisible ? (
               <PlaylistClipInspector {...controller.inspector} />
             ) : null

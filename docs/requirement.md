@@ -456,3 +456,7 @@ Pull request CIは `develop` を含む通常統合先で実行する。Model R&D
 - [自動イベント検出](event-detection.md)
 - [ADR 0021 Detached Timeline and Playback Authority](adr/0021-detached-timeline-playback-authority.md)
 - [ADR 0023 External Rugby Event Model R&D Boundary](adr/0023-external-rugby-event-model-rd-boundary.md)
+
+### Studio 戦術グラフィック
+
+手動のビーム・ディスク・2〜11点の選手リンク・曲線矢印、選手名/背番号、Coach表示を提供する。図形はアングル・時刻・基準解像度を維持してPlaylistに保存し、既存静止画挿入方式で動画へ書き出す。自動追跡・自動較正・3D投影は含まない。

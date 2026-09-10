@@ -90,6 +90,15 @@ export const useAnnotationCanvasRendering = ({
         bounds.maxY - bounds.minY + 8,
       );
     }
+    if (selectedObject.type === 'linkedDiscs') {
+      ctx.setLineDash([]);
+      selectedObject.path?.forEach((node) => {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
     ctx.restore();
   }, [
     canvasRef,

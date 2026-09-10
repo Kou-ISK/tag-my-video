@@ -298,3 +298,7 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 ### Playlist Studio
 
 `src/features/playlist/studio/` は描画gesture/editor hook、Playlist runtime adapter、描画ツール・プロパティ・レイヤー・transport・clip Viewを配置する。`components/annotationDrawing.ts` は編集とPNG出力で共通の描画処理。`fixtures/studio.ts` はStorybookとテスト専用データ。外部依存は既存Playlist controller/gatewayに閉じ込める。
+
+- `src/components/ui/composites/MovieTransportView.tsx`: 映像featureに依存しないジョグ式再生操作View。
+- `src/features/playlist/components/tacticalDrawing.ts`: 編集とPNG出力が共用する戦術図形renderer。
+- `src/features/playlist/studio/StudioCoachView.tsx`: Coach表示用の描画操作View。

@@ -2,6 +2,10 @@ import type { SCLabel } from '../timeline/sportscode';
 
 export type PlaylistType = 'reference' | 'embedded';
 export type DrawingToolType =
+  | 'beam'
+  | 'disc'
+  | 'linkedDiscs'
+  | 'curvedArrow'
   | 'ring'
   | 'spotlight'
   | 'polygon'
@@ -34,6 +38,10 @@ export interface DrawingObject {
   opacity?: number;
   dashed?: boolean;
   fill?: boolean;
+  /** 曲線矢印の曲がり。始終点間距離に対する比率。 */
+  curvature?: number;
+  /** 選手リンクのディスク半径。保存時のキャンバス座標。 */
+  discRadius?: number;
   startX: number;
   startY: number;
   endX?: number;

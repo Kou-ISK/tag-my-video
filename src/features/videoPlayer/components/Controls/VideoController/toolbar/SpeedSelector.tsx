@@ -1,48 +1,31 @@
-import React from 'react';
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-} from '@mui/material';
+import type { ReactElement } from 'react';
+import { MenuItem, Select } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-
 interface SpeedSelectorProps {
   playbackRate: number;
   speedOptions: number[];
   disabled: boolean;
   onSpeedChange: (event: SelectChangeEvent<string>) => void;
 }
-
-export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
-  playbackRate,
-  speedOptions,
-  disabled,
-  onSpeedChange,
-}) => (
-  <Stack
-    direction="row"
-    spacing={1}
-    alignItems="center"
-    flexWrap="wrap"
-    sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+export const SpeedSelector = (props: SpeedSelectorProps): ReactElement => (
+  <Select
+    variant="standard"
+    disableUnderline
+    value={String(props.playbackRate)}
+    onChange={props.onSpeedChange}
+    disabled={props.disabled}
+    inputProps={{ 'aria-label': '再生速度' }}
+    sx={{
+      minWidth: 58,
+      fontSize: 13,
+      fontVariantNumeric: 'tabular-nums',
+      '& .MuiSelect-select': { py: 0.5 },
+    }}
   >
-    <FormControl size="small" variant="outlined" sx={{ minWidth: 104 }}>
-      <InputLabel id="playback-speed-label">再生速度</InputLabel>
-      <Select
-        labelId="playback-speed-label"
-        label="再生速度"
-        value={String(playbackRate)}
-        onChange={onSpeedChange}
-        disabled={disabled}
-      >
-        {speedOptions.map((speed) => (
-          <MenuItem key={speed} value={speed.toString()}>
-            {speed}x
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  </Stack>
+    {props.speedOptions.map((speed) => (
+      <MenuItem key={speed} value={String(speed)}>
+        {speed}×
+      </MenuItem>
+    ))}
+  </Select>
 );
