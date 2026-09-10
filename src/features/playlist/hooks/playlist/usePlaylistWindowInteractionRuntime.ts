@@ -117,7 +117,9 @@ export const usePlaylistWindowInteractionRuntime = (
     stopReversePlayback,
     handlePrevious: playback.handlePrevious,
     handleNext: playback.handleNext,
-    handleDeleteSelected: selection.deleteSelected,
+    handleDeleteSelected: () => {
+      if (core.workspaceMode !== 'studio') selection.deleteSelected();
+    },
     handleUndo: runtime.handleUndo,
     handleRedo: runtime.handleRedo,
     handleSavePlaylist: runtime.saveFlow.handleSavePlaylist,
@@ -131,7 +133,7 @@ export const usePlaylistWindowInteractionRuntime = (
     videoRef: core.videoRef,
     videoRef2: core.videoRef2,
   });
-  const playlistHotkeys = usePlaylistHotkeys();
+  const playlistHotkeys = usePlaylistHotkeys(core.workspaceMode === 'studio');
 
   useGlobalHotkeys(
     playlistHotkeys,

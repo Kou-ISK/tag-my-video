@@ -206,6 +206,7 @@ export const TacticsVideoFixture = (): ReactElement => {
               }
             />
             <TacticsTimelineView
+              keyframes={editor.keyframes}
               objects={annotation.objects}
               time={time}
               min={0}

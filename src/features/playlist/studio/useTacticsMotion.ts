@@ -10,15 +10,12 @@ export interface TacticsMotionProps {
   onMotionToggle: (enabled: boolean) => void;
   onDurationChange: (duration: number) => void;
   onAddKeyframe: () => void;
-  onDeleteKeyframe: () => void;
-  onSeekKeyframe: (time: number) => void;
 }
 export const useTacticsMotion = (
   selected: DrawingObject | null,
   time: number,
   maxTime: number,
   update: (patch: Partial<DrawingObject>) => void,
-  seek: (time: number) => void,
 ): TacticsMotionProps => ({
   selected,
   time,
@@ -67,18 +64,4 @@ export const useTacticsMotion = (
         ),
       );
   },
-  onDeleteKeyframe: () => {
-    if (!selected?.motion) return;
-    update({
-      motion: {
-        ...selected.motion,
-        keyframes: selected.motion.keyframes.filter(
-          (key) =>
-            key.time === 0 ||
-            Math.abs(key.time - (time - selected.timestamp)) > 0.02,
-        ),
-      },
-    });
-  },
-  onSeekKeyframe: seek,
 });

@@ -1,3 +1,5 @@
+import { useStudioKeyframes } from './useStudioKeyframes';
+import type { StudioKeyframeControls } from './useStudioKeyframes';
 import type { TrackingTargetOverlayProps } from './TrackingTargetOverlayView';
 import {
   annotationOffsetAt,
@@ -41,6 +43,7 @@ export interface StudioEditorParams {
   canRedo: boolean;
 }
 export interface StudioEditor {
+  keyframes: StudioKeyframeControls;
   canvas: StudioGesture['handlers'] & {
     trackingTarget?: Omit<TrackingTargetOverlayProps, 'width' | 'height'>;
     canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -102,8 +105,23 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
   const selectedId = selection.key === params.documentKey ? selection.id : null;
   const selected =
     params.objects.find((object) => object.id === selectedId) ?? null;
-  const select = (id: string | null): void =>
+  const select = (id: string | null): void => {
+    keyframes.onClear();
     setSelection({ key: params.documentKey, id });
+  };
+  const keyframes = useStudioKeyframes({
+    documentKey: params.documentKey,
+    objects: params.objects,
+    selectedId,
+    enabled: params.enabled,
+    onSelectObject: (id) => {
+      gesture.cancel();
+      setSelection({ key: params.documentKey, id });
+      setTool('select');
+    },
+    onCommit: params.onCommit,
+    onSeek: params.onSeek,
+  });
   const gesture = useStudioGesture({
     ...params,
     canvasRef,
@@ -143,10 +161,10 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     params.time,
     params.maxTime ?? params.time + 30,
     update,
-    params.onSeek,
   );
   const remove = (): void => {
     if (selected && params.enabled) {
+      canvasRef.current?.focus();
       params.onCommit(
         params.objects.filter((object) => object.id !== selected.id),
       );
@@ -178,6 +196,15 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       event.stopPropagation();
       gesture.cancel();
       params.onTogglePlayback();
+      return;
+    }
+    if (['Delete', 'Backspace'].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!params.enabled || event.repeat) return;
+      gesture.cancel();
+      if (keyframes.active) keyframes.onDelete();
+      else remove();
       return;
     }
     if (!params.enabled) return;
@@ -217,10 +244,6 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       event.preventDefault();
       event.stopPropagation();
       duplicate();
-    } else if (['Delete', 'Backspace'].includes(event.key)) {
-      event.preventDefault();
-      event.stopPropagation();
-      remove();
     } else if (event.key === 'Escape') {
       event.stopPropagation();
       gesture.cancel();
@@ -253,6 +276,7 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     }
   };
   return {
+    keyframes,
     canvas: {
       canvasRef,
       width: params.width,

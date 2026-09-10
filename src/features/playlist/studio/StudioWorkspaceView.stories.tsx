@@ -137,6 +137,7 @@ const StudioFixture = ({
             )}
             {!coachMode && (
               <TacticsTimelineView
+                keyframes={editor.keyframes}
                 objects={history[cursor]}
                 time={time}
                 min={0}
@@ -213,4 +214,26 @@ export const CollapsedInspector: Story = {
       )
       ?.click();
   },
+};
+
+export const KeyframeEditing: Story = {
+  render: () => (
+    <StudioFixture
+      initialObjects={[
+        {
+          ...playerGraphics[0],
+          timestamp: 12,
+          motion: {
+            duration: 12,
+            keyframes: [
+              { time: 0, x: 0, y: 0 },
+              { time: 3, x: 80, y: 10 },
+              { time: 7, x: 140, y: 35 },
+              { time: 12, x: 220, y: 20 },
+            ],
+          },
+        },
+      ]}
+    />
+  ),
 };

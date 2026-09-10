@@ -191,6 +191,7 @@ export const usePlaylistStudio = (
     pitch,
     contentRect,
     timeline: {
+      keyframes: editor.keyframes,
       objects,
       time: core.currentTime,
       min: currentItemState.sliderMin,

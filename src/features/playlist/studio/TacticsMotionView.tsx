@@ -62,43 +62,10 @@ export const TacticsMotionView = (
             >
               位置を記録
             </Button>
-            <Button
-              disabled={
-                !object.motion.keyframes.some(
-                  (key) =>
-                    key.time > 0 && Math.abs(key.time - localTime) <= 0.02,
-                )
-              }
-              onClick={props.onDeleteKeyframe}
-            >
-              この位置を削除
-            </Button>
           </Stack>
-          <Stack
-            direction="row"
-            sx={{
-              flexWrap: 'wrap',
-              gap: 0.5,
-              maxHeight: 90,
-              overflowY: 'auto',
-            }}
-          >
-            {object.motion.keyframes.map((key) => (
-              <Button
-                key={key.time}
-                size="small"
-                variant={
-                  Math.abs(key.time - localTime) < 0.02 ? 'outlined' : 'text'
-                }
-                onClick={() =>
-                  props.onSeekKeyframe(object.timestamp + key.time)
-                }
-                aria-label={`${(object.timestamp + key.time).toFixed(2)}秒のキーフレーム`}
-              >
-                {key.time.toFixed(2)}s
-              </Button>
-            ))}
-          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            位置の編集・削除は下のタイムラインの◆を選択します。開始点は位置のみ編集できます。
+          </Typography>
         </>
       )}
     </Stack>
