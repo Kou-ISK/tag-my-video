@@ -1,3 +1,4 @@
+import { mediaChromeSx } from '../../../design-system/mediaChrome';
 import type { ReactElement } from 'react';
 import {
   Box,
@@ -79,25 +80,25 @@ export const PlaylistVideoControlsOverlay = (
   };
   return (
     <Paper
-      sx={{
-        position: 'absolute',
-        bottom: 12,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 'min(640px, calc(100% - 24px))',
-        px: 1.5,
-        pb: 0.75,
-        bgcolor: (theme) => theme.custom.tokens.surface.overlay,
-        backdropFilter: 'blur(16px)',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: '5px',
-        opacity: props.visible ? 1 : 0,
-        transition: 'opacity 0.2s ease',
-        pointerEvents: props.visible ? 'auto' : 'none',
-        zIndex: (theme) => theme.custom.zIndex.stickyChrome,
-        '&:focus-within': { opacity: 1, pointerEvents: 'auto' },
-      }}
+      elevation={0}
+      sx={[
+        mediaChromeSx,
+        {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          boxSizing: 'border-box',
+          px: 1.5,
+          pb: 0.5,
+          borderRadius: 0,
+          opacity: props.visible ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+          pointerEvents: props.visible ? 'auto' : 'none',
+          zIndex: (theme) => theme.custom.zIndex.stickyChrome,
+          '&:focus-within': { opacity: 1, pointerEvents: 'auto' },
+        },
+      ]}
     >
       <Box
         sx={{ position: 'relative', height: 24, mt: 0.5 }}
@@ -119,7 +120,7 @@ export const PlaylistVideoControlsOverlay = (
                   height: 24,
                   minWidth: 24,
                   minHeight: 24,
-                  color: 'primary.main',
+                  color: (theme) => theme.custom.tokens.media.accent,
                 }}
               >
                 <Brush sx={{ fontSize: 12 }} />
@@ -147,28 +148,15 @@ export const PlaylistVideoControlsOverlay = (
         sx={{ flexWrap: 'wrap', rowGap: 1 }}
       >
         <Stack direction="row" alignItems="center" sx={{ flex: 1 }}>
-          {action(
-            props.loopPlaylist
-              ? PLAYLIST_CONTROL_LABELS.loop.on
-              : PLAYLIST_CONTROL_LABELS.loop.off,
-            <Loop fontSize="small" />,
-            props.onToggleLoop,
-            props.loopPlaylist,
-          )}
-          {action(
-            props.autoAdvance
-              ? PLAYLIST_CONTROL_LABELS.autoAdvance.on
-              : PLAYLIST_CONTROL_LABELS.autoAdvance.off,
-            <PlaylistPlay fontSize="small" />,
-            props.onToggleAutoAdvance,
-            props.autoAdvance,
-          )}
           <Typography
             variant="technical"
             color="text.secondary"
             sx={{ ml: 0.5, whiteSpace: 'nowrap', fontSize: 10 }}
           >
-            {props.currentTime.toFixed(2)} s
+            <Box component="span" sx={{ display: 'block', opacity: 0.75 }}>
+              再生位置 / 終了
+            </Box>
+            {props.currentTime.toFixed(2)} / {props.sliderMax.toFixed(2)}
           </Typography>
         </Stack>
         <MovieTransportView
@@ -187,6 +175,22 @@ export const PlaylistVideoControlsOverlay = (
           justifyContent="flex-end"
           sx={{ flex: 1 }}
         >
+          {action(
+            props.loopPlaylist
+              ? PLAYLIST_CONTROL_LABELS.loop.on
+              : PLAYLIST_CONTROL_LABELS.loop.off,
+            <Loop fontSize="small" />,
+            props.onToggleLoop,
+            props.loopPlaylist,
+          )}
+          {action(
+            props.autoAdvance
+              ? PLAYLIST_CONTROL_LABELS.autoAdvance.on
+              : PLAYLIST_CONTROL_LABELS.autoAdvance.off,
+            <PlaylistPlay fontSize="small" />,
+            props.onToggleAutoAdvance,
+            props.autoAdvance,
+          )}
           {action(
             props.isMuted ? 'ミュート解除' : 'ミュート',
             props.isMuted ? (

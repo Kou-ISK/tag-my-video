@@ -310,3 +310,5 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 - `electron/src/ipc/exportMotionOverlays.ts` / `exportChroma.ts`: 検証済みの動画描画を静止挿入前のFFmpeg filterへ変換。
 
 利用者向けの名称はPaint。`studio/` と既存内部モード値は互換性のため維持する。
+
+`src/design-system/mediaChrome.ts` は動画に接する操作面の共通スタイル。`tokens/semantic.ts` のmediaトークンだけを消費し、再生状態やfeature依存を持たない。

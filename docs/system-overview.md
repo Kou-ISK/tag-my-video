@@ -289,3 +289,5 @@ Playlistに描画編集用のPaintモードを追加。通常レビューと同�
 Paintの動画描画はソース時刻と基準解像度の平行移動キーフレームを正本とし、requestVideoFrameCallbackで再生映像へ同期する。追跡は別のHTMLVideoElementで解析し、結果の明示的適用時だけ既存Undo履歴へ反映する。芝色マスクと平面較正はアングル別の注釈メタデータ。永続化時の不正な拡張データは読込エラーにして無言の欠落を防ぐ。詳細は[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)。
 
 描画モードの表示名はPaint。PlaylistReviewViewはprops-onlyのツールスロットを持ち、モード有効時だけ左パレットを合成する。ツールによって動画の座標領域を覆わず、ResizeObserverから得た実際の映像領域を引き続き描画の基準にする。
+
+映像操作面はHudl Sportscodeの現行公式動画を参照したフラットな黒いフッターへ更新。再生操作のshared Viewとmedia semantic tokenをメイン・Playlist・Paintで共有し、再生状態やシーク処理は既存controllerを維持する。

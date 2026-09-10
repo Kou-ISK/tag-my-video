@@ -1,3 +1,4 @@
+import { mediaChromeSx } from '../../../../../design-system/mediaChrome';
 import type { ReactElement, ReactNode } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
@@ -33,36 +34,33 @@ export const VideoControllerToolbar = (
       direction="row"
       alignItems="center"
       justifyContent="center"
-      sx={{
-        width: 'min(640px, 100%)',
-        mx: 'auto',
-        borderRadius: '5px',
-        minHeight: 44,
-        px: 1.5,
-        gap: 1,
-        flexWrap: 'wrap',
-        bgcolor: (theme) => theme.custom.tokens.surface.work,
-        border: 1,
-        borderColor: 'divider',
-        pointerEvents: 'auto',
-      }}
+      sx={[
+        mediaChromeSx,
+        {
+          width: '100%',
+          borderRadius: 0,
+          minHeight: 44,
+          px: 1.5,
+          gap: 1,
+          flexWrap: 'wrap',
+          pointerEvents: 'auto',
+        },
+      ]}
     >
-      <Box
+      <Typography
+        variant="body2"
         sx={{
           flex: '1 1 100px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
+          textAlign: 'left',
+          color: 'text.secondary',
+          whiteSpace: 'nowrap',
+          fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 11,
         }}
       >
-        {props.shortcutGuide}
-        <SpeedSelector
-          playbackRate={props.playbackRate}
-          speedOptions={props.speedOptions}
-          disabled={!props.hasVideos}
-          onSpeedChange={props.onSpeedChange}
-        />
-      </Box>
+        {props.currentTimeLabel}
+      </Typography>
       <MovieTransportView
         playing={props.isVideoPlaying}
         disabled={!props.hasVideos}
@@ -83,20 +81,23 @@ export const VideoControllerToolbar = (
           onClick: () => seek(props.largeSkipSeconds, 'forward-30'),
         }}
       />
-      <Typography
-        variant="body2"
+      <Box
         sx={{
           flex: '1 1 100px',
-          textAlign: 'right',
-          color: 'text.secondary',
-          whiteSpace: 'nowrap',
-          fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
-          fontVariantNumeric: 'tabular-nums',
-          fontSize: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          justifyContent: 'flex-end',
         }}
       >
-        {props.currentTimeLabel}
-      </Typography>
+        {props.shortcutGuide}
+        <SpeedSelector
+          playbackRate={props.playbackRate}
+          speedOptions={props.speedOptions}
+          disabled={!props.hasVideos}
+          onSpeedChange={props.onSpeedChange}
+        />
+      </Box>
     </Stack>
   );
 };

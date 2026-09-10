@@ -301,3 +301,5 @@ Storybook `Design System/Composites/Movie Transport`、`Workspace/Transport`、`
 Paintの時間・較正・芝色の純粋計算は `src/shared/tactics`、外部動画の解析は `studio/tracking`、端末プリセットの永続化は `tacticsPreferencesGateway.ts` が担当する。Video Tracking storyでは、結果適用→中間時刻の手修正→再追跡、較正取消、プリセット挿入Undoを確認する。追跡fixtureは320×180・4秒の合成WebMで実動画デコーダーを使う。書き出しはElectronのFFmpeg経路でも、単一/二映像・静止挿入・音声のない素材・芝色処理を確認する。[対応範囲](tactics.md)と[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)を参照。
 
 Paint改修の確認: 左パレット選択→映像へ描画→自動選択→移動、ツールの文字キー、入力欄への文字入力、Esc中止を確認する。Playlistのペン目印をクリックした際、対象時刻へのseekと確定callbackが動くことを確認する。従来の内部studio識別子、Tactics型名、プリセット保存キーは維持する。
+
+再生UIの参照は旧SportsCodeマニュアルから2026年3月版のHudl公式紹介動画へ変更した。参照時期と画面の根拠はdesign-system.mdに記録する。Storybookで黒い映像操作面が明暗両テーマで読めること、Playlistの描画目印と送り操作が動くことを確認する。

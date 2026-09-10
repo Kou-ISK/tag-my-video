@@ -3,6 +3,14 @@ import { primitiveColors } from './primitive';
 export type DesignSystemMode = 'dark' | 'light';
 
 export interface SemanticTokens {
+  media: {
+    surface: string;
+    foreground: string;
+    muted: string;
+    hover: string;
+    disabled: string;
+    accent: string;
+  };
   surface: {
     canvas: string;
     work: string;
@@ -77,6 +85,14 @@ export const createSemanticTokens = (
   const selected = dark ? rgba(primary, 0.16) : rgba(primary, 0.12);
 
   return {
+    media: {
+      surface: primitiveColors.black,
+      foreground: primitiveColors.textCool,
+      muted: primitiveColors.neutral400,
+      hover: primitiveColors.charcoalRaised,
+      disabled: primitiveColors.neutral600,
+      accent: primitiveColors.signalBlue,
+    },
     surface: {
       canvas: dark ? primitiveColors.nearBlack : primitiveColors.neutral100,
       work: dark ? primitiveColors.charcoal : primitiveColors.white,

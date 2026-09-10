@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 再生UIの参照元を2026年版Hudl Sportscode公式動画へ訂正。目盛り付きジョグを廃止し、映像幅に接する黒いフッターと中央のフラットな再生アイコンへ更新。
+
 - 再生コントローラーを矩形ジョグへ変更し、Playlistにクリック可能な描画目印を追加。描画モードをPaintへ改名し、左ツールパレット・ショートカット・描画後の自動選択を導入。
 
 - 描画モードの表示名をTacticsへ変更。位置キーフレーム、映像パターン追跡と再開、平面較正、芝色処理、プリセット、Coachカスタマイズ、動画上の描画書き出しを追加。

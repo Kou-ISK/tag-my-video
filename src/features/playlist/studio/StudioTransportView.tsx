@@ -1,3 +1,4 @@
+import { mediaChromeSx } from '../../../design-system/mediaChrome';
 import type { ReactElement } from 'react';
 import {
   Slider,
@@ -27,14 +28,16 @@ export const StudioTransportView = (
 ): ReactElement => (
   <Stack
     spacing={1}
-    sx={{
-      px: 2,
-      py: 1,
-      bgcolor: 'background.paper',
-      borderTop: 1,
-      borderColor: 'divider',
-      flexShrink: 0,
-    }}
+    sx={[
+      mediaChromeSx,
+      {
+        px: 2,
+        py: 1,
+        borderTop: 1,
+        borderColor: 'divider',
+        flexShrink: 0,
+      },
+    ]}
   >
     {props.coachMode && (
       <Slider
