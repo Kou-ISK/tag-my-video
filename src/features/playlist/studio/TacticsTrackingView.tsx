@@ -7,7 +7,7 @@ export const TacticsTrackingView = (
   <Stack spacing={1} sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
     <Typography variant="subtitle2">自動追尾</Typography>
     <Typography variant="caption" color="text.secondary">
-      再生位置から最大20秒を追尾します。選手を囲む図形か足元のディスクを選び、映像を一時停止して開始してください。途中で外れたら、その時刻で位置を直して再追尾できます。
+      再生位置から最大20秒を追尾します。描画を選んで一時停止し、追尾対象の上半身を別の枠で指定します。図形のサイズは変更されません。途中で外れたら、その時刻で位置を直して再追尾できます。
     </Typography>
     {props.running ? (
       <>
@@ -21,10 +21,10 @@ export const TacticsTrackingView = (
     ) : (
       <Button
         variant="outlined"
-        disabled={!props.available}
+        disabled={!props.available || Boolean(props.targetSelection)}
         onClick={props.onStart}
       >
-        自動追尾を開始
+        対象を指定して追尾
       </Button>
     )}
     {props.message && (

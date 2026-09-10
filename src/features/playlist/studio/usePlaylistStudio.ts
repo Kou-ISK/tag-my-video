@@ -1,3 +1,4 @@
+import { readVideoGrassKey } from './readVideoGrassKey';
 import { useTacticsPresets } from './useTacticsPresets';
 import { useTacticsChroma } from './useTacticsChroma';
 import { usePitchCalibration } from './usePitchCalibration';
@@ -37,6 +38,7 @@ export const usePlaylistStudio = (
   runtime: PlaylistWindowRuntime,
 ): PlaylistStudio => {
   const { core, annotations, currentItemState, history, playback } = runtime;
+  const [grassError, setGrassError] = useState('');
   const [panel, setPanel] = useState<TacticsInspectorPanel>('draw');
   const [coachMode, setCoachMode] = useState(false);
   const previousView = useRef(core.viewMode);
@@ -83,7 +85,32 @@ export const usePlaylistStudio = (
     contentRect: secondary
       ? core.secondaryContentRect
       : core.primaryContentRect,
-    onCommit: (next) => annotations.handleAnnotationObjectsChange(next, target),
+    onCommit: (next) => {
+      let grassKey = annotations.currentAnnotation?.chromaKey?.[target];
+      if (
+        !grassKey &&
+        !objects.some((object) =>
+          ['disc', 'ring', 'linkedDiscs', 'beam'].includes(object.type),
+        ) &&
+        next.some(
+          (object) =>
+            ['disc', 'ring', 'linkedDiscs', 'beam'].includes(object.type) &&
+            !objects.some((previous) => previous.id === object.id),
+        )
+      ) {
+        try {
+          grassKey = readVideoGrassKey(
+            (secondary ? core.videoRef2 : core.videoRef).current,
+          );
+          setGrassError('');
+        } catch {
+          setGrassError(
+            '芝色を取得できませんでした。ピッチの「選手の背後に描画」で調整してください。',
+          );
+        }
+      }
+      annotations.handleAnnotationObjectsChange(next, target, grassKey);
+    },
     onSeek: seek,
     onUndo: runtime.handleUndo,
     onRedo: runtime.handleRedo,
@@ -189,12 +216,16 @@ export const usePlaylistStudio = (
     },
     canvas: {
       ...editor.canvas,
+      trackingTarget: tracking.targetSelection
+        ? { selection: tracking.targetSelection, contentRect }
+        : undefined,
       enabled: editor.canvas.enabled && !pitch.editing,
     },
     sidebar: {
       panel,
       onPanelChange: setPanel,
       ...editor.inspector,
+      renderError: editor.inspector.renderError || grassError,
       tracking,
       pitch,
       chroma,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { extractGrassColor } from '../../../shared/tactics/chromaKey';
+import { readVideoGrassKey } from './readVideoGrassKey';
 import type { ChromaKey } from '../../../shared/tactics/chromaKey';
 export interface TacticsChromaProps {
   value?: ChromaKey;
@@ -23,25 +23,7 @@ export const useTacticsChroma = (
     onExtract: () => {
       if (disabled) return;
       try {
-        const source = video();
-        if (!source?.videoWidth)
-          throw new Error('映像を読み込んでから抽出してください。');
-        const canvas = document.createElement('canvas');
-        canvas.width = 320;
-        canvas.height = Math.round(
-          (320 * source.videoHeight) / source.videoWidth,
-        );
-        const context = canvas.getContext('2d');
-        if (!context) throw new Error('映像の色を取得できません。');
-        context.drawImage(source, 0, 0, canvas.width, canvas.height);
-        const color = extractGrassColor(
-          context.getImageData(0, 0, canvas.width, canvas.height).data,
-        );
-        if (!color)
-          throw new Error(
-            '芝色を識別できません。緑色のピッチが映る場面を選んでください。',
-          );
-        onChange({ color, similarity: 0.14, blend: 0.04 });
+        onChange(readVideoGrassKey(video()));
         setError('');
       } catch (cause) {
         setError(

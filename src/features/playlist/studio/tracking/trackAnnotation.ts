@@ -1,3 +1,4 @@
+import type { TrackingRegion } from './trackingAnchor';
 import { findTrackingAnchors } from './trackingAnchor';
 import {
   annotationAtTime,
@@ -24,6 +25,7 @@ export const trackAnnotation = async (
   signal: AbortSignal,
   onProgress: (progress: number) => void,
   fromTime = object.timestamp,
+  targetRegion?: TrackingRegion,
 ): Promise<TrackingResult> => {
   const start = Math.max(object.timestamp, fromTime);
   const startingOffset = annotationOffsetAt(object, start);
@@ -45,10 +47,45 @@ export const trackAnnotation = async (
           scaleY,
       ),
     };
+    const region = targetRegion
+      ? {
+          minX: targetRegion.minX * reader.width,
+          maxX: targetRegion.maxX * reader.width,
+          minY: targetRegion.minY * reader.height,
+          maxY: targetRegion.maxY * reader.height,
+        }
+      : undefined;
+    if (region) {
+      center.x = (region.minX + region.maxX) / 2;
+      center.y = (region.minY + region.maxY) / 2;
+    }
+    const movedRegion = (offset: {
+      x: number;
+      y: number;
+    }): TrackingRegion | undefined =>
+      region
+        ? {
+            minX: region.minX + offset.x,
+            maxX: region.maxX + offset.x,
+            minY: region.minY + offset.y,
+            maxY: region.maxY + offset.y,
+          }
+        : undefined;
     let frame = await reader.read(start);
-    const radius = Math.max(8, ((bounds.maxX - bounds.minX) * scaleX) / 2);
-    const preferAbove = ['disc', 'ring'].includes(object.type);
-    let points = findTrackingAnchors(frame, center, radius, preferAbove);
+    const radius = Math.max(
+      8,
+      region
+        ? (region.maxX - region.minX) / 2
+        : ((bounds.maxX - bounds.minX) * scaleX) / 2,
+    );
+    const preferAbove = !region && ['disc', 'ring'].includes(object.type);
+    let points = findTrackingAnchors(
+      frame,
+      center,
+      radius,
+      preferAbove,
+      region,
+    );
     let travel = { x: 0, y: 0 };
     let prediction = { x: 0, y: 0 };
     const duration = Math.min(
@@ -70,6 +107,7 @@ export const trackAnnotation = async (
           { x: center.x + travel.x, y: center.y + travel.y },
           radius,
           preferAbove,
+          movedRegion(travel),
         );
         match = trackFeatures(frame, next, points, prediction);
       }
@@ -92,6 +130,7 @@ export const trackAnnotation = async (
           { x: center.x + travel.x, y: center.y + travel.y },
           radius,
           preferAbove,
+          movedRegion(travel),
         );
       frame = next;
       onProgress(step / steps);

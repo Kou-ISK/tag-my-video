@@ -1,3 +1,4 @@
+import type { TrackingTargetOverlayProps } from './TrackingTargetOverlayView';
 import {
   annotationOffsetAt,
   setAnnotationKeyframe,
@@ -41,6 +42,7 @@ export interface StudioEditorParams {
 }
 export interface StudioEditor {
   canvas: StudioGesture['handlers'] & {
+    trackingTarget?: Omit<TrackingTargetOverlayProps, 'width' | 'height'>;
     canvasRef: RefObject<HTMLCanvasElement | null>;
     width: number;
     height: number;
@@ -58,8 +60,9 @@ export interface StudioEditor {
     selected: DrawingObject | null;
     selectedId: string | null;
     tool: DrawingToolType;
-    playerCount: number;
-    onPlayerCountChange: (count: number) => void;
+    linkCount: number;
+    onFinishLink: () => void;
+    onCancelLink: () => void;
     color: string;
     strokeWidth: number;
     opacity: number;
@@ -91,7 +94,6 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     id: string | null;
   }>({ key: '', id: null });
   const [tool, setTool] = useState<DrawingToolType>('select');
-  const [playerCount, setPlayerCount] = useState(3);
   const [color, setColor] = useState('#FFD60A');
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [opacity, setOpacity] = useState(1);
@@ -111,7 +113,6 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     opacity,
     fill,
     dashed,
-    playerCount,
     selectedId,
     onSelect: select,
     onDrawComplete: () => setTool('select'),
@@ -180,6 +181,12 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       return;
     }
     if (!params.enabled) return;
+    if (event.key === 'Enter' && gesture.linkCount >= 2) {
+      event.preventDefault();
+      event.stopPropagation();
+      gesture.finishLink();
+      return;
+    }
     const command = event.metaKey || event.ctrlKey;
     const shortcuts: Record<string, DrawingToolType> = {
       v: 'select',
@@ -258,11 +265,9 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     inspector: {
       inspectorCollapsed,
       onToggleInspector: () => setInspectorCollapsed((value) => !value),
-      playerCount,
-      onPlayerCountChange: (count) => {
-        gesture.cancel();
-        setPlayerCount(count);
-      },
+      linkCount: gesture.linkCount,
+      onFinishLink: gesture.finishLink,
+      onCancelLink: gesture.cancel,
       renderError,
       motion,
       enabled: params.enabled,

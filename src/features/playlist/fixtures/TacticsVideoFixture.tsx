@@ -162,6 +162,11 @@ export const TacticsVideoFixture = (): ReactElement => {
             />
             <StudioCanvasView
               {...editor.canvas}
+              trackingTarget={
+                tracking.targetSelection
+                  ? { selection: tracking.targetSelection, contentRect }
+                  : undefined
+              }
               enabled={!playing && !pitch.editing}
             />
             <PitchCalibrationOverlayView

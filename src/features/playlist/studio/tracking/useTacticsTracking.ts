@@ -1,8 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DrawingObject } from '../../../../types/playlist/core';
 import { trackAnnotation } from './trackAnnotation';
+import type { TrackingRegion } from './trackingAnchor';
 import type { TrackingResult } from './trackAnnotation';
 export interface TacticsTrackingProps {
+  targetSelection?: {
+    region: TrackingRegion | null;
+    onBegin: (x: number, y: number) => void;
+    onMove: (x: number, y: number) => void;
+    onConfirm: () => void;
+    onCancel: () => void;
+  };
   available: boolean;
   running: boolean;
   progress: number;
@@ -39,6 +47,15 @@ export const useTacticsTracking = ({
     snapshot: string;
     result?: TrackingResult;
   } | null>(null);
+  const selectionKey = `${key}:${time}:${enabled}:${JSON.stringify(selected)}`;
+  const [selection, setSelection] = useState<{
+    key: string;
+    start: { x: number; y: number } | null;
+    region: TrackingRegion | null;
+  } | null>(null);
+  const selecting =
+    selection?.key === selectionKey && enabled ? selection : null;
+  useEffect(() => () => setSelection(null), [selectionKey]);
   const abort = useRef<AbortController | null>(null);
   const latest = useRef({ selected, enabled, onApply });
   useLayoutEffect(() => {
@@ -54,6 +71,91 @@ export const useTacticsTracking = ({
   const cancel = (): void => {
     abort.current?.abort();
     setState(null);
+    setSelection(null);
+  };
+  const run = (region: TrackingRegion): void => {
+    if (
+      !selected ||
+      !enabled ||
+      current?.running ||
+      time < selected.timestamp ||
+      time >= endTime ||
+      (selected.motion?.keyframes.length ?? 0) >= 256
+    )
+      return;
+    const url = source();
+    if (!url) {
+      setState({
+        key,
+        running: false,
+        progress: 0,
+        snapshot: '',
+        message:
+          '映像を読み込めません。クリップを開き直して再試行してください。',
+      });
+      return;
+    }
+    abort.current?.abort();
+    const controller = new AbortController();
+    abort.current = controller;
+    const snapshot = JSON.stringify(selected);
+    setState({
+      key,
+      running: true,
+      progress: 0,
+      message: '映像パターンを追跡中…',
+      snapshot,
+    });
+    void trackAnnotation(
+      url,
+      selected,
+      endTime,
+      controller.signal,
+      (progress) =>
+        setState((previous) =>
+          previous?.key === key ? { ...previous, progress } : previous,
+        ),
+      time,
+      region,
+    )
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        if (
+          JSON.stringify(latest.current.selected) !== snapshot ||
+          !latest.current.enabled
+        ) {
+          setState({
+            key,
+            snapshot,
+            running: false,
+            progress: 0,
+            message: '選択や描画が変わったため追尾結果を破棄しました。',
+          });
+          return;
+        }
+        if (!result.lost) latest.current.onApply(result.object);
+        setState({
+          key,
+          snapshot,
+          running: false,
+          progress: 1,
+          result: result.lost ? result : undefined,
+          message: result.lost
+            ? `${result.trackedDuration.toFixed(1)}秒で対象を見失いました。追跡できた範囲を適用できます。`
+            : `${result.trackedDuration.toFixed(1)}秒の追尾を反映しました。再生して確認できます（取り消し可能）。`,
+        });
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted)
+          setState({
+            key,
+            snapshot,
+            running: false,
+            progress: 0,
+            message:
+              error instanceof Error ? error.message : '追跡できませんでした。',
+          });
+      });
   };
   return {
     available:
@@ -76,88 +178,43 @@ export const useTacticsTracking = ({
             : ''),
     hasResult: Boolean(current?.result),
     onStart: () => {
-      if (
-        !selected ||
-        !enabled ||
-        current?.running ||
-        (selected.motion?.keyframes.length ?? 0) >= 256
-      )
-        return;
-      const url = source();
-      if (!url) {
-        setState({
-          key,
-          running: false,
-          progress: 0,
-          snapshot: '',
-          message:
-            '映像を読み込めません。クリップを開き直して再試行してください。',
-        });
-        return;
-      }
-      abort.current?.abort();
-      const controller = new AbortController();
-      abort.current = controller;
-      const snapshot = JSON.stringify(selected);
-      setState({
-        key,
-        running: true,
-        progress: 0,
-        message: '映像パターンを追跡中…',
-        snapshot,
-      });
-      void trackAnnotation(
-        url,
-        selected,
-        endTime,
-        controller.signal,
-        (progress) =>
-          setState((previous) =>
-            previous?.key === key ? { ...previous, progress } : previous,
-          ),
-        time,
-      )
-        .then((result) => {
-          if (controller.signal.aborted) return;
-          if (
-            JSON.stringify(latest.current.selected) !== snapshot ||
-            !latest.current.enabled
-          ) {
-            setState({
-              key,
-              snapshot,
-              running: false,
-              progress: 0,
-              message: '選択や描画が変わったため追尾結果を破棄しました。',
-            });
-            return;
-          }
-          if (!result.lost) latest.current.onApply(result.object);
-          setState({
-            key,
-            snapshot,
-            running: false,
-            progress: 1,
-            result: result.lost ? result : undefined,
-            message: result.lost
-              ? `${result.trackedDuration.toFixed(1)}秒で対象を見失いました。追跡できた範囲を適用できます。`
-              : `${result.trackedDuration.toFixed(1)}秒の追尾を反映しました。再生して確認できます（取り消し可能）。`,
-          });
-        })
-        .catch((error: unknown) => {
-          if (!controller.signal.aborted)
-            setState({
-              key,
-              snapshot,
-              running: false,
-              progress: 0,
-              message:
-                error instanceof Error
-                  ? error.message
-                  : '追跡できませんでした。',
-            });
-        });
+      if (!selected || !enabled || current?.running) return;
+      setSelection({ key: selectionKey, start: null, region: null });
     },
+    targetSelection: selecting
+      ? {
+          region: selecting.region,
+          onBegin: (x, y) =>
+            setSelection({ key: selectionKey, start: { x, y }, region: null }),
+          onMove: (x, y) =>
+            setSelection((previous) =>
+              previous?.key === selectionKey && previous.start
+                ? {
+                    ...previous,
+                    region: {
+                      minX: Math.min(x, previous.start.x),
+                      minY: Math.min(y, previous.start.y),
+                      maxX: Math.max(x, previous.start.x),
+                      maxY: Math.max(y, previous.start.y),
+                    },
+                  }
+                : previous,
+            ),
+          onConfirm: () => {
+            const region = selecting.region;
+            if (
+              !region ||
+              region.maxX - region.minX < 0.005 ||
+              region.maxY - region.minY < 0.005
+            )
+              return;
+            setSelection(null);
+            run(region);
+          },
+          onCancel: cancel,
+        }
+      : undefined,
+
     onCancel: cancel,
     onDiscard: cancel,
     onApply: () => {

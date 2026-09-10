@@ -48,7 +48,11 @@ describe('tracking application', () => {
         onApply,
       }),
     );
-    await act(async () => result.current.onStart());
+    act(() => result.current.onStart());
+    expect(trackAnnotation).not.toHaveBeenCalled();
+    act(() => result.current.targetSelection?.onBegin(0.1, 0.2));
+    act(() => result.current.targetSelection?.onMove(0.2, 0.4));
+    await act(async () => result.current.targetSelection?.onConfirm());
     expect(onApply).toHaveBeenCalledExactlyOnceWith(tracked.object);
     expect(result.current.hasResult).toBe(false);
   });
@@ -75,6 +79,9 @@ describe('tracking application', () => {
       { initialProps: { object: selected } },
     );
     act(() => result.current.onStart());
+    act(() => result.current.targetSelection?.onBegin(0.1, 0.2));
+    act(() => result.current.targetSelection?.onMove(0.2, 0.4));
+    act(() => result.current.targetSelection?.onConfirm());
     rerender({ object: { ...selected, startX: 70 } });
     await act(async () => finish(tracked));
     expect(onApply).not.toHaveBeenCalled();
@@ -96,11 +103,18 @@ describe('tracking application', () => {
         }),
       { initialProps: { source: (): string | undefined => 'video' } },
     );
-    await act(async () => result.current.onStart());
+    act(() => result.current.onStart());
+    expect(trackAnnotation).not.toHaveBeenCalled();
+    act(() => result.current.targetSelection?.onBegin(0.1, 0.2));
+    act(() => result.current.targetSelection?.onMove(0.2, 0.4));
+    await act(async () => result.current.targetSelection?.onConfirm());
     expect(onApply).not.toHaveBeenCalled();
     expect(result.current.hasResult).toBe(true);
     rerender({ source: () => undefined });
     act(() => result.current.onStart());
+    act(() => result.current.targetSelection?.onBegin(0.1, 0.2));
+    act(() => result.current.targetSelection?.onMove(0.2, 0.4));
+    act(() => result.current.targetSelection?.onConfirm());
     expect(result.current.message).toContain('読み込めません');
   });
 });

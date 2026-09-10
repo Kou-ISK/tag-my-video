@@ -6,21 +6,6 @@ export const PLAYER_COUNTS = Array.from(
   (_, index) => index + 2,
 );
 
-export const createLinkedDiscPath = (
-  start: Point,
-  end: Point,
-  count: number,
-): Point[] => {
-  const size = Math.max(
-    2,
-    Math.min(15, Math.round(Number.isFinite(count) ? count : 3)),
-  );
-  return Array.from({ length: size }, (_, index) => ({
-    x: start.x + ((end.x - start.x) * index) / (size - 1),
-    y: start.y + ((end.y - start.y) * index) / (size - 1),
-  }));
-};
-
 /** 既存選手の位置を動かさず、長い区間の中点へ新しい選手を追加する。 */
 export const resizeLinkedDiscPath = (
   object: DrawingObject,

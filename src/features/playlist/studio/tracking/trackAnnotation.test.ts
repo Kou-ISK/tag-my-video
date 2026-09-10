@@ -102,3 +102,27 @@ describe('resumable tracking', () => {
     expect(mock.dispose).toHaveBeenCalledOnce();
   });
 });
+
+it('tracks the explicit player region independently of a distant decorative disc', async () => {
+  const disc = {
+    ...object,
+    type: 'disc' as const,
+    startX: 180,
+    startY: 150,
+    endX: 260,
+    endY: 160,
+  };
+  const result = await trackAnnotation(
+    'video',
+    disc,
+    12.1,
+    new AbortController().signal,
+    () => {},
+    12,
+    { minX: 0.1, minY: 0.2, maxX: 0.2, maxY: 0.4 },
+  );
+  expect(mock.match.mock.calls[0][2][0]).toEqual({ x: 48, y: 54 });
+  expect(result.object.startX).toBe(180);
+  expect(result.object.endY).toBe(160);
+  expect(result.object.motion?.keyframes.at(-1)?.x).toBeGreaterThan(42);
+});

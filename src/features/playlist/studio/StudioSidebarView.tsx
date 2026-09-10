@@ -136,6 +136,11 @@ export const StudioSidebarView = (
             >
               <StudioPropertiesView {...props} />
             </Box>
+            {props.selected &&
+              props.chroma &&
+              ['disc', 'ring', 'linkedDiscs', 'beam'].includes(
+                props.selected.type,
+              ) && <TacticsChromaView {...props.chroma} />}
             {props.selected && props.tracking && (
               <TacticsTrackingView {...props.tracking} />
             )}

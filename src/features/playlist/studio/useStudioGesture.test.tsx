@@ -151,7 +151,7 @@ it('moves only the selected player node in stored coordinates and commits once',
   ]);
 });
 
-it('uses the selected player count for one undoable linked-disc gesture', () => {
+it('places players with individual clicks and commits the whole link once', () => {
   const commit = vi.fn();
   const { result } = renderHook(() =>
     useStudioGesture({
@@ -161,7 +161,6 @@ it('uses the selected player count for one undoable linked-disc gesture', () => 
       contentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
       objects: [],
       tool: 'linkedDiscs',
-      playerCount: 6,
       color: '#ffffff',
       strokeWidth: 3,
       opacity: 1,
@@ -174,11 +173,28 @@ it('uses the selected player count for one undoable linked-disc gesture', () => 
       onCommit: commit,
     }),
   );
-  act(() => result.current.handlers.onPointerDown(pointer(100, 100)));
-  act(() => result.current.handlers.onPointerMove(pointer(400, 200)));
+  for (let index = 0; index < 6; index++) {
+    act(() =>
+      result.current.handlers.onPointerDown(
+        pointer(100 + index * 35, 100 + index * 10),
+      ),
+    );
+    act(() =>
+      result.current.handlers.onPointerUp(
+        pointer(100 + index * 35, 100 + index * 10),
+      ),
+    );
+    act(() => result.current.handlers.onLostPointerCapture());
+  }
   expect(commit).not.toHaveBeenCalled();
-  expect(result.current.displayObjects[0].path).toHaveLength(6);
-  act(() => result.current.handlers.onPointerUp(pointer(400, 200)));
+  expect(result.current.linkCount).toBe(6);
+  act(() => result.current.finishLink());
   expect(commit).toHaveBeenCalledTimes(1);
-  expect(commit.mock.calls[0][0][0].path).toHaveLength(6);
+  expect(commit.mock.calls[0][0][0].path).toEqual(
+    Array.from({ length: 6 }, (_, index) => ({
+      x: 100 + index * 35,
+      y: 100 + index * 10,
+    })),
+  );
+  expect(result.current.linkCount).toBe(0);
 });

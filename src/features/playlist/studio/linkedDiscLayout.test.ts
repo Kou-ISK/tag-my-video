@@ -1,12 +1,6 @@
 import { expect, it } from 'vitest';
-import { createLinkedDiscPath, resizeLinkedDiscPath } from './linkedDiscLayout';
+import { resizeLinkedDiscPath } from './linkedDiscLayout';
 import type { DrawingObject } from '../../../types/playlist/core';
-it('creates the requested player count including both drag endpoints', () => {
-  const points = createLinkedDiscPath({ x: 10, y: 20 }, { x: 110, y: 70 }, 6);
-  expect(points).toHaveLength(6);
-  expect(points[0]).toEqual({ x: 10, y: 20 });
-  expect(points[5]).toEqual({ x: 110, y: 70 });
-});
 it('adds players between existing positions without moving them or leaving the frame', () => {
   const object: DrawingObject = {
     id: 'link',

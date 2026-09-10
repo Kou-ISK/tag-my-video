@@ -1,11 +1,10 @@
-import { createLinkedDiscPath } from './linkedDiscLayout';
 import {
   annotationAtTime,
   annotationOffsetAt,
   isAnnotationVisible,
   setAnnotationKeyframe,
 } from '../../../shared/tactics/annotationMotion';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent, RefObject } from 'react';
 import type {
   DrawingObject,
@@ -33,7 +32,6 @@ interface Params {
   contentRect: StudioContentRect;
   objects: DrawingObject[];
   tool: DrawingToolType;
-  playerCount?: number;
   color: string;
   strokeWidth: number;
   opacity: number;
@@ -65,14 +63,24 @@ export interface StudioGesture {
     onPointerCancel: () => void;
     onLostPointerCapture: () => void;
   };
+  linkCount: number;
+  finishLink: () => void;
   cancel: () => void;
 }
 export const useStudioGesture = (params: Params): StudioGesture => {
+  const gestureKey = `${params.documentKey}:${params.time}:${params.enabled}`;
   const gesture = useRef<Gesture | null>(null);
   const [preview, setPreview] = useState<{
     key: string;
     objects: DrawingObject[];
   } | null>(null);
+  useEffect(
+    () => () => {
+      gesture.current = null;
+      setPreview(null);
+    },
+    [gestureKey],
+  );
   const point = (
     event: PointerEvent<HTMLCanvasElement>,
   ): { x: number; y: number } => {
@@ -107,6 +115,31 @@ export const useStudioGesture = (params: Params): StudioGesture => {
     event.currentTarget.focus();
     event.currentTarget.setPointerCapture(event.pointerId);
     const start = point(event);
+    const pending = gesture.current;
+    if (
+      params.tool === 'linkedDiscs' &&
+      pending?.key === gestureKey &&
+      pending.kind === 'draw'
+    ) {
+      const path = pending.latest.path ?? [];
+      if (
+        path.length < 15 &&
+        path.every((node) => Math.hypot(node.x - start.x, node.y - start.y) > 3)
+      ) {
+        pending.latest = {
+          ...pending.latest,
+          path: [...path, start],
+          endX: start.x,
+          endY: start.y,
+        };
+        pending.changed = true;
+        setPreview({
+          key: pending.key,
+          objects: [...pending.objects, pending.latest],
+        });
+      }
+      return;
+    }
     if (params.tool === 'select') {
       const display = params.objects
         .filter((object) => isAnnotationVisible(object, params.time))
@@ -139,7 +172,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
       const original = params.objects.find((object) => object.id === hit?.id);
       if (!original) return;
       gesture.current = {
-        key: params.documentKey,
+        key: gestureKey,
         kind: nodeIndex >= 0 ? 'node' : resize ? 'resize' : 'move',
         nodeIndex,
         start,
@@ -174,7 +207,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         baseHeight: params.contentRect.height,
       };
       gesture.current = {
-        key: params.documentKey,
+        key: gestureKey,
         kind: 'draw',
         start,
         original: object,
@@ -183,7 +216,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         changed: params.tool === 'text',
       };
       setPreview({
-        key: params.documentKey,
+        key: gestureKey,
         objects: [...params.objects, object],
       });
     }
@@ -192,9 +225,11 @@ export const useStudioGesture = (params: Params): StudioGesture => {
     const current = gesture.current;
     if (
       !current ||
-      current.key !== params.documentKey ||
+      current.key !== gestureKey ||
       !event.currentTarget.hasPointerCapture(event.pointerId)
     )
+      return;
+    if (current.kind === 'draw' && current.latest.type === 'linkedDiscs')
       return;
     const at = point(event);
     const dx = at.x - current.start.x;
@@ -205,12 +240,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         ...current.latest,
         endX: at.x,
         endY: at.y,
-        path:
-          current.latest.type === 'linkedDiscs'
-            ? createLinkedDiscPath(current.start, at, params.playerCount ?? 3)
-            : current.latest.path
-              ? [...current.latest.path, at]
-              : undefined,
+        path: current.latest.path ? [...current.latest.path, at] : undefined,
       };
     } else {
       const baseDx =
@@ -259,6 +289,15 @@ export const useStudioGesture = (params: Params): StudioGesture => {
   };
   const onPointerUp = (event: PointerEvent<HTMLCanvasElement>): void => {
     const current = gesture.current;
+    if (
+      current?.kind === 'draw' &&
+      current.latest.type === 'linkedDiscs' &&
+      current.key === gestureKey
+    ) {
+      if (event.currentTarget.hasPointerCapture(event.pointerId))
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      return;
+    }
     gesture.current = null;
     setPreview(null);
     if (event.currentTarget.hasPointerCapture(event.pointerId))
@@ -266,7 +305,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
     if (
       !params.enabled ||
       !current ||
-      current.key !== params.documentKey ||
+      current.key !== gestureKey ||
       !current.changed
     )
       return;
@@ -284,15 +323,41 @@ export const useStudioGesture = (params: Params): StudioGesture => {
     gesture.current = null;
     setPreview(null);
   };
+  const finishLink = (): void => {
+    const current = gesture.current;
+    if (
+      !params.enabled ||
+      current?.key !== gestureKey ||
+      current.latest.type !== 'linkedDiscs' ||
+      (current.latest.path?.length ?? 0) < 2
+    )
+      return;
+    params.onCommit([...current.objects, current.latest]);
+    params.onSelect(current.latest.id);
+    cancel();
+    params.onDrawComplete?.();
+  };
   return {
+    linkCount:
+      preview?.key === gestureKey &&
+      gesture.current?.latest.type === 'linkedDiscs'
+        ? (gesture.current.latest.path?.length ?? 0)
+        : 0,
+    finishLink,
     displayObjects:
-      preview?.key === params.documentKey ? preview.objects : params.objects,
+      preview?.key === gestureKey ? preview.objects : params.objects,
     handlers: {
       onPointerDown,
       onPointerMove,
       onPointerUp,
       onPointerCancel: cancel,
-      onLostPointerCapture: cancel,
+      onLostPointerCapture: () => {
+        if (
+          gesture.current?.latest.type !== 'linkedDiscs' ||
+          gesture.current.kind !== 'draw'
+        )
+          cancel();
+      },
     },
     cancel,
   };

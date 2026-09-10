@@ -38,6 +38,8 @@ ADR は長期的な設計判断を残すための記録です。実装規約の�
 | [0029](0029-tactics-motion-and-plane-contract.md) | Tactics motion and plane contract | Accepted | 2026-09-10 |
 | [0030](0030-video-window-aspect.md) | Video window aspect | Accepted | 2026-09-10 |
 
+| [0031](0031-tracking-target-selection.md) | Tracking target selection | Accepted | 2026-09-11 |
+
 ## Status Values
 
 - `Proposed`: 提案中。実装前または合意前。

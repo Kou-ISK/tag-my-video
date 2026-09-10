@@ -33,6 +33,7 @@ interface UsePlaylistAnnotationsResult {
   handleAnnotationObjectsChange: (
     objects: DrawingObject[],
     target?: AnnotationTarget,
+    grassKey?: ChromaKey,
   ) => void;
   handleFreezeDurationChange: (freezeDuration: number) => void;
 }
@@ -81,7 +82,11 @@ export const usePlaylistAnnotations = ({
   }, [currentItem, defaultFreezeDuration, itemAnnotations]);
 
   const handleAnnotationObjectsChange = useCallback(
-    (objects: DrawingObject[], target: AnnotationTarget = 'primary') => {
+    (
+      objects: DrawingObject[],
+      target: AnnotationTarget = 'primary',
+      grassKey?: ChromaKey,
+    ) => {
       if (!currentItem) return;
       const currentAnn = itemAnnotations[currentItem.id] ||
         currentItem.annotation || {
@@ -112,6 +117,9 @@ export const usePlaylistAnnotations = ({
       const newAnnotation: ItemAnnotation = {
         ...currentAnn,
         objects: mergedObjects,
+        ...(grassKey
+          ? { chromaKey: { ...currentAnn.chromaKey, [target]: grassKey } }
+          : {}),
         freezeDuration: Math.max(
           minFreezeDuration,
           currentAnn.freezeDuration ?? defaultFreezeDuration,

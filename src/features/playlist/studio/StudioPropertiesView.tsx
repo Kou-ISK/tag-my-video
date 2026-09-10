@@ -1,7 +1,7 @@
-import { StudioPlayerCountView } from './StudioPlayerCountView';
 import type { ReactElement } from 'react';
 import {
   Box,
+  Button,
   Checkbox,
   FormControlLabel,
   Stack,
@@ -23,10 +23,20 @@ export const StudioPropertiesView = (props: Props): ReactElement => {
         {object ? '選択した描画のスタイル' : '新しい描画のスタイル'}
       </Typography>
       {!object && props.tool === 'linkedDiscs' && (
-        <StudioPlayerCountView
-          count={props.playerCount}
-          onChange={props.onPlayerCountChange}
-        />
+        <Stack spacing={1}>
+          <Typography variant="body2" role="status">
+            足元を順にクリックしてリンク（{props.linkCount} /
+            15人）。Enterで確定、Escで中止。
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button onClick={props.onFinishLink} disabled={props.linkCount < 2}>
+              リンクを確定
+            </Button>
+            <Button onClick={props.onCancelLink} disabled={!props.linkCount}>
+              中止
+            </Button>
+          </Stack>
+        </Stack>
       )}
       <Stack direction="row" spacing={1}>
         <TextField

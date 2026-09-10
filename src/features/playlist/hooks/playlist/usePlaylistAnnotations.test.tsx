@@ -55,8 +55,12 @@ it('stores Studio edits with embedded timestamps and preserves the other angle t
     result.current.editor.handleAnnotationObjectsChange(
       studioObjects,
       'primary',
+      { color: '#207030', similarity: 0.14, blend: 0.04 },
     ),
   );
+  expect(
+    result.current.history.items[0].annotation?.chromaKey?.primary?.color,
+  ).toBe('#207030');
   expect(result.current.dirty).toBe(true);
   const annotation = result.current.history.items[0].annotation!;
   expect(
@@ -77,6 +81,7 @@ it('stores Studio edits with embedded timestamps and preserves the other angle t
   act(() => {
     result.current.history.undo();
   });
+  expect(result.current.history.items[0].annotation?.chromaKey).toBeUndefined();
   expect(result.current.history.items[0].annotation?.objects).toEqual(
     initial[0].annotation?.objects,
   );

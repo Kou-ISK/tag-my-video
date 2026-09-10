@@ -1,7 +1,5 @@
 import type { ReactElement } from 'react';
-import { MenuItem, TextField } from '@mui/material';
-import { PLAYER_COUNTS } from './linkedDiscLayout';
-
+import { Button, Stack, Typography } from '@mui/material';
 export const StudioPlayerCountView = ({
   count,
   onChange,
@@ -9,22 +7,17 @@ export const StudioPlayerCountView = ({
   count: number;
   onChange: (count: number) => void;
 }): ReactElement => (
-  <TextField
-    select
-    fullWidth
-    size="small"
-    label="選手数"
-    value={count}
-    helperText="各ディスクの中心をドラッグして選手の足元へ配置"
-    onChange={(event) => {
-      const value = Number(event.target.value);
-      if (PLAYER_COUNTS.includes(value)) onChange(value);
-    }}
-  >
-    {PLAYER_COUNTS.map((value) => (
-      <MenuItem key={value} value={value}>
-        {value}人
-      </MenuItem>
-    ))}
-  </TextField>
+  <Stack spacing={1}>
+    <Typography variant="body2">
+      {count}人のリンク · 中心をドラッグして足元へ配置
+    </Typography>
+    <Stack direction="row" spacing={1}>
+      <Button disabled={count <= 2} onClick={() => onChange(count - 1)}>
+        末尾を削除
+      </Button>
+      <Button disabled={count >= 15} onClick={() => onChange(count + 1)}>
+        選手を追加
+      </Button>
+    </Stack>
+  </Stack>
 );
