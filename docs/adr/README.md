@@ -36,6 +36,7 @@ ADR は長期的な設計判断を残すための記録です。実装規約の�
 
 | [0028](0028-playlist-studio-annotation-contract.md) | Playlist Studio annotation contract | Superseded | 2026-09-10 |
 | [0029](0029-tactics-motion-and-plane-contract.md) | Tactics motion and plane contract | Accepted | 2026-09-10 |
+| [0030](0030-video-window-aspect.md) | Video window aspect | Accepted | 2026-09-10 |
 
 ## Status Values
 

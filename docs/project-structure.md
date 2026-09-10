@@ -312,3 +312,7 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 利用者向けの名称はPaint。`studio/` と既存内部モード値は互換性のため維持する。
 
 `src/design-system/mediaChrome.ts` は動画に接する操作面の共通スタイル。`tokens/semantic.ts` のmediaトークンだけを消費し、再生状態やfeature依存を持たない。
+
+`src/shared/hooks/useVideoWindowAspect.ts` は映像のメタデータと表示領域をOSのウィンドウ寸法へ接続する共通Hook。描画専用Viewは寸法制約やIPCを持たない。
+
+`StudioTimeRulerView` は目盛りとネイティブシーク入力のみを描画し、TacticsTimelineViewがレイヤーと共通再生線へ合成する。

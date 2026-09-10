@@ -1,3 +1,4 @@
+import { findTrackingAnchor } from './trackingAnchor';
 import {
   annotationAtTime,
   annotationOffsetAt,
@@ -33,12 +34,18 @@ export const trackAnnotation = async (
   try {
     const scaleX = reader.width / (object.baseWidth ?? reader.width);
     const scaleY = reader.height / (object.baseHeight ?? reader.height);
-    const origin = {
+    const center = {
       x: Math.round(((bounds.minX + bounds.maxX) / 2) * scaleX),
       y: Math.round(((bounds.minY + bounds.maxY) / 2) * scaleY),
     };
-    let at = origin;
     let frame = await reader.read(start);
+    const origin = findTrackingAnchor(
+      frame,
+      center,
+      Math.max(8, ((bounds.maxX - bounds.minX) * scaleX) / 2),
+      ['disc', 'ring', 'beam'].includes(object.type),
+    );
+    let at = origin;
     const duration = Math.min(
       20,
       endTime - start,

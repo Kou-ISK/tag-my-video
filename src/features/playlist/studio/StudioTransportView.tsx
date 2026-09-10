@@ -32,6 +32,7 @@ export const StudioTransportView = (
     sx={[
       mediaChromeSx,
       {
+        m: 0.75,
         px: 1,
         py: 0.5,
         borderTop: 1,
@@ -70,8 +71,18 @@ export const StudioTransportView = (
             if (value) props.onCoachModeChange?.(value === 'coach');
           }}
         >
-          <ToggleButton value="edit">編集</ToggleButton>
-          <ToggleButton value="coach">Coach</ToggleButton>
+          <ToggleButton
+            value="edit"
+            title="描画の形・時間・追尾を細かく編集します。"
+          >
+            編集
+          </ToggleButton>
+          <ToggleButton
+            value="coach"
+            title="映像を見せながら簡単に描画。詳細設定と時間軸を隠します。"
+          >
+            プレゼン
+          </ToggleButton>
         </ToggleButtonGroup>
       )}
       <Typography variant="technical" sx={{ minWidth: 116 }}>

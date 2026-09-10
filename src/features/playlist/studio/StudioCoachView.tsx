@@ -1,5 +1,11 @@
 import type { ReactElement } from 'react';
-import { Button, Stack, ToggleButton, Tooltip } from '@mui/material';
+import {
+  Button,
+  Typography,
+  Stack,
+  ToggleButton,
+  Tooltip,
+} from '@mui/material';
 import { DeleteOutline, Redo, Undo } from '@mui/icons-material';
 import type { StudioEditor } from './useStudioEditor';
 import { STUDIO_TOOLS } from './studioGeometry';
@@ -32,7 +38,7 @@ export const StudioCoachView = ({
     alignItems="center"
     spacing={0.5}
     role="group"
-    aria-label="Coach 描画操作"
+    aria-label="プレゼン 描画操作"
     sx={{
       flexWrap: 'wrap',
       rowGap: 0.5,
@@ -42,6 +48,9 @@ export const StudioCoachView = ({
       bgcolor: 'background.paper',
     }}
   >
+    <Typography variant="caption" sx={{ width: '100%' }}>
+      プレゼン：一時停止して描画し、再生して説明します。描画は編集モードと共有・保存されます。
+    </Typography>
     {STUDIO_TOOLS.filter(
       (tool) =>
         tool.id === 'select' ||

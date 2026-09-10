@@ -1,5 +1,6 @@
+import { StudioTimeRulerView } from './StudioTimeRulerView';
 import type { ReactElement } from 'react';
-import { Box, ButtonBase, Slider, Typography } from '@mui/material';
+import { Box, ButtonBase, Typography } from '@mui/material';
 import type { DrawingObject } from '../../../types/playlist/core';
 import { STUDIO_TOOLS } from './studioGeometry';
 export interface TacticsTimelineProps {
@@ -43,44 +44,11 @@ export const TacticsTimelineView = (
           <Typography variant="caption" sx={{ px: 1 }}>
             描画 · {props.objects.length}
           </Typography>
-          <Slider
-            aria-label="描画タイムラインの再生位置"
-            size="small"
-            track={false}
-            marks={Array.from({ length: 5 }, (_, index) => ({
-              value: props.min + (duration * index) / 4,
-              label: `${(props.min + (duration * index) / 4).toFixed(1)}s`,
-            }))}
+          <StudioTimeRulerView
             min={props.min}
-            max={Math.max(props.min + 0.001, props.max)}
-            value={Math.min(props.max, Math.max(props.min, props.time))}
-            step={0.01}
-            onChange={(_, value) => {
-              if (typeof value === 'number') props.onSeek(value);
-            }}
-            sx={{
-              width: '100%',
-              height: '1px',
-              alignSelf: 'start',
-              py: 1,
-              m: 0,
-              '& .MuiSlider-rail': { opacity: 0 },
-              '& .MuiSlider-mark': { width: 1, height: 6, bgcolor: 'divider' },
-              '& .MuiSlider-markLabel': {
-                top: 22,
-                fontSize: 10,
-                fontVariantNumeric: 'tabular-nums',
-              },
-              '& .MuiSlider-markLabel[data-index="0"]': { transform: 'none' },
-              '& .MuiSlider-markLabel[data-index="4"]': {
-                transform: 'translateX(-100%)',
-              },
-              '& .MuiSlider-thumb': {
-                width: 8,
-                height: 10,
-                borderRadius: '1px',
-              },
-            }}
+            max={props.max}
+            time={props.time}
+            onSeek={props.onSeek}
           />
         </Box>
         {props.objects.length === 0 && (

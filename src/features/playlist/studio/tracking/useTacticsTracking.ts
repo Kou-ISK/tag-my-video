@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DrawingObject } from '../../../../types/playlist/core';
 import { trackAnnotation } from './trackAnnotation';
 import type { TrackingResult } from './trackAnnotation';
@@ -40,6 +40,10 @@ export const useTacticsTracking = ({
     result?: TrackingResult;
   } | null>(null);
   const abort = useRef<AbortController | null>(null);
+  const latest = useRef({ selected, enabled, onApply });
+  useLayoutEffect(() => {
+    latest.current = { selected, enabled, onApply };
+  }, [selected, enabled, onApply]);
   useEffect(
     () => () => {
       abort.current?.abort();
@@ -61,7 +65,15 @@ export const useTacticsTracking = ({
       time < endTime,
     running: current?.running ?? false,
     progress: current?.progress ?? 0,
-    message: current?.message ?? '',
+    message:
+      current?.message ??
+      (!selected
+        ? '追尾する図形を選択してください。'
+        : !enabled
+          ? '映像を一時停止すると追尾できます。'
+          : time >= endTime
+            ? 'クリップ末尾です。開始位置へ戻してください。'
+            : ''),
     hasResult: Boolean(current?.result),
     onStart: () => {
       if (
@@ -72,7 +84,17 @@ export const useTacticsTracking = ({
       )
         return;
       const url = source();
-      if (!url) return;
+      if (!url) {
+        setState({
+          key,
+          running: false,
+          progress: 0,
+          snapshot: '',
+          message:
+            '映像を読み込めません。クリップを開き直して再試行してください。',
+        });
+        return;
+      }
       abort.current?.abort();
       const controller = new AbortController();
       abort.current = controller;
@@ -97,15 +119,29 @@ export const useTacticsTracking = ({
       )
         .then((result) => {
           if (controller.signal.aborted) return;
+          if (
+            JSON.stringify(latest.current.selected) !== snapshot ||
+            !latest.current.enabled
+          ) {
+            setState({
+              key,
+              snapshot,
+              running: false,
+              progress: 0,
+              message: '選択や描画が変わったため追尾結果を破棄しました。',
+            });
+            return;
+          }
+          if (!result.lost) latest.current.onApply(result.object);
           setState({
             key,
             snapshot,
             running: false,
             progress: 1,
-            result,
+            result: result.lost ? result : undefined,
             message: result.lost
               ? `${result.trackedDuration.toFixed(1)}秒で対象を見失いました。追跡できた範囲を適用できます。`
-              : `${result.trackedDuration.toFixed(1)}秒を追跡しました。適用後に再生して確認してください。`,
+              : `${result.trackedDuration.toFixed(1)}秒の追尾を反映しました。再生して確認できます（取り消し可能）。`,
           });
         })
         .catch((error: unknown) => {

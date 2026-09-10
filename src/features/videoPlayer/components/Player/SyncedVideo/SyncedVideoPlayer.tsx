@@ -1,3 +1,5 @@
+import { videoGridAspect } from '../../../../../shared/hooks/videoGridAspect';
+import { useVideoWindowAspect } from '../../../../../shared/hooks/useVideoWindowAspect';
 import React from 'react';
 import { Box } from '@mui/material';
 import { MemoizedSingleVideoPlayer } from '../SingleVideoPlayer';
@@ -123,15 +125,16 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = (props) => {
   const gridRows = Math.max(1, Math.ceil(visibleVideoCount / gridColumnCount));
 
   // useSyncedVideoPlayer は全てのモードで常に呼び出す（React Hooks のルール）
-  const { blockPlayStates, handleAspectRatioChange } = useSyncedVideoPlayer({
-    videoList: effectiveVideoList,
-    isVideoPlaying,
-    videoPlayBackRate,
-    setMaxSec,
-    syncData,
-    syncMode: isManualMode ? 'manual' : 'auto',
-    forceUpdateKey,
-  });
+  const { blockPlayStates, aspectRatios, handleAspectRatioChange } =
+    useSyncedVideoPlayer({
+      videoList: effectiveVideoList,
+      isVideoPlaying,
+      videoPlayBackRate,
+      setMaxSec,
+      syncData,
+      syncMode: isManualMode ? 'manual' : 'auto',
+      forceUpdateKey,
+    });
 
   // 手動モードでは同期処理を完全にバイパスし、各プレイヤーを独立させる
   const isIndexVisible = (index: number) => {
@@ -139,6 +142,16 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = (props) => {
     if (effectiveViewMode === 'angle1') return index === 0;
     return index === 1;
   };
+
+  const mediaRef = React.useRef<HTMLDivElement>(null);
+  const visibleRatios = safeVideoList.flatMap((path, index) =>
+    path && isIndexVisible(index) ? [aspectRatios[index] ?? 16 / 9] : [],
+  );
+  useVideoWindowAspect(
+    mediaRef,
+    effectiveViewMode,
+    videoGridAspect(visibleRatios),
+  );
 
   const hiddenItemSx = {
     position: 'absolute' as const,
@@ -153,6 +166,7 @@ export const SyncedVideoPlayer: React.FC<SyncedVideoPlayerProps> = (props) => {
 
   return (
     <Box
+      ref={mediaRef}
       sx={{
         display: 'grid',
         gridTemplateColumns: `repeat(${gridColumnCount}, minmax(0, 1fr))`,

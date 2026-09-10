@@ -38,7 +38,7 @@ export const VideoControllerToolbar = (
         mediaChromeSx,
         {
           width: '100%',
-          borderRadius: 0,
+          borderRadius: 2,
           minHeight: 44,
           px: 1.5,
           gap: 1,

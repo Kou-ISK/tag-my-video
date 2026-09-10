@@ -53,7 +53,7 @@ export const TacticsPresetsView = (props: TacticsPresetProps): ReactElement => (
       </Typography>
     )}
     <Divider />
-    <Typography variant="subtitle2">Coach のツール</Typography>
+    <Typography variant="subtitle2">プレゼンのツール</Typography>
     <Stack>
       {STUDIO_TOOLS.filter((tool) => tool.id !== 'select').map((tool) => (
         <FormControlLabel
@@ -69,7 +69,7 @@ export const TacticsPresetsView = (props: TacticsPresetProps): ReactElement => (
         />
       ))}
     </Stack>
-    <Typography variant="subtitle2">Coach の4色</Typography>
+    <Typography variant="subtitle2">プレゼンの4色</Typography>
     <Stack direction="row" spacing={0.5}>
       {props.preferences.coachColors.map((color, index) => (
         <TextField

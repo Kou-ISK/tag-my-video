@@ -58,7 +58,7 @@ export const MovieTransportView = (
       aria-label="映像再生操作"
       sx={{
         flexShrink: 0,
-        bgcolor: (theme) => theme.custom.tokens.media.surface,
+        bgcolor: 'transparent',
       }}
     >
       {props.outerBackward &&

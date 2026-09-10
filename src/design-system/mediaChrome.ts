@@ -1,8 +1,11 @@
+import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import type { SystemStyleObject } from '@mui/system';
 /** 映像操作面はアプリの明暗テーマにかかわらず、映像に接する黒地を使用する。 */
 export const mediaChromeSx = (theme: Theme): SystemStyleObject<Theme> => ({
-  bgcolor: theme.custom.tokens.media.surface,
+  bgcolor: alpha(theme.custom.tokens.media.surface, 0.82),
+  backdropFilter: 'blur(16px)',
+  borderRadius: 2,
   color: theme.custom.tokens.media.foreground,
   '& .MuiIconButton-root, & .MuiTypography-root, & .MuiInputBase-root, & .MuiInputLabel-root, & .MuiSelect-icon, & .MuiInputAdornment-root, & .MuiToggleButton-root':
     { color: 'inherit' },
