@@ -83,6 +83,7 @@ export const TacticsVideoFixture = (): ReactElement => {
     offsetY: (size.height - height) / 2,
   };
   const editor = useStudioEditor({
+    onToolSelected: () => setPanel('draw'),
     onTogglePlayback: () => setPlaying((value) => !value),
     documentKey: 'video-fixture',
     enabled: !playing,

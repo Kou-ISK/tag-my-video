@@ -1,3 +1,4 @@
+import { StudioPlayerCountView } from './StudioPlayerCountView';
 import type { ReactElement } from 'react';
 import {
   Box,
@@ -21,6 +22,12 @@ export const StudioPropertiesView = (props: Props): ReactElement => {
       <Typography variant="caption" color="text.secondary">
         {object ? '選択した描画のスタイル' : '新しい描画のスタイル'}
       </Typography>
+      {!object && props.tool === 'linkedDiscs' && (
+        <StudioPlayerCountView
+          count={props.playerCount}
+          onChange={props.onPlayerCountChange}
+        />
+      )}
       <Stack direction="row" spacing={1}>
         <TextField
           type="color"

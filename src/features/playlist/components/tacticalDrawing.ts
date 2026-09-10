@@ -1,34 +1,6 @@
+import { drawPlayerDisc as disc } from './discDrawing';
 import { getCurveControl } from './tacticalGeometry';
 import type { DrawingObject } from '../../../types/playlist/core';
-
-const disc = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  rx: number,
-  ry: number,
-  color: string,
-): void => {
-  ctx.save();
-  ctx.setLineDash([]);
-  // 厚みのある足元マーカー。選手座標は楕円の中心。
-  ctx.fillStyle = color;
-  ctx.globalAlpha *= 0.35;
-  ctx.beginPath();
-  ctx.ellipse(x, y + ry * 0.35, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.globalAlpha *= 0.3;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  ctx.stroke();
-};
 
 /** 編集・プレビュー・PNG書き出しで共通の戦術グラフィック描画。 */
 export const renderTacticalObject = (
@@ -42,6 +14,12 @@ export const renderTacticalObject = (
     obj.path.forEach((point, index) =>
       index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y),
     );
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.globalAlpha *= 0.28;
+    ctx.lineWidth += 2;
+    ctx.stroke();
+    ctx.restore();
     ctx.stroke();
     const radius = obj.discRadius ?? 22;
     obj.path.forEach((point) =>

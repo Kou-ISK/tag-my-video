@@ -7,7 +7,7 @@ export const TacticsTrackingView = (
   <Stack spacing={1} sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
     <Typography variant="subtitle2">自動追尾</Typography>
     <Typography variant="caption" color="text.secondary">
-      一時停止し、選手を囲む図形を選んで開始します（最大20秒）。成功すると動きを自動反映します。複数の模様を照合し、足元のディスクは上半身も探索します。見失った場合は位置を修正して再試行してください。
+      再生位置から最大20秒を追尾します。選手を囲む図形か足元のディスクを選び、映像を一時停止して開始してください。途中で外れたら、その時刻で位置を直して再追尾できます。
     </Typography>
     {props.running ? (
       <>

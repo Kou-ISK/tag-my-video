@@ -150,3 +150,35 @@ it('moves only the selected player node in stored coordinates and commits once',
     { x: 300, y: 200 },
   ]);
 });
+
+it('uses the selected player count for one undoable linked-disc gesture', () => {
+  const commit = vi.fn();
+  const { result } = renderHook(() =>
+    useStudioGesture({
+      documentKey: 'six-players',
+      enabled: true,
+      canvasRef: { current: canvas },
+      contentRect: { width: 800, height: 450, offsetX: 0, offsetY: 0 },
+      objects: [],
+      tool: 'linkedDiscs',
+      playerCount: 6,
+      color: '#ffffff',
+      strokeWidth: 3,
+      opacity: 1,
+      fill: false,
+      dashed: false,
+      time: 10,
+      target: 'primary',
+      selectedId: null,
+      onSelect: vi.fn(),
+      onCommit: commit,
+    }),
+  );
+  act(() => result.current.handlers.onPointerDown(pointer(100, 100)));
+  act(() => result.current.handlers.onPointerMove(pointer(400, 200)));
+  expect(commit).not.toHaveBeenCalled();
+  expect(result.current.displayObjects[0].path).toHaveLength(6);
+  act(() => result.current.handlers.onPointerUp(pointer(400, 200)));
+  expect(commit).toHaveBeenCalledTimes(1);
+  expect(commit.mock.calls[0][0][0].path).toHaveLength(6);
+});

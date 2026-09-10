@@ -20,6 +20,7 @@ import type { StudioContentRect, StudioGesture } from './useStudioGesture';
 
 export interface StudioEditorParams {
   onTogglePlayback?: () => void;
+  onToolSelected?: () => void;
   chromaKey?: ChromaKey;
   videoRef?: RefObject<HTMLVideoElement | null>;
   maxTime?: number;
@@ -55,6 +56,8 @@ export interface StudioEditor {
     selected: DrawingObject | null;
     selectedId: string | null;
     tool: DrawingToolType;
+    playerCount: number;
+    onPlayerCountChange: (count: number) => void;
     color: string;
     strokeWidth: number;
     opacity: number;
@@ -85,6 +88,7 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     id: string | null;
   }>({ key: '', id: null });
   const [tool, setTool] = useState<DrawingToolType>('select');
+  const [playerCount, setPlayerCount] = useState(3);
   const [color, setColor] = useState('#FFD60A');
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [opacity, setOpacity] = useState(1);
@@ -104,6 +108,7 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
     opacity,
     fill,
     dashed,
+    playerCount,
     selectedId,
     onSelect: select,
     onDrawComplete: () => setTool('select'),
@@ -186,6 +191,10 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       event.preventDefault();
       event.stopPropagation();
       gesture.cancel();
+      if (nextTool !== 'select') {
+        select(null);
+        params.onToolSelected?.();
+      }
       setTool(nextTool);
       return;
     }
@@ -244,6 +253,11 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       onKeyDown,
     },
     inspector: {
+      playerCount,
+      onPlayerCountChange: (count) => {
+        gesture.cancel();
+        setPlayerCount(count);
+      },
       renderError,
       motion,
       enabled: params.enabled,
@@ -258,6 +272,10 @@ export const useStudioEditor = (params: StudioEditorParams): StudioEditor => {
       dashed,
       onToolChange: (value: DrawingToolType): void => {
         gesture.cancel();
+        if (value !== 'select') {
+          select(null);
+          params.onToolSelected?.();
+        }
         setTool(value);
       },
       onColorChange: (value: string): void => {

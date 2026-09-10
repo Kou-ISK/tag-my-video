@@ -12,18 +12,20 @@ import type { TacticsInspectorPanel } from './StudioSidebarView';
 import { StudioSidebarView } from './StudioSidebarView';
 import { StudioTransportView } from './StudioTransportView';
 import { useStudioEditor } from './useStudioEditor';
-import { studioObjects } from '../fixtures/studio';
+import { playerGraphics, studioObjects } from '../fixtures/studio';
 import type { DrawingObject } from '../../../types/playlist/core';
 
 const StudioFixture = ({
   empty = false,
+  initialObjects = studioObjects,
 }: {
   empty?: boolean;
+  initialObjects?: DrawingObject[];
 }): ReactElement => {
   const root = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 450 });
   const [history, setHistory] = useState<DrawingObject[][]>([
-    empty ? [] : studioObjects,
+    empty ? [] : initialObjects,
   ]);
   const [cursor, setCursor] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -51,6 +53,7 @@ const StudioFixture = ({
     return () => observer.disconnect();
   }, []);
   const editor = useStudioEditor({
+    onToolSelected: () => setPanel('draw'),
     onTogglePlayback: () => setPlaying((value) => !value),
     documentKey: 'fixture-primary',
     enabled: !empty && !playing,
@@ -190,3 +193,7 @@ export const Interactive: Story = {};
 export const Empty: Story = { render: () => <StudioFixture empty /> };
 
 export const VideoTracking: Story = { render: () => <TacticsVideoFixture /> };
+
+export const PlayerGraphics: Story = {
+  render: () => <StudioFixture initialObjects={playerGraphics} />,
+};

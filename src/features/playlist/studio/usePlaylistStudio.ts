@@ -65,6 +65,7 @@ export const usePlaylistStudio = (
     else playback.handleTogglePlay();
   };
   const editor = useStudioEditor({
+    onToolSelected: () => setPanel('draw'),
     onTogglePlayback: togglePlayback,
     chromaKey: annotations.currentAnnotation?.chromaKey?.[target],
     videoRef: secondary ? core.videoRef2 : core.videoRef,

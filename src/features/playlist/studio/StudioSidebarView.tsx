@@ -139,6 +139,9 @@ export const StudioSidebarView = (
             >
               <StudioPropertiesView {...props} />
             </Box>
+            {props.selected && props.tracking && (
+              <TacticsTrackingView {...props.tracking} />
+            )}
           </>
         )}
         {props.panel === 'motion' && (

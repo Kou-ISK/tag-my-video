@@ -1,5 +1,7 @@
+import { StudioPlayerCountView } from './StudioPlayerCountView';
+import { resizeLinkedDiscPath } from './linkedDiscLayout';
 import type { ReactElement } from 'react';
-import { Stack, TextField, Typography } from '@mui/material';
+import { Stack, TextField } from '@mui/material';
 import type { DrawingObject } from '../../../types/playlist/core';
 
 export const StudioTacticalPropertiesView = ({
@@ -32,33 +34,11 @@ export const StudioTacticalPropertiesView = ({
     )}
     {object.type === 'linkedDiscs' && (
       <>
-        <Typography variant="caption" color="text.secondary">
-          映像上の白い点をドラッグして、各選手の足元へ配置できます。
-        </Typography>
-        <TextField
-          type="number"
-          label="選手数"
-          value={object.path?.length ?? 0}
-          slotProps={{ htmlInput: { min: 2, max: 11 } }}
-          onChange={(event) => {
-            const count = Number(event.target.value);
-            if (
-              !Number.isInteger(count) ||
-              count < 2 ||
-              count > 11 ||
-              !object.path?.length
-            )
-              return;
-            const path = [...object.path];
-            while (path.length < count) {
-              const last = path[path.length - 1];
-              path.push({
-                x: Math.min(object.baseWidth ?? 10000, last.x + 40),
-                y: last.y,
-              });
-            }
-            onUpdate({ path: path.slice(0, count) });
-          }}
+        <StudioPlayerCountView
+          count={object.path?.length ?? 2}
+          onChange={(count) =>
+            onUpdate({ path: resizeLinkedDiscPath(object, count) })
+          }
         />
         <TextField
           type="number"

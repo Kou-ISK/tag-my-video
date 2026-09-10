@@ -1,3 +1,4 @@
+import { createLinkedDiscPath } from './linkedDiscLayout';
 import {
   annotationAtTime,
   annotationOffsetAt,
@@ -32,6 +33,7 @@ interface Params {
   contentRect: StudioContentRect;
   objects: DrawingObject[];
   tool: DrawingToolType;
+  playerCount?: number;
   color: string;
   strokeWidth: number;
   opacity: number;
@@ -205,14 +207,7 @@ export const useStudioGesture = (params: Params): StudioGesture => {
         endY: at.y,
         path:
           current.latest.type === 'linkedDiscs'
-            ? [
-                current.start,
-                {
-                  x: (current.start.x + at.x) / 2,
-                  y: (current.start.y + at.y) / 2,
-                },
-                at,
-              ]
+            ? createLinkedDiscPath(current.start, at, params.playerCount ?? 3)
             : current.latest.path
               ? [...current.latest.path, at]
               : undefined,

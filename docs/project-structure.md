@@ -318,3 +318,5 @@ feature固有の `*.stories.tsx` は対象のprops-only Viewと同じディレ�
 `useStudioRulerInput` が連続入力のフレーム単位の集約を担当する。`StudioTimeRulerView` は目盛りとネイティブシーク入力のみを描画し、TacticsTimelineViewがレイヤーと共通再生線へ合成する。
 
 Paint trackingのfeatureTrackerは複数点の往復照合と変位の合意、trackingAnchorは初期点/再探索、trackAnnotationはフレーム読込とキーフレーム出力を担当する。PlaylistはuseVideoWindowAspectを利用しない。
+
+PaintのlinkedDiscLayoutは選手リンクの配置計算、StudioPlayerCountViewは人数ドロップダウンを担当する。components/discDrawingは映像用ディスクの材質描画を共有する。tracking/framePyramidは追尾再探索用の縮小画像を生成する。いずれも外部依存を持たない。
