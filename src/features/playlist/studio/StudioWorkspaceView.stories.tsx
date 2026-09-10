@@ -99,6 +99,21 @@ const StudioFixture = ({
         }
         transport={
           <>
+            <StudioTransportView
+              coachMode={coachMode}
+              onCoachModeChange={setCoachMode}
+              {...{
+                time,
+                min: 0,
+                max: 30,
+                freezeDuration: freeze,
+                onFreezeDurationChange: setFreeze,
+                playing,
+                disabled: empty,
+                onSeek: setTime,
+                onTogglePlay: () => setPlaying(!playing),
+              }}
+            />
             {coachMode && (
               <StudioCoachView
                 editor={editor.inspector}
@@ -124,21 +139,6 @@ const StudioFixture = ({
                 onSeek={setTime}
               />
             )}
-            <StudioTransportView
-              coachMode={coachMode}
-              onCoachModeChange={setCoachMode}
-              {...{
-                time,
-                min: 0,
-                max: 30,
-                freezeDuration: freeze,
-                onFreezeDurationChange: setFreeze,
-                playing,
-                disabled: empty,
-                onSeek: setTime,
-                onTogglePlay: () => setPlaying(!playing),
-              }}
-            />
           </>
         }
         media={

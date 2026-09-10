@@ -2,6 +2,7 @@ import { mediaChromeSx } from '../../../design-system/mediaChrome';
 import type { ReactElement } from 'react';
 import {
   Slider,
+  InputAdornment,
   ToggleButton,
   ToggleButtonGroup,
   Stack,
@@ -31,8 +32,8 @@ export const StudioTransportView = (
     sx={[
       mediaChromeSx,
       {
-        px: 2,
-        py: 1,
+        px: 1,
+        py: 0.5,
         borderTop: 1,
         borderColor: 'divider',
         flexShrink: 0,
@@ -56,7 +57,7 @@ export const StudioTransportView = (
     <Stack
       direction="row"
       alignItems="center"
-      spacing={2}
+      spacing={1}
       sx={{ flexWrap: 'wrap', rowGap: 1 }}
     >
       {props.onCoachModeChange && (
@@ -73,28 +74,30 @@ export const StudioTransportView = (
           <ToggleButton value="coach">Coach</ToggleButton>
         </ToggleButtonGroup>
       )}
-      <MovieTransportView
-        playing={props.playing}
-        disabled={props.disabled}
-        onTogglePlay={props.onTogglePlay}
-        backwardLabel="0.1秒戻る"
-        forwardLabel="0.1秒進む"
-        onBackward={() => props.onSeek(Math.max(props.min, props.time - 0.1))}
-        onForward={() => props.onSeek(Math.min(props.max, props.time + 0.1))}
-        outerBackward={{
-          label: 'クリップの先頭',
-          onClick: () => props.onSeek(props.min),
-        }}
-        outerForward={{
-          label: 'クリップの末尾',
-          onClick: () => props.onSeek(props.max),
-        }}
-      />
-      <Typography variant="technical" sx={{ flex: 1 }}>
-        {props.time.toFixed(2)} s
+      <Typography variant="technical" sx={{ minWidth: 116 }}>
+        {props.time.toFixed(2)} / {props.max.toFixed(2)} s
       </Typography>
+      <Stack direction="row" justifyContent="center" sx={{ flex: 1 }}>
+        <MovieTransportView
+          playing={props.playing}
+          disabled={props.disabled}
+          onTogglePlay={props.onTogglePlay}
+          backwardLabel="0.1秒戻る"
+          forwardLabel="0.1秒進む"
+          onBackward={() => props.onSeek(Math.max(props.min, props.time - 0.1))}
+          onForward={() => props.onSeek(Math.min(props.max, props.time + 0.1))}
+          outerBackward={{
+            label: 'クリップの先頭',
+            onClick: () => props.onSeek(props.min),
+          }}
+          outerForward={{
+            label: 'クリップの末尾',
+            onClick: () => props.onSeek(props.max),
+          }}
+        />
+      </Stack>
       <TextField
-        label="静止時間（秒）"
+        hiddenLabel
         type="number"
         size="small"
         value={props.freezeDuration}
@@ -104,8 +107,28 @@ export const StudioTransportView = (
           if (Number.isFinite(value) && value >= 1 && value <= 60)
             props.onFreezeDurationChange(value);
         }}
-        slotProps={{ htmlInput: { min: 1, max: 60, step: 0.5 } }}
-        sx={{ width: 128 }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">静止</InputAdornment>
+            ),
+            endAdornment: <InputAdornment position="end">s</InputAdornment>,
+          },
+          htmlInput: {
+            min: 1,
+            max: 60,
+            step: 0.5,
+            'aria-label': '静止時間（秒）',
+            title: '静止時間（秒）',
+          },
+        }}
+        sx={{
+          width: 120,
+          '& .MuiInputBase-root': {
+            height: 30,
+            bgcolor: (theme) => theme.custom.tokens.media.hover,
+          },
+        }}
       />
     </Stack>
   </Stack>

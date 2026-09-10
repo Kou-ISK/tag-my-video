@@ -4,7 +4,7 @@ import type { SystemStyleObject } from '@mui/system';
 export const mediaChromeSx = (theme: Theme): SystemStyleObject<Theme> => ({
   bgcolor: theme.custom.tokens.media.surface,
   color: theme.custom.tokens.media.foreground,
-  '& .MuiIconButton-root, & .MuiTypography-root, & .MuiInputBase-root, & .MuiInputLabel-root, & .MuiSelect-icon, & .MuiToggleButton-root':
+  '& .MuiIconButton-root, & .MuiTypography-root, & .MuiInputBase-root, & .MuiInputLabel-root, & .MuiSelect-icon, & .MuiInputAdornment-root, & .MuiToggleButton-root':
     { color: 'inherit' },
   '& .MuiIconButton-root:hover, & .MuiToggleButton-root:hover': {
     bgcolor: theme.custom.tokens.media.hover,

@@ -1,5 +1,11 @@
 import type { ReactElement } from 'react';
-import { ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+} from '@mui/material';
 import { Flare, Hub, Adjust, TurnSlightRight } from '@mui/icons-material';
 import NearMeOutlined from '@mui/icons-material/NearMeOutlined';
 import NorthEast from '@mui/icons-material/NorthEast';
@@ -55,8 +61,8 @@ export const StudioToolsView = ({
     }}
     sx={{
       display: 'grid',
-      gridTemplateColumns: '1fr',
-      width: 44,
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      width: 80,
       flexShrink: 0,
       alignContent: 'start',
       overflowY: 'auto',
@@ -73,32 +79,69 @@ export const StudioToolsView = ({
       },
     }}
   >
-    {STUDIO_TOOLS.map((entry, index) => {
-      const Icon = icons[index];
-      return (
-        <Tooltip
-          key={entry.id}
-          title={`${entry.label}${shortcuts[entry.id] ? ` (${shortcuts[entry.id]})` : ''}`}
-          placement="right"
+    {[
+      { label: '選択', ids: ['select'] },
+      {
+        label: '描画',
+        ids: [
+          'pen',
+          'arrow',
+          'curvedArrow',
+          'line',
+          'rectangle',
+          'circle',
+          'polygon',
+          'text',
+        ],
+      },
+      {
+        label: '選手',
+        ids: ['beam', 'disc', 'linkedDiscs', 'ring', 'spotlight'],
+      },
+    ].map((group) => (
+      <Box
+        key={group.label}
+        role="group"
+        aria-label={group.label}
+        sx={{ display: 'contents' }}
+      >
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ gridColumn: '1 / -1', px: 0.5, pt: 0.5, fontSize: 10 }}
         >
-          <ToggleButton
-            disabled={disabled}
-            value={entry.id}
-            aria-label={entry.label}
-            sx={{
-              minWidth: 36,
-              minHeight: 32,
-              p: 0.5,
-              flexDirection: 'column',
-              gap: 0.5,
-              fontSize: 10,
-              lineHeight: 1.2,
-            }}
-          >
-            <Icon fontSize="small" />
-          </ToggleButton>
-        </Tooltip>
-      );
-    })}
+          {group.label}
+        </Typography>
+        {group.ids.map((id) => {
+          const index = STUDIO_TOOLS.findIndex((entry) => entry.id === id);
+          const entry = STUDIO_TOOLS[index];
+          const Icon = icons[index];
+          return (
+            <Tooltip
+              key={entry.id}
+              title={`${entry.label}${shortcuts[entry.id] ? ` (${shortcuts[entry.id]})` : ''}`}
+              placement="right"
+            >
+              <ToggleButton
+                disabled={disabled}
+                value={entry.id}
+                aria-label={entry.label}
+                sx={{
+                  minWidth: 36,
+                  minHeight: 32,
+                  p: 0.5,
+                  flexDirection: 'column',
+                  gap: 0.5,
+                  fontSize: 10,
+                  lineHeight: 1.2,
+                }}
+              >
+                <Icon fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+          );
+        })}
+      </Box>
+    ))}
   </ToggleButtonGroup>
 );

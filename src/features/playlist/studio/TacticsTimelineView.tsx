@@ -23,7 +23,7 @@ export const TacticsTimelineView = (
       aria-label="Paint 描画タイムライン"
       sx={{
         maxHeight: 180,
-        pr: 1,
+        px: 1.5,
         overflowY: 'auto',
         borderTop: 1,
         borderColor: 'divider',
@@ -37,7 +37,7 @@ export const TacticsTimelineView = (
             display: 'grid',
             gridTemplateColumns: '112px minmax(0, 1fr)',
             alignItems: 'center',
-            height: 30,
+            height: 42,
           }}
         >
           <Typography variant="caption" sx={{ px: 1 }}>
@@ -46,6 +46,11 @@ export const TacticsTimelineView = (
           <Slider
             aria-label="描画タイムラインの再生位置"
             size="small"
+            track={false}
+            marks={Array.from({ length: 5 }, (_, index) => ({
+              value: props.min + (duration * index) / 4,
+              label: `${(props.min + (duration * index) / 4).toFixed(1)}s`,
+            }))}
             min={props.min}
             max={Math.max(props.min + 0.001, props.max)}
             value={Math.min(props.max, Math.max(props.min, props.time))}
@@ -53,7 +58,29 @@ export const TacticsTimelineView = (
             onChange={(_, value) => {
               if (typeof value === 'number') props.onSeek(value);
             }}
-            sx={{ width: '100%', height: 2 }}
+            sx={{
+              width: '100%',
+              height: '1px',
+              alignSelf: 'start',
+              py: 1,
+              m: 0,
+              '& .MuiSlider-rail': { opacity: 0 },
+              '& .MuiSlider-mark': { width: 1, height: 6, bgcolor: 'divider' },
+              '& .MuiSlider-markLabel': {
+                top: 22,
+                fontSize: 10,
+                fontVariantNumeric: 'tabular-nums',
+              },
+              '& .MuiSlider-markLabel[data-index="0"]': { transform: 'none' },
+              '& .MuiSlider-markLabel[data-index="4"]': {
+                transform: 'translateX(-100%)',
+              },
+              '& .MuiSlider-thumb': {
+                width: 8,
+                height: 10,
+                borderRadius: '1px',
+              },
+            }}
           />
         </Box>
         {props.objects.length === 0 && (
@@ -96,7 +123,12 @@ export const TacticsTimelineView = (
             <Box sx={{ position: 'relative', minWidth: 0 }}>
               <ButtonBase
                 aria-label={`${object.text || object.type}の表示区間`}
-                onClick={() => props.onSelect(object.id)}
+                onClick={() => {
+                  props.onSelect(object.id);
+                  props.onSeek(
+                    Math.max(props.min, Math.min(props.max, object.timestamp)),
+                  );
+                }}
                 sx={{
                   position: 'absolute',
                   top: 5,
@@ -119,14 +151,19 @@ export const TacticsTimelineView = (
                   }}
                   sx={{
                     position: 'absolute',
-                    left: `calc(${percent(object.timestamp + key.time)}% - 5px)`,
-                    top: 8,
-                    width: 10,
-                    height: 10,
-                    transform: 'rotate(45deg)',
-                    bgcolor: 'background.paper',
-                    border: 1,
-                    borderColor: 'text.primary',
+                    left: `calc(${percent(object.timestamp + key.time)}% - 12px)`,
+                    top: 1,
+                    width: 24,
+                    height: 24,
+                    '&::after': {
+                      content: '""',
+                      width: 8,
+                      height: 8,
+                      transform: 'rotate(45deg)',
+                      bgcolor: 'background.paper',
+                      border: 1,
+                      borderColor: 'text.primary',
+                    },
                   }}
                 />
               ))}

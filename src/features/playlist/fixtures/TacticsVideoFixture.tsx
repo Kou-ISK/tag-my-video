@@ -186,15 +186,6 @@ export const TacticsVideoFixture = (): ReactElement => {
         }
         transport={
           <>
-            <TacticsTimelineView
-              objects={annotation.objects}
-              time={time}
-              min={0}
-              max={3.9}
-              selectedId={editor.inspector.selectedId}
-              onSelect={editor.inspector.onSelect}
-              onSeek={seek}
-            />
             <StudioTransportView
               time={time}
               min={0}
@@ -207,6 +198,15 @@ export const TacticsVideoFixture = (): ReactElement => {
               onFreezeDurationChange={(value) =>
                 commit({ ...annotation, freezeDuration: value })
               }
+            />
+            <TacticsTimelineView
+              objects={annotation.objects}
+              time={time}
+              min={0}
+              max={3.9}
+              selectedId={editor.inspector.selectedId}
+              onSelect={editor.inspector.onSelect}
+              onSeek={seek}
             />
           </>
         }

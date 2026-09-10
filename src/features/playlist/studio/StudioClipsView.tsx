@@ -22,7 +22,7 @@ export const StudioClipsView = ({
   >
     {items.length === 0 ? (
       <Typography color="text.secondary" variant="body2">
-        プレイリストにクリップを追加すると、Tacticsで映像へ描画できます。
+        プレイリストにクリップを追加すると、Paintで映像へ描画できます。
       </Typography>
     ) : (
       items.map((item, index) => (

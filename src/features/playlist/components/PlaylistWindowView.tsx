@@ -89,13 +89,13 @@ export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
           transport={
             controller.studio.active ? (
               <>
+                <StudioTransportView {...controller.studio.transport} />
                 {controller.studio.coachMode && (
                   <StudioCoachView {...controller.studio.coach} />
                 )}
                 {!controller.studio.coachMode && (
                   <TacticsTimelineView {...controller.studio.timeline} />
                 )}
-                <StudioTransportView {...controller.studio.transport} />
               </>
             ) : undefined
           }
