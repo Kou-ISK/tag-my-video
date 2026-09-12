@@ -9,6 +9,8 @@
 - `v*` tag push
 - GitHub Actions の `workflow_dispatch`
 
+配布jobはタグまたは手動実行だけを受け付けます。main側にbranch push triggerが残っていても、タグ作成前のpushではjobをskipします。
+
 現行 workflow は macOS runner で macOS DMG を作成します。Windows / Linux artifacts は `electron-builder.json` に設定がありますが、現行 release workflow では生成していません。
 
 生成される artifact:
