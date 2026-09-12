@@ -2,6 +2,8 @@
 
 バージョン更新・公開後の復旧は[Release手順](../.github/RELEASE.md)に従います。同じバージョンのDMGを差し替えず、新しいバージョンを発行します。
 
+macOS署名で停止した場合は[署名の切り分け](../.github/RELEASE.md#macos-signing-keychain-unlock-failed)を確認し、署名・公証を完了したDMGだけをTapへ反映します。
+
 このドキュメントでは、SporTagLyticsをHomebrew Caskで**完全自動配布**するための手順を説明します。リリース全体の正本は [.github/RELEASE.md](../.github/RELEASE.md) です。
 
 HomebrewのCPU識別名をURLへ直接埋め込みません。Caskの `arch arm: "arm64", intel: "x64"` でDMG名へ対応付け、`#{arch}` をURLで使用します。公開後は両アーキテクチャのURLとSHA256を確認します。

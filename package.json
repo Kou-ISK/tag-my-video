@@ -1,6 +1,6 @@
 {
   "name": "sportaglytics",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Sports video tagging and analytics application",
   "private": true,
   "packageManager": "pnpm@9.1.0",
@@ -90,8 +90,8 @@
     "@vitejs/plugin-react": "^5.1.2",
     "concurrently": "^9.2.1",
     "electron": "^43.2.0",
-    "electron-builder": "^26.15.3",
-    "electron-builder-squirrel-windows": "26.15.3",
+    "electron-builder": "^26.16.1",
+    "electron-builder-squirrel-windows": "26.16.1",
     "eslint": "^9.39.2",
     "jsdom": "^27.4.0",
     "playwright": "1.61.1",
