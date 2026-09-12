@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-13
+
 ### Fixed
 
 - HomebrewのIntel向けCPU名を配布DMG名の `x64` へ明示的に対応付け、ダウンロードURLの不一致を修正。
 
+- macOS署名用の一時キーチェーンへ誤ったパスワードを渡すelectron-builderの既知不具合を、修正版26.16.1への更新で解消。
+
 ## [0.12.0] - 2026-09-13
+
+配布DMGは署名工程の失敗により未公開。以下の機能は0.12.1に含まれます。
 
 ### Added
 
