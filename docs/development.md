@@ -275,6 +275,8 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 
 配布前に `pnpm audit` / `pnpm audit --prod` も確認します。lockfileを固定してインストールし、UIのゲートとStorybook buildをReleaseでも実行します。
 
+macOS署名はキーチェーン修正版のelectron-builder 26.16.1で行います。builder関連パッケージとlockfileを揃えて更新し、署名・公証の障害は[Release手順](../.github/RELEASE.md#macos-signing-keychain-unlock-failed)に沿って切り分けます。
+
 `main` への直接push/mergeは行いません。Event detection model packはアプリreleaseと独立できます。
 
 ## ドキュメント運用

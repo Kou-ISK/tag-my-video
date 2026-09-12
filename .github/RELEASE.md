@@ -134,6 +134,12 @@ The workflow validates that the version/tag agree and the tagged commit belongs 
 - failing script (`e2e-clip-sync`, `e2e-code-window-menu`, `e2e-export-progress`, `e2e-timeline-rows`) とその前段の build/preload/media-tool log を確認します。
 - 修正は通常の work branch → `develop` PR で行い、release preparation をやり直します。
 
+### macOS signing keychain unlock failed
+
+`security import` が成功した後に `set-key-partition-list` で `SecKeychainUnlock` が発生する場合、証明書のパスワードと一時キーチェーンのパスワードの取り違えを確認します。electron-builder 26.16.1はこの既知不具合を修正しています（[upstream #10172](https://github.com/electron-userland/electron-builder/pull/10172)）。package.jsonとlockfileのbuilder一式を同じ修正版に揃え、secretの変更や署名の省略で回避しません。
+
+タグ作成後にbuild依存の修正が必要になった場合は、新しいpatch versionを通常のPR順序で配布します。失敗したタグも付け替えず、公開DMGの有無をCHANGELOGに記録します。
+
 ### Artifact names do not match
 
 - Confirm `electron-builder.json` `artifactName` still matches `SporTagLytics-<version>-<arch>.dmg`.
