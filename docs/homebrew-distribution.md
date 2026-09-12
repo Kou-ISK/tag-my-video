@@ -4,6 +4,8 @@
 
 このドキュメントでは、SporTagLyticsをHomebrew Caskで**完全自動配布**するための手順を説明します。リリース全体の正本は [.github/RELEASE.md](../.github/RELEASE.md) です。
 
+HomebrewのCPU識別名をURLへ直接埋め込みません。Caskの `arch arm: "arm64", intel: "x64"` でDMG名へ対応付け、`#{arch}` をURLで使用します。公開後は両アーキテクチャのURLとSHA256を確認します。
+
 ## 配布方式
 
 ### 採用: 別Tapリポジトリ + 完全自動化
