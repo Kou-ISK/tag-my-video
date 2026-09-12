@@ -15,11 +15,13 @@ The release workflow updates `Kou-ISK/homebrew-tap` and writes `Casks/sportaglyt
 
 ```ruby
 cask "sportaglytics" do
+  arch arm: "arm64", intel: "x64"
+
   version "<version>"
   sha256 arm:   "<arm64-sha256>",
          intel: "<x64-sha256>"
 
-  url "https://github.com/Kou-ISK/sportaglytics/releases/download/v#{version}/SporTagLytics-#{version}-#{Hardware::CPU.arch}.dmg",
+  url "https://github.com/Kou-ISK/sportaglytics/releases/download/v#{version}/SporTagLytics-#{version}-#{arch}.dmg",
       verified: "github.com/Kou-ISK/sportaglytics/"
   name "SporTagLytics"
   desc "Video tagging application for sports analysis"

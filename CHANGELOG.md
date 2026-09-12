@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- HomebrewのIntel向けCPU名を配布DMG名の `x64` へ明示的に対応付け、ダウンロードURLの不一致を修正。
+
 ## [0.12.0] - 2026-09-13
 
 ### Added

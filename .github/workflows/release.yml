@@ -192,11 +192,13 @@ jobs:
           # Cask formulaを生成
           cat > Casks/sportaglytics.rb << 'EOF'
           cask "sportaglytics" do
+            arch arm: "arm64", intel: "x64"
+
             version "${{ steps.get_version.outputs.VERSION }}"
             sha256 arm:   "${{ steps.sha256_arm64.outputs.SHA256_ARM64 }}",
                    intel: "${{ steps.sha256_x64.outputs.SHA256_X64 }}"
 
-            url "https://github.com/Kou-ISK/sportaglytics/releases/download/v#{version}/SporTagLytics-#{version}-#{Hardware::CPU.arch}.dmg",
+            url "https://github.com/Kou-ISK/sportaglytics/releases/download/v#{version}/SporTagLytics-#{version}-#{arch}.dmg",
                 verified: "github.com/Kou-ISK/sportaglytics/"
             name "SporTagLytics"
             desc "Video tagging application for sports analysis"
