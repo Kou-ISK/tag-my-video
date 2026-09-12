@@ -49,8 +49,14 @@ jobs:
       - name: Architecture check
         run: pnpm run check:architecture
 
+      - name: Design system check
+        run: pnpm run check:design-system
+
       - name: ADR check
         run: pnpm run check:adr
 
       - name: Test
         run: pnpm run test:ci
+
+      - name: Storybook build
+        run: pnpm run build:storybook

@@ -1,6 +1,6 @@
 {
   "name": "sportaglytics",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "Sports video tagging and analytics application",
   "private": true,
   "packageManager": "pnpm@9.1.0",
@@ -29,6 +29,7 @@
   "homepage": "./",
   "author": "Kou-ISK",
   "scripts": {
+    "verify": "pnpm run typecheck && pnpm run typecheck:electron && pnpm run lint && pnpm run check:architecture && pnpm run check:design-system && pnpm run check:adr && pnpm run test:run && pnpm run build && pnpm run build:storybook",
     "lint": "eslint src electron/src scripts --max-warnings=0",
     "lint:fix": "eslint src electron/src scripts --fix",
     "fix": "pnpm run lint:fix && pnpm run format",
@@ -50,7 +51,10 @@
     "typecheck:electron": "tsc -p electron/tsconfig.json",
     "build:electron-main": "tsc -p electron/tsconfig.build.json",
     "check:architecture": "node scripts/check-architecture.js",
+    "check:design-system": "node scripts/check-design-system.cjs",
     "check:adr": "node scripts/check-adr.js",
+    "storybook": "storybook dev -p 6006",
+    "build:storybook": "storybook build",
     "report:architecture-health": "node scripts/report-architecture-health.js",
     "report:large-files": "node scripts/report-large-files.js",
     "bundle:preload": "vite build --config vite.preload.config.ts",
@@ -74,6 +78,8 @@
     ]
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "10.5.10",
+    "@storybook/react-vite": "10.5.10",
     "@testing-library/react": "^16.3.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.9",
@@ -90,9 +96,10 @@
     "jsdom": "^27.4.0",
     "playwright": "1.61.1",
     "prettier": "^3.8.0",
+    "storybook": "10.5.10",
     "typescript": "^5.4.5",
     "vite": "^7.3.6",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "wait-on": "^9.1.0"
   },
   "repository": "https://github.com/Kou-ISK/sportaglytics.git",
@@ -105,14 +112,21 @@
       "brace-expansion@5": "5.0.9",
       "esbuild": "0.28.1",
       "form-data": "4.0.6",
-      "js-yaml": "4.3.1",
+      "js-yaml": "4.3.2",
       "nanoid": "3.3.18",
       "postcss": "8.5.23",
       "shell-quote": "1.9.0",
       "tar": "7.5.21",
       "tmp": "0.2.7",
       "undici": "6.28.0",
-      "ws": "8.21.0"
+      "ws": "8.21.0",
+      "browserslist": "4.28.9",
+      "baseline-browser-mapping": "2.11.0",
+      "@humanfs/node": "0.16.8",
+      "@xmldom/xmldom@0.8": "0.8.15",
+      "@xmldom/xmldom@0.9": "0.9.12",
+      "fast-uri": "3.1.6",
+      "joi@18": "18.2.5"
     }
   }
 }

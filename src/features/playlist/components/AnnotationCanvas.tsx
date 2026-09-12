@@ -2,6 +2,7 @@
  * アノテーション描画キャンバス
  * Sportscode風：図形（矩形、円、矢印、線）、フリーハンド、テキスト対応
  */
+import type { ChromaKey } from '../../../shared/tactics/chromaKey';
 import React, {
   forwardRef,
   useCallback,
@@ -34,6 +35,8 @@ export interface AnnotationCanvasRef {
 }
 
 interface AnnotationCanvasProps {
+  chromaKey?: ChromaKey;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
   width: number;
   height: number;
   isActive: boolean;
@@ -116,7 +119,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       }
     }, [initialObjects, isActive, target]);
 
-    useAnnotationCanvasRendering({
+    const renderError = useAnnotationCanvasRendering({
+      chromaKey: props.chromaKey,
+      videoRef: props.videoRef,
       canvasRef,
       objects,
       currentObject,
@@ -207,6 +212,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
     return (
       <AnnotationCanvasView
+        renderError={renderError}
         containerRef={containerRef}
         canvasRef={canvasRef}
         width={width}

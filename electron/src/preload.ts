@@ -39,6 +39,14 @@ const electronAPI = {
   ...createCodeWindowBridge(ipcRenderer),
   codingPanelWindow: createCodingPanelWindowBridge(ipcRenderer, listenerStore),
   timelineWindow: createTimelineWindowBridge(ipcRenderer, listenerStore),
+  resolveDroppedPackagePath: (file: File): string => {
+    try {
+      const path = webUtils.getPathForFile(file);
+      return /\.stpkg$/i.test(path) ? path : '';
+    } catch {
+      return '';
+    }
+  },
   resolveDroppedVideoFilePath: (file: File): string => {
     try {
       const filePath = webUtils.getPathForFile(file);

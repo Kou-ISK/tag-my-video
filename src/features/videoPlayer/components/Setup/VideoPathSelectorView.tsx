@@ -1,80 +1,86 @@
-import React from 'react';
+import type { ReactElement, HTMLAttributes } from 'react';
 import { Box, Stack } from '@mui/material';
-import { CreatePackageWizard } from './VideoPathSelector/CreatePackageWizard';
 import { WelcomeHeader } from './VideoPathSelector/components/WelcomeHeader';
 import { DropZoneCard } from './VideoPathSelector/components/DropZoneCard';
 import { ActionButtonsRow } from './VideoPathSelector/components/ActionButtonsRow';
 import { RecentPackagesSection } from './VideoPathSelector/components/RecentPackagesSection';
-import type { PackageLoadResult } from './VideoPathSelector/types';
+import { StartStatusView } from './VideoPathSelector/components/StartStatusView';
+import type { StartStatusProps } from './VideoPathSelector/components/StartStatusView';
 import type { DragAndDropState } from './VideoPathSelector/hooks/useDragAndDrop';
-import type { RecentPackage } from './VideoPathSelector/hooks/useRecentPackages';
-
-interface VideoPathSelectorViewProps {
+import type { RecentPackage } from './VideoPathSelector/types';
+export interface VideoPathSelectorViewProps extends StartStatusProps {
   showWelcome: boolean;
   dragState: DragAndDropState;
-  dragHandlers: React.HTMLAttributes<HTMLDivElement>;
-  wizardOpen: boolean;
+  dragHandlers: HTMLAttributes<HTMLDivElement>;
   recentPackages: RecentPackage[];
-  onPackageLoaded: (payload: PackageLoadResult) => void;
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
+  onOpenPackage: () => void;
   onOpenWizard: () => void;
-  onCloseWizard: () => void;
-  onPackageCreated: (payload: PackageLoadResult) => void;
   onOpenRecentPackage: (path: string) => void;
   onRemoveRecentPackage: (path: string) => void;
 }
-
-export const VideoPathSelectorView: React.FC<VideoPathSelectorViewProps> = ({
-  showWelcome,
-  dragState,
-  dragHandlers,
-  wizardOpen,
-  recentPackages,
-  onPackageLoaded,
-  onOpenWizard,
-  onCloseWizard,
-  onPackageCreated,
-  onOpenRecentPackage,
-  onRemoveRecentPackage,
-}) => {
-  return (
-    <Box
-      sx={{
-        width: '100%',
-        mx: 'auto',
-        mt: 2,
-        px: { xs: 2, md: 3 },
-        pb: 3,
-        maxWidth: 1180,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: (theme) => `1px solid ${theme.palette.divider}`,
-        color: 'text.primary',
-        fontFamily: 'inherit',
-      }}
-      {...dragHandlers}
-    >
-      <Stack spacing={2.5}>
-        <WelcomeHeader show={showWelcome} />
-
-        <RecentPackagesSection
-          packages={recentPackages}
-          onOpen={onOpenRecentPackage}
-          onRemove={onRemoveRecentPackage}
-        />
-
-        <ActionButtonsRow
-          onPackageLoaded={onPackageLoaded}
-          onOpenWizard={onOpenWizard}
-        />
-
-        <DropZoneCard dragState={dragState} />
-      </Stack>
-
-      <CreatePackageWizard
-        open={wizardOpen}
-        onClose={onCloseWizard}
-        onPackageCreated={onPackageCreated}
-      />
-    </Box>
-  );
-};
+export const VideoPathSelectorView = (
+  props: VideoPathSelectorViewProps,
+): ReactElement => (
+  <Box
+    component="main"
+    aria-label="分析を開始"
+    aria-busy={props.busy}
+    {...props.dragHandlers}
+    sx={{
+      width: '100%',
+      maxWidth: 1100,
+      mx: 'auto',
+      my: { xs: 1, md: 4 },
+      p: { xs: 1.5, sm: 3 },
+      color: 'text.primary',
+    }}
+  >
+    <Stack spacing={3}>
+      <WelcomeHeader show={props.showWelcome} />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'minmax(0,1fr)',
+            md: '280px minmax(0,1fr)',
+          },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 2,
+          overflow: 'hidden',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Stack
+          spacing={3}
+          sx={(theme) => ({
+            p: { xs: 2, sm: 3 },
+            bgcolor: 'background.default',
+            borderRight: { md: `1px solid ${theme.palette.divider}` },
+            borderBottom: { xs: `1px solid ${theme.palette.divider}`, md: 0 },
+          })}
+        >
+          <ActionButtonsRow
+            onOpenPackage={props.onOpenPackage}
+            onOpenWizard={props.onOpenWizard}
+            disabled={props.busy}
+          />
+          <DropZoneCard dragState={props.dragState} />
+        </Stack>
+        <Stack spacing={2} sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
+          <StartStatusView {...props} />
+          <RecentPackagesSection
+            packages={props.recentPackages}
+            onOpen={props.onOpenRecentPackage}
+            onRemove={props.onRemoveRecentPackage}
+            searchQuery={props.searchQuery}
+            onSearchChange={props.onSearchChange}
+            disabled={props.busy}
+          />
+        </Stack>
+      </Box>
+    </Stack>
+  </Box>
+);

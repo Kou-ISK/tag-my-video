@@ -24,6 +24,7 @@ export interface IElectronAPI {
   openFile: () => Promise<string>;
   openVideoFiles: () => Promise<string[]>;
   resolveDroppedVideoFilePath: (file: File) => string;
+  resolveDroppedPackagePath: (file: File) => string;
   openDirectory: () => Promise<string>;
   exportTimeline: (filePath: string, source: unknown) => Promise<void>;
   createPackage: (
@@ -143,7 +144,12 @@ export interface IElectronAPI {
     onProgress: (callback: (payload: unknown) => void) => void;
     offProgress: (callback: (payload: unknown) => void) => void;
   };
+  setVideoWindowAspect?: (
+    layout: { aspectRatio: number; width: number; height: number } | null,
+  ) => void;
   setWindowTitle: (title: string) => void;
+  bindPackageSession?: (packagePath: string) => Promise<boolean>;
+  releasePackageSession?: (packagePath: string) => Promise<boolean>;
   exportClipsWithOverlay?: (
     payload: ClipExportPayload,
   ) => Promise<ClipExportExecutionResult>;

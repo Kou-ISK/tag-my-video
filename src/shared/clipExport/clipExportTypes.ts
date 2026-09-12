@@ -1,3 +1,4 @@
+import type { ChromaKey } from '../tactics/chromaKey';
 export type ClipExportScope = 'all' | 'selected';
 export type ClipExportMode = 'single' | 'perInstance' | 'perRow';
 export type ClipExportAngleOption = 'allAngles' | 'single' | 'multi';
@@ -24,7 +25,27 @@ export const DEFAULT_CLIP_EXPORT_OVERLAY_SETTINGS: ClipExportOverlaySettings = {
   showMemo: true,
 };
 
+export interface ClipExportFreezeFrame {
+  time: number;
+  duration: number;
+  annotationPngPrimary?: string | null;
+  annotationPngSecondary?: string | null;
+}
+
+export interface ClipExportMotionOverlay {
+  start: number;
+  end: number;
+  baseWidth: number;
+  baseHeight: number;
+  target: 'primary' | 'secondary';
+  png: string;
+  keyframes: Array<{ time: number; x: number; y: number }>;
+}
+
 export interface ClipExportItem {
+  chromaKey?: Partial<Record<'primary' | 'secondary', ChromaKey>>;
+  motionOverlays?: ClipExportMotionOverlay[];
+  freezeFrames?: ClipExportFreezeFrame[];
   id: string;
   actionName: string;
   startTime: number;

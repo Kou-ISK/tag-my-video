@@ -1,3 +1,4 @@
+import { hasExportAudio } from './exportAudioProbe';
 import * as fs from 'node:fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -97,14 +98,14 @@ export const renderClipWithFfmpeg = async ({
   let annPrimaryPath: string | null = null;
   let annSecondaryPath: string | null = null;
 
-  if (clip.annotationPngPrimary) {
+  if (!clip.freezeFrames && clip.annotationPngPrimary) {
     annPrimaryPath = await dataUrlToTempFile(
       clip.annotationPngPrimary,
       `anno_p_${clip.id}`,
       tempFiles,
     );
   }
-  if (clip.annotationPngSecondary) {
+  if (!clip.freezeFrames && clip.annotationPngSecondary) {
     annSecondaryPath = await dataUrlToTempFile(
       clip.annotationPngSecondary,
       `anno_s_${clip.id}`,
@@ -112,9 +113,52 @@ export const renderClipWithFfmpeg = async ({
     );
   }
 
+  const freezeFrames = clip.freezeFrames
+    ? await Promise.all(
+        clip.freezeFrames.map(async (frame, index) => ({
+          time: frame.time,
+          duration: frame.duration,
+          primary: frame.annotationPngPrimary
+            ? await dataUrlToTempFile(
+                frame.annotationPngPrimary,
+                `anno_p_${clip.id}_${index}`,
+                tempFiles,
+              )
+            : null,
+          secondary: frame.annotationPngSecondary
+            ? await dataUrlToTempFile(
+                frame.annotationPngSecondary,
+                `anno_s_${clip.id}_${index}`,
+                tempFiles,
+              )
+            : null,
+        })),
+      )
+    : undefined;
+
   const clipMainSource = clip.videoSource || mainSource;
   const clipSecondarySource = clip.videoSource2 || secondarySource;
+  const motionOverlays = clip.motionOverlays
+    ? await Promise.all(
+        clip.motionOverlays.map(async ({ png, ...entry }, index) => ({
+          ...entry,
+          image: await dataUrlToTempFile(
+            png,
+            `motion_${clip.id}_${index}`,
+            tempFiles,
+          ),
+        })),
+      )
+    : undefined;
   const ffmpegClip: ExportClipForFfmpeg = {
+    chromaKey: clip.chromaKey,
+    hasAudio: await hasExportAudio(
+      clip.angleType === 'angle2'
+        ? clipSecondarySource || clipMainSource
+        : clipMainSource,
+    ),
+    motionOverlays,
+    freezeFrames,
     startTime: clip.startTime,
     endTime: clip.endTime,
     freezeAt: clip.freezeAt,
@@ -126,7 +170,17 @@ export const renderClipWithFfmpeg = async ({
     await runFfmpegSingle({
       getFfmpegPath,
       sourcePath: secondaryOnly,
-      clip: ffmpegClip,
+      clip: {
+        ...ffmpegClip,
+        chromaKey: { primary: clip.chromaKey?.secondary },
+        motionOverlays: motionOverlays
+          ?.filter((entry) => entry.target === 'secondary')
+          .map((entry) => ({ ...entry, target: 'primary' })),
+        freezeFrames: freezeFrames?.map((frame) => ({
+          ...frame,
+          primary: frame.secondary,
+        })),
+      },
       outputPath: target,
       overlayEnabled: overlay.enabled,
       overlayLines,

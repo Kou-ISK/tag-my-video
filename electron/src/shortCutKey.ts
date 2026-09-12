@@ -18,7 +18,7 @@ export const registerShortcuts = (
     hotkeys.find((h) => h.id === 'openPlaylist')?.key || 'CmdOrCtrl+Shift+P';
   try {
     globalShortcut.register(playlistKey, () => {
-      createPlaylistWindow();
+      createPlaylistWindow(undefined, mainWindow);
     });
   } catch (e) {
     console.warn('Failed to register playlist hotkey', e);

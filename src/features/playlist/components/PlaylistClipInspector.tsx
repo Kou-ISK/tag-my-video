@@ -12,7 +12,10 @@ import {
 import Edit from '@mui/icons-material/Edit';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import { useTheme } from '@mui/material/styles';
-import type { ItemAnnotation, PlaylistItem } from '../../../types/playlist/core';
+import type {
+  ItemAnnotation,
+  PlaylistItem,
+} from '../../../types/playlist/core';
 
 type PlaylistClipInspectorProps = {
   item: PlaylistItem | null;
@@ -35,7 +38,7 @@ export const PlaylistClipInspector = ({
   width,
   onEditNote,
   onPlay,
-}: PlaylistClipInspectorProps) => {
+}: PlaylistClipInspectorProps): React.ReactElement => {
   const theme = useTheme();
   const annotationCount = annotation?.objects.length ?? 0;
 
@@ -59,17 +62,25 @@ export const PlaylistClipInspector = ({
     >
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Typography variant="overline" sx={{ flex: 1, letterSpacing: 1 }}>
-          Clip data
+          クリップ詳細
         </Typography>
         {item ? (
           <>
             <Tooltip title="クリップを再生">
-              <IconButton size="small" onClick={() => onPlay(item.id)}>
+              <IconButton
+                size="small"
+                aria-label="クリップを再生"
+                onClick={() => onPlay(item.id)}
+              >
                 <PlayArrow fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="メモを編集">
-              <IconButton size="small" onClick={() => onEditNote(item.id)}>
+              <IconButton
+                size="small"
+                aria-label="メモを編集"
+                onClick={() => onEditNote(item.id)}
+              >
                 <Edit fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -87,7 +98,17 @@ export const PlaylistClipInspector = ({
             <Typography variant="subtitle2" noWrap>
               {item.actionName || '名称なし'}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="technical"
+              color="primary.main"
+              sx={{
+                display: 'block',
+                mt: 0.75,
+                p: 1,
+                bgcolor: 'background.default',
+                borderRadius: 0.5,
+              }}
+            >
               {formatTime(item.startTime)} – {formatTime(item.endTime)}
               {' · '}
               {(item.endTime - item.startTime).toFixed(1)}s
@@ -95,34 +116,46 @@ export const PlaylistClipInspector = ({
           </Box>
 
           <Divider />
-          <InspectorField label="Labels">
+          <InspectorField label="ラベル">
             {item.labels?.length ? (
               <Stack direction="row" flexWrap="wrap" gap={0.5}>
                 {item.labels.map((label) => (
-                  <Chip key={`${label.group ?? ''}-${label.name}`} label={label.name} size="small" />
+                  <Chip
+                    key={`${label.group ?? ''}-${label.name}`}
+                    label={label.name}
+                    size="small"
+                  />
                 ))}
               </Stack>
             ) : (
-              <Typography variant="body2" color="text.secondary">なし</Typography>
+              <Typography variant="body2" color="text.secondary">
+                なし
+              </Typography>
             )}
           </InspectorField>
-          <InspectorField label="Note">
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          <InspectorField label="ノート">
+            <Typography
+              variant="body2"
+              sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+            >
               {item.note || 'なし'}
             </Typography>
           </InspectorField>
-          <InspectorField label="Memo">
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          <InspectorField label="メモ">
+            <Typography
+              variant="body2"
+              sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
+            >
               {item.memo || 'なし'}
             </Typography>
           </InspectorField>
-          <InspectorField label="Presentation">
+          <InspectorField label="プレゼンテーション">
             <Typography variant="body2">
               Freeze {annotation?.freezeDuration?.toFixed(1) ?? '0.0'}s
               {annotationCount ? ` · Drawing ${annotationCount}` : ''}
             </Typography>
           </InspectorField>
-          <InspectorField label="Video">
+          <InspectorField label="映像">
             <Typography variant="body2" noWrap title={item.videoSource}>
               Angle 1: {item.videoSource || '未指定'}
               {item.videoSource2 ? ` · Angle 2: ${item.videoSource2}` : ''}
@@ -140,9 +173,13 @@ const InspectorField = ({
 }: {
   label: string;
   children: React.ReactNode;
-}) => (
+}): React.ReactElement => (
   <Box>
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ display: 'block' }}
+    >
       {label}
     </Typography>
     {children}

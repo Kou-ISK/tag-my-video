@@ -13,6 +13,9 @@ on:
         required: true
         default: '0.1.0'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: macos-latest
@@ -20,11 +23,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.12.0'
+
+      - name: Validate release version and main ancestry
+        env:
+          RELEASE_INPUT: ${{ github.event.inputs.version }}
+        run: |
+          RELEASE_VERSION=$(node -p "require('./package.json').version")
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            test "$GITHUB_REF_NAME" = "v$RELEASE_VERSION"
+          else
+            test "$RELEASE_INPUT" = "$RELEASE_VERSION"
+          fi
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          test "$(git rev-parse "v$RELEASE_VERSION^{commit}")" = "$GITHUB_SHA"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -45,7 +63,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Security audit
         run: pnpm audit && pnpm audit --prod
@@ -56,10 +74,14 @@ jobs:
           pnpm exec tsc -p electron/tsconfig.json
           pnpm run lint
           pnpm run check:architecture
+          pnpm run check:design-system
           # Vitest + MUI module transforms can exceed the macOS runner default.
           ulimit -n 10240
           pnpm run test:ci
           pnpm run check:adr
+
+      - name: Build Storybook
+        run: pnpm run build:storybook
 
       - name: Build React app
         run: pnpm run build
@@ -147,28 +169,15 @@ jobs:
               exit 1
           fi
 
-      - name: Delete existing release and tag (if exists)
-        run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-          gh release delete "v${VERSION}" --yes --cleanup-tag || true
-          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/v${VERSION}" || true
+      - name: Create immutable release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          target_commitish: ${{ github.sha }}
-          files: |
-            ./dist/SporTagLytics-${{ steps.get_version.outputs.VERSION }}-arm64.dmg
-            ./dist/SporTagLytics-${{ steps.get_version.outputs.VERSION }}-x64.dmg
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          gh release create "v$RELEASE_VERSION" --verify-tag \
+            --title "v$RELEASE_VERSION" --generate-notes \
+            "./dist/SporTagLytics-$RELEASE_VERSION-arm64.dmg" \
+            "./dist/SporTagLytics-$RELEASE_VERSION-x64.dmg"
 
       - name: Update Homebrew Tap
         run: |

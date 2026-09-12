@@ -1,5 +1,7 @@
 # Homebrew配布ガイド（完全自動化版）
 
+バージョン更新・公開後の復旧は[Release手順](../.github/RELEASE.md)に従います。同じバージョンのDMGを差し替えず、新しいバージョンを発行します。
+
 このドキュメントでは、SporTagLyticsをHomebrew Caskで**完全自動配布**するための手順を説明します。リリース全体の正本は [.github/RELEASE.md](../.github/RELEASE.md) です。
 
 ## 配布方式

@@ -46,16 +46,19 @@ export const useTimelineLaneController = ({
   currentTimePosition,
   formatTime,
   firstTeamName,
-  onSeek,
   maxSec,
   onUpdateTimeRange,
   contentWidth,
   zoomScale,
 }: TimelineLaneProps): TimelineLaneViewProps => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const activeEdgeDragCleanupRef = useRef<(() => void) | null>(null);
-  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
+  const activeDragCleanupRef = useRef<(() => void) | null>(null);
   const [isEditModifierPressed, setIsEditModifierPressed] = useState(false);
+  const [edgeDraft, setEdgeDraft] = useState<{
+    original: TimelineData;
+    startTime: number;
+    endTime: number;
+  } | null>(null);
   const [draftRange, setDraftRange] = useState<{
     startTime: number;
     endTime: number;
@@ -68,15 +71,20 @@ export const useTimelineLaneController = ({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       setIsEditModifierPressed(event.altKey && event.metaKey);
+      if (event.key === 'Escape' && activeDragCleanupRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        activeDragCleanupRef.current();
+      }
     };
     const handleKeyUp = (event: KeyboardEvent): void => {
       const modifierStillPressed = event.altKey && event.metaKey;
       setIsEditModifierPressed(modifierStillPressed);
-      if (!modifierStillPressed) activeEdgeDragCleanupRef.current?.();
+      if (!modifierStillPressed) activeDragCleanupRef.current?.();
     };
     const handleBlur = (): void => {
       setIsEditModifierPressed(false);
-      activeEdgeDragCleanupRef.current?.();
+      activeDragCleanupRef.current?.();
     };
 
     globalThis.addEventListener('keydown', handleKeyDown);
@@ -84,12 +92,25 @@ export const useTimelineLaneController = ({
     globalThis.addEventListener('blur', handleBlur);
 
     return () => {
-      activeEdgeDragCleanupRef.current?.();
+      activeDragCleanupRef.current?.();
       globalThis.removeEventListener('keydown', handleKeyDown);
       globalThis.removeEventListener('keyup', handleKeyUp);
       globalThis.removeEventListener('blur', handleBlur);
     };
   }, []);
+
+  useEffect(() => {
+    if (!edgeDraft) return;
+    const current = items.find((item) => item.id === edgeDraft.original.id);
+    if (
+      !current ||
+      !selectedIds.includes(current.id) ||
+      current.startTime !== edgeDraft.original.startTime ||
+      current.endTime !== edgeDraft.original.endTime
+    ) {
+      activeDragCleanupRef.current?.();
+    }
+  }, [edgeDraft, items, selectedIds]);
 
   const teamName = actionName.split(' ')[0];
   const isTeam1 = teamName === firstTeamName;
@@ -102,6 +123,7 @@ export const useTimelineLaneController = ({
       edge: 'start' | 'end',
     ): void => {
       if (
+        event.button !== 0 ||
         !event.altKey ||
         !event.metaKey ||
         !selectedIds.includes(item.id) ||
@@ -112,95 +134,99 @@ export const useTimelineLaneController = ({
 
       event.stopPropagation();
       event.preventDefault();
-      activeEdgeDragCleanupRef.current?.();
+      activeDragCleanupRef.current?.();
 
+      let startTime = item.startTime;
+      let endTime = item.endTime;
+      setEdgeDraft({ original: item, startTime, endTime });
       const handleMouseMove = (mouseEvent: MouseEvent): void => {
         const newTime = positionToTime(clientXToContentX(mouseEvent.clientX));
-
         if (edge === 'start') {
-          const adjustedStart = Math.min(
-            newTime,
-            item.endTime - MIN_TIMELINE_INSTANCE_DURATION_SECONDS,
+          startTime = Math.max(
+            0,
+            Math.min(
+              newTime,
+              item.endTime - MIN_TIMELINE_INSTANCE_DURATION_SECONDS,
+            ),
           );
-          onUpdateTimeRange(item.id, Math.max(0, adjustedStart), item.endTime);
-          onSeek(Math.max(0, adjustedStart));
-          return;
+        } else {
+          endTime = Math.min(
+            maxSec,
+            Math.max(
+              newTime,
+              item.startTime + MIN_TIMELINE_INSTANCE_DURATION_SECONDS,
+            ),
+          );
         }
-
-        const adjustedEnd = Math.max(
-          newTime,
-          item.startTime + MIN_TIMELINE_INSTANCE_DURATION_SECONDS,
-        );
-        const clampedEnd = Math.min(maxSec, adjustedEnd);
-        onUpdateTimeRange(item.id, item.startTime, clampedEnd);
-        onSeek(clampedEnd);
+        setEdgeDraft({ original: item, startTime, endTime });
       };
-
       const cleanup = (): void => {
+        setEdgeDraft(null);
         document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', cleanup);
-        if (activeEdgeDragCleanupRef.current === cleanup) {
-          activeEdgeDragCleanupRef.current = null;
+        document.removeEventListener('mouseup', finish);
+        if (activeDragCleanupRef.current === cleanup) {
+          activeDragCleanupRef.current = null;
         }
       };
-
-      activeEdgeDragCleanupRef.current = cleanup;
+      const finish = (): void => {
+        cleanup();
+        // 1 gesture = 1 persistence update / Undo entry. Preview stays local.
+        if (startTime !== item.startTime || endTime !== item.endTime) {
+          onUpdateTimeRange(item.id, startTime, endTime);
+        }
+      };
+      activeDragCleanupRef.current = cleanup;
       document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', cleanup);
+      document.addEventListener('mouseup', finish);
     },
-    [
-      clientXToContentX,
-      maxSec,
-      onSeek,
-      onUpdateTimeRange,
-      positionToTime,
-      selectedIds,
-    ],
+    [clientXToContentX, maxSec, onUpdateTimeRange, positionToTime, selectedIds],
   );
 
-  const handlePlayheadMouseDown = useCallback(
+  const handleRangeCreateMouseDown = useCallback(
     (event: React.MouseEvent): void => {
+      if (
+        event.button !== 0 ||
+        !event.altKey ||
+        !event.metaKey ||
+        !onCreateItem
+      )
+        return;
       event.stopPropagation();
-      setIsDraggingPlayhead(true);
-      const isCreating = event.altKey && event.metaKey && Boolean(onCreateItem);
+      event.preventDefault();
+      activeDragCleanupRef.current?.();
       const anchorTime = positionToTime(currentTimePosition);
-      if (isCreating) {
-        setDraftRange({ startTime: anchorTime, endTime: anchorTime });
-      }
-
+      setDraftRange({ startTime: anchorTime, endTime: anchorTime });
       let lastTime = anchorTime;
 
       const handleMouseMove = (mouseEvent: MouseEvent): void => {
-        const time = positionToTime(clientXToContentX(mouseEvent.clientX));
-        lastTime = time;
-        onSeek(time);
-        if (isCreating) {
-          setDraftRange({
-            startTime: Math.min(anchorTime, time),
-            endTime: Math.max(anchorTime, time),
-          });
-        }
+        lastTime = positionToTime(clientXToContentX(mouseEvent.clientX));
+        setDraftRange({
+          startTime: Math.min(anchorTime, lastTime),
+          endTime: Math.max(anchorTime, lastTime),
+        });
       };
-
+      const cleanup = (): void => {
+        setDraftRange(null);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        if (activeDragCleanupRef.current === cleanup)
+          activeDragCleanupRef.current = null;
+      };
       const handleMouseUp = (): void => {
-        setIsDraggingPlayhead(false);
         if (
-          isCreating &&
           Math.abs(lastTime - anchorTime) >=
-            MIN_TIMELINE_INSTANCE_DURATION_SECONDS
+          MIN_TIMELINE_INSTANCE_DURATION_SECONDS
         ) {
-          onCreateItem?.(
+          onCreateItem(
             actionName,
             Math.min(anchorTime, lastTime),
             Math.max(anchorTime, lastTime),
             rowColor,
           );
         }
-        setDraftRange(null);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        cleanup();
       };
-
+      activeDragCleanupRef.current = cleanup;
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
@@ -209,7 +235,6 @@ export const useTimelineLaneController = ({
       clientXToContentX,
       currentTimePosition,
       onCreateItem,
-      onSeek,
       positionToTime,
       rowColor,
     ],
@@ -243,7 +268,15 @@ export const useTimelineLaneController = ({
     actionName,
     rowColor,
     isRowSelected,
-    items,
+    items: items.map((item) =>
+      item.id === edgeDraft?.original.id
+        ? {
+            ...item,
+            startTime: edgeDraft.startTime,
+            endTime: edgeDraft.endTime,
+          }
+        : item,
+    ),
     selectedIds,
     hoveredItemId,
     focusedItemId,
@@ -263,20 +296,18 @@ export const useTimelineLaneController = ({
     currentTimePosition,
     formatTime,
     firstTeamName,
-    onSeek,
     maxSec,
     onUpdateTimeRange,
     contentWidth,
     zoomScale,
     containerRef,
-    isDraggingPlayhead,
     isEditModifierPressed,
     isTeam1,
     laneLabelColor,
     draftRange,
     onLaneDragOver: handleLaneDragOver,
     onLaneDrop: handleLaneDrop,
-    onPlayheadMouseDown: handlePlayheadMouseDown,
+    onRangeCreateMouseDown: handleRangeCreateMouseDown,
     onEdgeMouseDown: handleEdgeMouseDown,
   };
 };

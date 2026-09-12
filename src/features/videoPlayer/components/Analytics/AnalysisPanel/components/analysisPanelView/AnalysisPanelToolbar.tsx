@@ -44,6 +44,12 @@ export const AnalysisPanelToolbar = ({
   return (
     <>
       <ToggleButtonGroup
+        aria-label="分析表示"
+        sx={{
+          maxWidth: '100%',
+          overflowX: 'auto',
+          '& .MuiToggleButton-root': { whiteSpace: 'nowrap' },
+        }}
         value={currentView}
         exclusive
         onChange={(_event, value) => {

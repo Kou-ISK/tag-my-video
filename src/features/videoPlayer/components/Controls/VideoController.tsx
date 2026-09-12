@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShortcutGuide } from '../../../../components/ShortcutGuide';
 import { VideoControllerToolbar } from './VideoController/VideoControllerToolbar';
 import type { VideoControllerProps } from './VideoController/VideoController.types';
 import { useVideoControllerController } from './VideoController/hooks/useVideoControllerController';
@@ -30,5 +31,10 @@ export const VideoController = ({
     useTimelineClock,
   });
 
-  return <VideoControllerToolbar {...toolbarProps} />;
+  return (
+    <VideoControllerToolbar
+      {...toolbarProps}
+      shortcutGuide={<ShortcutGuide />}
+    />
+  );
 };

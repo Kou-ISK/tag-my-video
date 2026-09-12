@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-13
+
+### Added
+
+- Paint描画モード: 選手ビーム・ディスク・リンク、位置キーのタイムライン編集、対象範囲を指定する映像追尾、ピッチ較正、芝色処理、素材プリセット、プレゼン表示、動画への描画書き出し。操作・制約は[Paint仕様](docs/tactics.md)を参照。
+- Design Systemのsemantic token、共有UIのStorybook、UI chrome検査、`pnpm run verify`による一括検証。
+- 複数 `.stpkg` をPackage Sessionごとの独立したMain Windowで開き、既存パッケージへの要求ではそのウィンドウを復元・focus。
+
+### Changed
+
+- 起動画面を検索可能な最近の履歴と開く・新規作成の操作へ整理。保存場所の表示、重複ロード防止、持続するエラーと再試行を追加。[起動仕様](docs/start-workspace.md)を正本とする。
+- dark/lightの共通UI、Timelineの連続した行・再生ヘッド、Playlistのnative風リストとメニューを統一。再生バーは角丸・半透明とし、Playlistに描画位置の目印を表示。
+- メイン映像ウィンドウはアングル数に応じた縦横比を保持。Playlistウィンドウは自由な縦横比を維持。
+- Paintの右ペインを折りたたみ可能にし、選手リンクは順次クリックで人数を指定。Delete / Backspaceは選択した位置キー・図形へ作用し、Paint中のクリップ誤削除を防止。
+- Timeline、Analysis、Coding Panel、PlaylistのWindowとIPCをPackage Session単位で分離。
+
+### Fixed
+
+- ライトモードの映像再生バーで、編集モード切替と時刻の文字色が暗くなる問題を共通media chromeで修正。
+
+- Timelineの伸縮を1操作1履歴へ変更し、Esc取消とUndo/Redoの保存同期を改善。
+- Paintの位置数値の空欄・未変更入力による意図しない保存を防止し、Enter確定・Esc取消と位置キードラッグの取消を追加。
+- 依存関係の監査指摘を修正したバージョンへ更新。Releaseでlockfile固定、UI検査、公開タグ・DMGの上書き防止を適用。
+
+- Timelineのアクション選択・長さ変更で再生位置が移動する動作を廃止し、ドラッグシークを上部つまみに限定。空白クリックでは選択IDとフォーカス枠を解除。
+- 起動画面の `.stpkg` ドロップをElectronの `webUtils.getPathForFile` 経由へ変更。
+
+### Documentation
+
+- 起動・Playlist・Paintの現行操作、保存契約、制約、実装責務、検証方法を機能別の正本へ統合し、古いUI説明・型の複製・変更の逐次追記を整理。アプリ内Helpも同期。
+
 ## [0.11.1] - 2026-08-26
 
 ### Changed

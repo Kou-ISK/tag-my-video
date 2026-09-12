@@ -36,7 +36,6 @@ export interface TimelineLaneProps {
   currentTimePosition: number;
   formatTime: (seconds: number) => string;
   firstTeamName: string | undefined;
-  onSeek: (time: number) => void;
   maxSec: number;
   onUpdateTimeRange?: (id: string, startTime: number, endTime: number) => void;
   laneRef?: (el: HTMLDivElement | null) => void;
@@ -49,14 +48,13 @@ export interface TimelineLaneViewProps extends Omit<
   'laneRef' | 'clientXToContentX'
 > {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  isDraggingPlayhead: boolean;
   isEditModifierPressed: boolean;
   isTeam1: boolean;
   laneLabelColor: string;
   draftRange: { startTime: number; endTime: number } | null;
   onLaneDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   onLaneDrop: (event: React.DragEvent<HTMLDivElement>) => void;
-  onPlayheadMouseDown: (event: React.MouseEvent) => void;
+  onRangeCreateMouseDown: (event: React.MouseEvent) => void;
   onEdgeMouseDown: (
     event: React.MouseEvent,
     item: TimelineData,

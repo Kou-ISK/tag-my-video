@@ -1,3 +1,12 @@
+import {
+  prepareChromaForeground,
+  restoreChromaForeground,
+} from './exportChroma';
+import type { ChromaKey } from '../../../src/shared/tactics/chromaKey';
+import { overlayMotion } from './exportMotionOverlays';
+import type { ExportMotionOverlay } from './exportMotionOverlays';
+import { insertFreeze, overlayFreeze } from './exportFreezeFrames';
+import type { ExportFreezeFrame } from './exportFreezeFrames';
 import { buildOverlayFilters } from './exportFfmpegOverlay';
 import {
   concatFfmpegFiles,
@@ -7,6 +16,10 @@ import {
 import { H264_ENCODER_ARGS } from '../mediaTools';
 
 export interface ExportClipForFfmpeg {
+  chromaKey?: Partial<Record<'primary' | 'secondary', ChromaKey>>;
+  hasAudio?: boolean;
+  motionOverlays?: ExportMotionOverlay[];
+  freezeFrames?: ExportFreezeFrame[];
   startTime: number;
   endTime: number;
   freezeAt?: number | null;
@@ -73,7 +86,13 @@ const canUseStreamCopyForSingle = ({
     clip.freezeAt !== null &&
     clip.freezeAt !== undefined &&
     (clip.freezeDuration ?? 0) > 0;
-  return !overlayEnabled && !annotationPath && !hasFreeze;
+  return (
+    !overlayEnabled &&
+    !annotationPath &&
+    !hasFreeze &&
+    !clip.freezeFrames?.length &&
+    !clip.motionOverlays?.length
+  );
 };
 
 export const runFfmpegSingle = ({
@@ -140,53 +159,101 @@ export const runFfmpegSingle = ({
       `[0:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[vtrim]`,
     );
     filterSteps.push(
-      `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
+      clip.hasAudio === false
+        ? `anullsrc=r=48000:cl=stereo,atrim=duration=${clipDuration}[atrim]`
+        : `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
     );
     baseLabel = '[vtrim]';
     mapLabel = '[vtrim]';
     audioMap = '[atrim]';
+    baseLabel = prepareChromaForeground(
+      filterSteps,
+      baseLabel,
+      clip.chromaKey?.primary,
+      'chroma',
+    );
+    const motion = overlayMotion(
+      filterSteps,
+      inputArgs,
+      baseLabel,
+      clip.motionOverlays ?? [],
+      'primary',
+      1,
+    );
+    baseLabel = restoreChromaForeground(
+      filterSteps,
+      motion.label,
+      clip.chromaKey?.primary,
+      'chroma',
+    );
 
-    const freezeAt =
-      clip.freezeAt !== null && clip.freezeAt !== undefined
-        ? Math.max(0, Math.min(clip.freezeAt, clipDuration))
-        : null;
-    const freezeDuration = clip.freezeDuration ?? 0;
-
-    if (freezeAt !== null && freezeDuration > 0) {
-      filterSteps.push(`${baseLabel}split[vpre][vpost]`);
-      filterSteps.push(
-        `[vpre]trim=end=${freezeAt},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${freezeDuration}[vprepad]`,
+    const frames =
+      clip.freezeFrames ??
+      (clip.freezeAt != null
+        ? [
+            {
+              time: clip.freezeAt,
+              duration: clip.freezeDuration ?? 0,
+              primary: annotationPath,
+            },
+          ]
+        : []);
+    const ordered = [...frames].sort((a, b) => a.time - b.time);
+    let insertedDuration = 0;
+    for (const [index, frame] of ordered.entries()) {
+      if (frame.duration <= 0) continue;
+      const time =
+        Math.max(0, Math.min(frame.time, clipDuration)) + insertedDuration;
+      baseLabel = insertFreeze(
+        filterSteps,
+        baseLabel,
+        time,
+        frame.duration,
+        `f${index}v`,
       );
-      filterSteps.push(
-        `[vpost]trim=start=${freezeAt},setpts=PTS-STARTPTS[vpostshift]`,
+      audioMap = insertFreeze(
+        filterSteps,
+        audioMap,
+        time,
+        frame.duration,
+        `f${index}a`,
+        true,
       );
-      filterSteps.push(`[vprepad][vpostshift]concat=n=2:v=1:a=0[vfreeze]`);
-      baseLabel = '[vfreeze]';
-      mapLabel = baseLabel;
-
-      filterSteps.push(`${audioMap}asplit[apre][apost]`);
-      filterSteps.push(
-        `[apre]atrim=end=${freezeAt},asetpts=PTS-STARTPTS,apad=pad_dur=${freezeDuration}[aprepad]`,
-      );
-      filterSteps.push(
-        `[apost]atrim=start=${freezeAt},asetpts=PTS-STARTPTS[apostshift]`,
-      );
-      filterSteps.push(`[aprepad][apostshift]concat=n=2:v=0:a=1[afreeze]`);
-      audioMap = '[afreeze]';
+      insertedDuration += frame.duration;
     }
-
-    if (annotationPath) {
-      inputArgs.push('-i', annotationPath);
-      const enableExpr =
-        freezeAt !== null && freezeDuration > 0
-          ? `:enable='between(t,${freezeAt},${freezeAt + freezeDuration})'`
-          : '';
-      filterSteps.push('[1:v]format=rgba[ovrraw]');
-      filterSteps.push(`[ovrraw]${baseLabel}scale2ref[ovr][bbase]`);
-      filterSteps.push(`[bbase][ovr]overlay=0:0${enableExpr}[vanno]`);
-      baseLabel = '[vanno]';
-      mapLabel = baseLabel;
+    let imageIndex = motion.inputIndex;
+    insertedDuration = 0;
+    for (const [index, frame] of ordered.entries()) {
+      const time =
+        Math.max(0, Math.min(frame.time, clipDuration)) + insertedDuration;
+      const result = overlayFreeze(
+        filterSteps,
+        inputArgs,
+        baseLabel,
+        frame.primary,
+        imageIndex,
+        time,
+        frame.duration,
+        `ann${index}`,
+      );
+      baseLabel = result.label;
+      imageIndex = result.inputIndex;
+      insertedDuration += Math.max(0, frame.duration);
     }
+    // Legacy annotations without a freeze retain their full-clip overlay.
+    if (!frames.length && annotationPath) {
+      baseLabel = overlayFreeze(
+        filterSteps,
+        inputArgs,
+        baseLabel,
+        annotationPath,
+        imageIndex,
+        0,
+        clipDuration,
+        'ann',
+      ).label;
+    }
+    mapLabel = baseLabel;
 
     if (vfTexts.length) {
       filterSteps.push(`${baseLabel}${vfTexts.join(',')}[vout]`);
@@ -209,8 +276,7 @@ export const runFfmpegSingle = ({
       outputPath,
     );
 
-    const durationSeconds =
-      clipDuration + Math.max(0, clip.freezeDuration ?? 0);
+    const durationSeconds = clipDuration + insertedDuration;
     runWithOptionalProgress(getFfmpegPath, args, durationSeconds, onProgress)
       .then(resolve)
       .catch(reject);
@@ -245,12 +311,6 @@ export const runFfmpegDual = ({
     let subLabel = '[1:v]';
     let audioMap = '0:a?';
     const clipDuration = Math.max(0.5, clip.endTime - clip.startTime);
-    const freezePos =
-      clip.freezeAt !== null && clip.freezeAt !== undefined
-        ? Math.max(0, Math.min(clip.freezeAt, clipDuration))
-        : null;
-    const freezeDur = clip.freezeDuration ?? 0;
-
     const inputs = ['-y', '-i', actualMainSource, '-i', actualSecondarySource];
     let currentInputIndex = 2;
 
@@ -258,7 +318,9 @@ export const runFfmpegDual = ({
       `[0:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[mtrim]`,
     );
     filterSteps.push(
-      `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
+      clip.hasAudio === false
+        ? `anullsrc=r=48000:cl=stereo,atrim=duration=${clipDuration}[atrim]`
+        : `[0:a]atrim=start=${clip.startTime}:end=${clip.endTime},asetpts=PTS-STARTPTS[atrim]`,
     );
     filterSteps.push(
       `[1:v]trim=start=${clip.startTime}:end=${clip.endTime},setpts=PTS-STARTPTS[strim]`,
@@ -267,65 +329,143 @@ export const runFfmpegDual = ({
     mainLabel = '[mtrim]';
     subLabel = '[strim]';
     audioMap = '[atrim]';
+    mainLabel = prepareChromaForeground(
+      filterSteps,
+      mainLabel,
+      clip.chromaKey?.primary,
+      'chromaP',
+    );
+    subLabel = prepareChromaForeground(
+      filterSteps,
+      subLabel,
+      clip.chromaKey?.secondary,
+      'chromaS',
+    );
+    const mainMotion = overlayMotion(
+      filterSteps,
+      inputs,
+      mainLabel,
+      clip.motionOverlays ?? [],
+      'primary',
+      currentInputIndex,
+    );
+    mainLabel = restoreChromaForeground(
+      filterSteps,
+      mainMotion.label,
+      clip.chromaKey?.primary,
+      'chromaP',
+    );
+    const subMotion = overlayMotion(
+      filterSteps,
+      inputs,
+      subLabel,
+      clip.motionOverlays ?? [],
+      'secondary',
+      mainMotion.inputIndex,
+    );
+    subLabel = restoreChromaForeground(
+      filterSteps,
+      subMotion.label,
+      clip.chromaKey?.secondary,
+      'chromaS',
+    );
+    currentInputIndex = subMotion.inputIndex;
 
-    if (freezePos !== null && freezeDur > 0) {
-      filterSteps.push(`${mainLabel}split[mvpre][mvpost]`);
-      filterSteps.push(
-        `[mvpre]trim=end=${freezePos},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${freezeDur}[mvprepad]`,
+    const frames =
+      clip.freezeFrames ??
+      (clip.freezeAt != null
+        ? [
+            {
+              time: clip.freezeAt,
+              duration: clip.freezeDuration ?? 0,
+              primary: annotationPrimary,
+              secondary: annotationSecondary,
+            },
+          ]
+        : []);
+    const ordered = [...frames].sort((a, b) => a.time - b.time);
+    let insertedDuration = 0;
+    for (const [index, frame] of ordered.entries()) {
+      if (frame.duration <= 0) continue;
+      const time =
+        Math.max(0, Math.min(frame.time, clipDuration)) + insertedDuration;
+      mainLabel = insertFreeze(
+        filterSteps,
+        mainLabel,
+        time,
+        frame.duration,
+        `f${index}m`,
       );
-      filterSteps.push(
-        `[mvpost]trim=start=${freezePos},setpts=PTS-STARTPTS[mvpostshift]`,
+      subLabel = insertFreeze(
+        filterSteps,
+        subLabel,
+        time,
+        frame.duration,
+        `f${index}s`,
       );
-      filterSteps.push(`[mvprepad][mvpostshift]concat=n=2:v=1:a=0[mvfreeze]`);
-      mainLabel = '[mvfreeze]';
-
-      filterSteps.push(`${audioMap}asplit[apre][apost]`);
-      filterSteps.push(
-        `[apre]atrim=end=${freezePos},asetpts=PTS-STARTPTS,apad=pad_dur=${freezeDur}[aprepad]`,
+      audioMap = insertFreeze(
+        filterSteps,
+        audioMap,
+        time,
+        frame.duration,
+        `f${index}a`,
+        true,
       );
-      filterSteps.push(
-        `[apost]atrim=start=${freezePos},asetpts=PTS-STARTPTS[apostshift]`,
-      );
-      filterSteps.push(`[aprepad][apostshift]concat=n=2:v=0:a=1[afreeze]`);
-      audioMap = '[afreeze]';
+      insertedDuration += frame.duration;
     }
-
-    if (freezePos !== null && freezeDur > 0) {
-      filterSteps.push(`${subLabel}split[svpre][svpost]`);
-      filterSteps.push(
-        `[svpre]trim=end=${freezePos},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${freezeDur}[svprepad]`,
+    insertedDuration = 0;
+    for (const [index, frame] of ordered.entries()) {
+      const time =
+        Math.max(0, Math.min(frame.time, clipDuration)) + insertedDuration;
+      const primary = overlayFreeze(
+        filterSteps,
+        inputs,
+        mainLabel,
+        frame.primary,
+        currentInputIndex,
+        time,
+        frame.duration,
+        `p${index}`,
       );
-      filterSteps.push(
-        `[svpost]trim=start=${freezePos},setpts=PTS-STARTPTS[svpostshift]`,
+      mainLabel = primary.label;
+      currentInputIndex = primary.inputIndex;
+      const secondary = overlayFreeze(
+        filterSteps,
+        inputs,
+        subLabel,
+        frame.secondary,
+        currentInputIndex,
+        time,
+        frame.duration,
+        `s${index}`,
       );
-      filterSteps.push(`[svprepad][svpostshift]concat=n=2:v=1:a=0[svfreeze]`);
-      subLabel = '[svfreeze]';
+      subLabel = secondary.label;
+      currentInputIndex = secondary.inputIndex;
+      insertedDuration += Math.max(0, frame.duration);
     }
-
-    if (annotationPrimary) {
-      inputs.push('-i', annotationPrimary);
-      const enableExpr =
-        freezePos !== null && freezeDur > 0
-          ? `:enable='between(t,${freezePos},${freezePos + freezeDur})'`
-          : '';
-      filterSteps.push(`[${currentInputIndex}:v]format=rgba[ovpraw]`);
-      filterSteps.push(`[ovpraw]${mainLabel}scale2ref[ovp][mbase]`);
-      filterSteps.push(`[mbase][ovp]overlay=0:0${enableExpr}[vp]`);
-      mainLabel = '[vp]';
-      currentInputIndex += 1;
-    }
-
-    if (annotationSecondary) {
-      inputs.push('-i', annotationSecondary);
-      const enableExpr =
-        freezePos !== null && freezeDur > 0
-          ? `:enable='between(t,${freezePos},${freezePos + freezeDur})'`
-          : '';
-      filterSteps.push(`[${currentInputIndex}:v]format=rgba[ovsraw]`);
-      filterSteps.push(`[ovsraw]${subLabel}scale2ref[ovs][sbase]`);
-      filterSteps.push(`[sbase][ovs]overlay=0:0${enableExpr}[vs]`);
-      subLabel = '[vs]';
-      currentInputIndex += 1;
+    if (!frames.length) {
+      const primary = overlayFreeze(
+        filterSteps,
+        inputs,
+        mainLabel,
+        annotationPrimary,
+        currentInputIndex,
+        0,
+        clipDuration,
+        'p',
+      );
+      mainLabel = primary.label;
+      currentInputIndex = primary.inputIndex;
+      subLabel = overlayFreeze(
+        filterSteps,
+        inputs,
+        subLabel,
+        annotationSecondary,
+        currentInputIndex,
+        0,
+        clipDuration,
+        's',
+      ).label;
     }
 
     filterSteps.push(`${mainLabel}${subLabel}hstack=inputs=2[vbase]`);
@@ -356,7 +496,7 @@ export const runFfmpegDual = ({
       outputPath,
     ];
 
-    const durationSeconds = clipDuration + Math.max(0, freezeDur);
+    const durationSeconds = clipDuration + insertedDuration;
     runWithOptionalProgress(getFfmpegPath, args, durationSeconds, onProgress)
       .then(resolve)
       .catch(reject);

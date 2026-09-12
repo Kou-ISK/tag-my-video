@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '@mui/material/styles';
 import { Box, Button, Typography } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import type { ActionDefinition } from '../../../../types/settings/coreTypes';
@@ -12,7 +13,12 @@ type TeamActionSectionProps = {
   primaryAction: string | null;
   activeRecordings: Record<string, { startTime: number }>;
   getActionLabels: (action: ActionDefinition) => LabelGroup[];
-  onActionClick: (teamName: string, action: ActionDefinition) => void;
+  onActionClick: (
+    teamName: string,
+    action: ActionDefinition,
+    originalName?: string,
+    color?: string,
+  ) => void;
   renderLabelGroup: (
     actionName: string,
     groupName: string,
@@ -31,6 +37,7 @@ export const TeamActionSection = ({
   onActionClick,
   renderLabelGroup,
 }: TeamActionSectionProps) => {
+  const theme = useTheme();
   const color = isFirstTeam ? 'team1' : 'team2';
 
   return (
@@ -62,7 +69,14 @@ export const TeamActionSection = ({
               <Button
                 variant={isSelected ? 'contained' : 'outlined'}
                 color={color}
-                onClick={() => onActionClick(teamName, action)}
+                onClick={() =>
+                  onActionClick(
+                    teamName,
+                    action,
+                    undefined,
+                    theme.palette[color].main,
+                  )
+                }
                 startIcon={
                   isActive ? (
                     <FiberManualRecordIcon

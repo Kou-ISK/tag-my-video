@@ -22,6 +22,19 @@ const item = (
 });
 
 describe('timelineRows', () => {
+  it('takes initial row colors from buttons while preserving configured rows', () => {
+    const colors = new Map([['Attack', '#00ff00']]);
+    expect(
+      deriveTimelineRows([item('1', 'Attack', '#ff0000')], colors)[0].color,
+    ).toBe('#00ff00');
+    const configured = [{ id: 'attack', name: 'Attack', color: '#0000ff' }];
+    expect(ensureTimelineRows(configured, [item('1', 'Attack')], colors)).toBe(
+      configured,
+    );
+    expect(ensureTimelineRows([], [item('1', 'Attack')], colors)[0].color).toBe(
+      '#00ff00',
+    );
+  });
   it('derives one row per action and adopts the first instance color', () => {
     const rows = deriveTimelineRows([
       item('1', 'Attack', '#123456'),

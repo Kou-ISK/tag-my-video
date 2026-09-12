@@ -1,7 +1,15 @@
+import type { ChromaKey } from '../../shared/tactics/chromaKey';
 import type { SCLabel } from '../timeline/sportscode';
 
 export type PlaylistType = 'reference' | 'embedded';
 export type DrawingToolType =
+  | 'beam'
+  | 'disc'
+  | 'linkedDiscs'
+  | 'curvedArrow'
+  | 'ring'
+  | 'spotlight'
+  | 'polygon'
   | 'pen'
   | 'line'
   | 'arrow'
@@ -23,12 +31,27 @@ export interface PlaylistRow {
   order: number;
 }
 
+export interface DrawingKeyframe {
+  /** 描画開始からの秒数。 */
+  time: number;
+  x: number;
+  y: number;
+}
+
 export interface DrawingObject {
+  /** 存在しない場合は従来の静止画注釈。座標は基準解像度の平行移動量。 */
+  motion?: { duration: number; keyframes: DrawingKeyframe[] };
   id: string;
   type: DrawingToolType;
   color: string;
   strokeWidth: number;
+  opacity?: number;
+  dashed?: boolean;
   fill?: boolean;
+  /** 曲線矢印の曲がり。始終点間距離に対する比率。 */
+  curvature?: number;
+  /** 選手リンクのディスク半径。保存時のキャンバス座標。 */
+  discRadius?: number;
   startX: number;
   startY: number;
   endX?: number;
@@ -42,7 +65,16 @@ export interface DrawingObject {
   baseHeight?: number;
 }
 
+export interface PitchCalibration {
+  /** 同一平面上の既知の長方形。画像に対する0〜1座標、周回順。 */
+  corners: Array<{ x: number; y: number }>;
+  widthMeters: number;
+  lengthMeters: number;
+}
+
 export interface ItemAnnotation {
+  chromaKey?: Partial<Record<AnnotationTarget, ChromaKey>>;
+  pitchCalibration?: Partial<Record<AnnotationTarget, PitchCalibration>>;
   objects: DrawingObject[];
   freezeDuration: number;
   freezeAt: number;

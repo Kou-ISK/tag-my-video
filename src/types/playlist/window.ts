@@ -1,10 +1,6 @@
-import type {
-  Playlist,
-  PlaylistItem,
-  PlaylistState,
-} from './core';
+import type { Playlist, PlaylistItem, PlaylistState } from './core';
 
-export type PlaylistWorkspaceMode = 'organizer' | 'sorter';
+export type PlaylistWorkspaceMode = 'organizer' | 'sorter' | 'studio';
 
 export interface PlaylistSorterColumnState {
   id: string;

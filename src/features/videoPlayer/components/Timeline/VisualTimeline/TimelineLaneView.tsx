@@ -30,14 +30,13 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
   contentWidth,
   zoomScale,
   containerRef,
-  isDraggingPlayhead,
   isEditModifierPressed,
   isTeam1,
-  laneLabelColor,
   draftRange,
   onLaneDragOver,
   onLaneDrop,
-  onPlayheadMouseDown,
+  onRangeCreateMouseDown,
+  onCreateItem,
   onEdgeMouseDown,
 }) => {
   const theme = useTheme();
@@ -46,10 +45,13 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'stretch',
         gap: 0,
         position: 'relative',
+        height: 32,
         minHeight: 32,
+        borderBottom: 1,
+        borderColor: 'divider',
         width: '100%',
       }}
     >
@@ -69,23 +71,28 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         onDragOver={onRowDragOver}
         onDrop={(event) => onRowDrop(event, rowId)}
         aria-label={`${actionName} 行`}
+        title={actionName}
         variant="caption"
         sx={{
-          color: laneLabelColor,
-          fontWeight: 'bold',
-          fontSize: '0.7rem',
+          color: 'text.primary',
+          fontWeight: 600,
+          fontSize: '0.75rem',
           width: TIMELINE_ROW_HEADER_WIDTH_PX,
           flexShrink: 0,
-          textAlign: 'right',
+          textAlign: 'left',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           userSelect: 'none',
           lineHeight: 1.1,
           position: 'sticky',
           left: 0,
-          zIndex: 12,
+          zIndex: theme.custom.zIndex.timelineRowHeader,
           alignSelf: 'stretch',
           border: 0,
           borderRight: 1,
           borderColor: 'divider',
+          borderLeft: `3px solid ${rowColor}`,
           backgroundColor: isRowSelected
             ? alpha(theme.palette.primary.main, 0.18)
             : 'background.paper',
@@ -111,12 +118,12 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         data-testid={`timeline-lane-${actionName}`}
         sx={{
           position: 'relative',
-          height: 26,
+          height: '100%',
           flex: 1,
           flexShrink: 0,
-          backgroundColor: alpha(rowColor, 0.16),
-          borderRadius: 1,
-          border: 1,
+          backgroundColor: alpha(rowColor, 0.06),
+          borderRadius: 0,
+          border: 0,
           borderColor: 'divider',
           boxSizing: 'border-box',
           userSelect: 'none',
@@ -171,31 +178,16 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
               boxSizing: 'border-box',
               bgcolor: alpha(rowColor, 0.72),
               border: `1px dashed ${rowColor}`,
-              borderRadius: 1,
+              borderRadius: 0.5,
               pointerEvents: 'none',
-              zIndex: 9,
+              zIndex: theme.custom.zIndex.timelineSelection,
             }}
           />
         )}
 
         <Box
-          aria-hidden="true"
-          sx={{
-            position: 'absolute',
-            left: `${currentTimePosition}px`,
-            top: 0,
-            bottom: 0,
-            width: 2,
-            transform: 'translateX(-1px)',
-            backgroundColor: 'error.main',
-            pointerEvents: 'none',
-            zIndex: 10,
-            transition: isDraggingPlayhead ? 'none' : 'left 80ms linear',
-          }}
-        />
-
-        <Box
-          onMouseDown={onPlayheadMouseDown}
+          onMouseDown={onRangeCreateMouseDown}
+          onClick={(event) => event.stopPropagation()}
           data-testid={`timeline-playhead-${actionName}`}
           sx={{
             position: 'absolute',
@@ -205,13 +197,11 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
             width: 12,
             transform: 'translateX(-6px)',
             backgroundColor: 'transparent',
-            zIndex: isEditModifierPressed || isDraggingPlayhead ? 11 : 1,
-            cursor: isEditModifierPressed
-              ? 'col-resize'
-              : isDraggingPlayhead
-                ? 'grabbing'
-                : 'grab',
-            transition: isDraggingPlayhead ? 'none' : 'left 80ms linear',
+            pointerEvents:
+              isEditModifierPressed && onCreateItem ? 'auto' : 'none',
+            // インスタンスのstacking contextより下に置き、赤線と端が重なっても端の編集を優先する。
+            zIndex: theme.custom.zIndex.workSurface,
+            cursor: 'col-resize',
           }}
         />
       </Box>

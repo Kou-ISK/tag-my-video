@@ -6,7 +6,6 @@ interface TimelineHistoryState {
   present: TimelineData[];
   future: TimelineData[][];
 }
-
 interface UseTimelineHistoryReturn {
   timeline: TimelineData[];
   canUndo: boolean;
@@ -16,7 +15,6 @@ interface UseTimelineHistoryReturn {
   redo: () => TimelineData[] | null;
   clearHistory: () => void;
 }
-
 const MAX_HISTORY_SIZE = 50;
 
 export function useTimelineHistory(
@@ -27,103 +25,63 @@ export function useTimelineHistory(
     present: initialTimeline,
     future: [],
   });
+  // Commands must synchronously return the document to persist, even when React
+  // batches rendering. Never obtain that result from a deferred state updater.
+  const current = useRef(state);
+  const previousInput = useRef(JSON.stringify(initialTimeline));
+  const apply = useCallback((next: TimelineHistoryState): void => {
+    current.current = next;
+    setState(next);
+  }, []);
 
-  // 初回マウントフラグ（ファイル読み込み時のみ履歴をリセット）
-  const isInitialMount = useRef(true);
-  // 前回のinitialTimelineを保持（無限ループを防ぐため）
-  const prevInitialTimelineJSON = useRef<string>(
-    JSON.stringify(initialTimeline),
-  );
-
-  // 外部からのタイムライン更新を検知（ファイル読み込み時など）
-  // 注意: 内部でsetTimelineを呼んだ結果の変更では履歴をクリアしない
   useEffect(() => {
-    const newJSON = JSON.stringify(initialTimeline);
-
-    // initialTimelineが変更された場合
-    if (prevInitialTimelineJSON.current !== newJSON) {
-      // 初回マウント時、または現在のpresentと異なる場合のみ履歴をリセット
-      // （内部でsetTimelineした結果の同期では履歴をクリアしない）
-      const currentPresentJSON = JSON.stringify(state.present);
-      if (isInitialMount.current || newJSON !== currentPresentJSON) {
-        setState({
-          past: [],
-          present: initialTimeline,
-          future: [],
-        });
-      }
-      prevInitialTimelineJSON.current = newJSON;
-      isInitialMount.current = false;
+    const input = JSON.stringify(initialTimeline);
+    if (input === previousInput.current) return;
+    previousInput.current = input;
+    // A persistence echo of our own edit/Undo keeps history. A loaded document
+    // replaces it, so Undo cannot cross into a different package.
+    if (input !== JSON.stringify(current.current.present)) {
+      apply({ past: [], present: initialTimeline, future: [] });
     }
-  }, [initialTimeline, state.present]);
+  }, [initialTimeline, apply]);
 
-  const setTimeline = useCallback((newTimeline: TimelineData[]) => {
-    setState((prev) => {
-      const newPast = [...prev.past, prev.present].slice(-MAX_HISTORY_SIZE);
-      return {
-        past: newPast,
-        present: newTimeline,
-        future: [], // 新しい変更を加えたらfutureはクリア
-      };
-    });
-  }, []);
-
-  const undo = useCallback((): TimelineData[] | null => {
-    let result: TimelineData[] | null = null;
-
-    setState((prev) => {
-      if (prev.past.length === 0) {
-        return prev;
-      }
-
-      const previous = prev.past.at(-1);
-      if (!previous) return prev;
-
-      const newPast = prev.past.slice(0, -1);
-
-      result = previous;
-
-      return {
-        past: newPast,
-        present: previous,
-        future: [prev.present, ...prev.future],
-      };
-    });
-
-    return result;
-  }, []);
-
-  const redo = useCallback((): TimelineData[] | null => {
-    let result: TimelineData[] | null = null;
-
-    setState((prev) => {
-      if (prev.future.length === 0) {
-        return prev;
-      }
-
-      const next = prev.future[0];
-      const newFuture = prev.future.slice(1);
-
-      result = next;
-
-      return {
-        past: [...prev.past, prev.present],
+  const setTimeline = useCallback(
+    (next: TimelineData[]): void => {
+      const previous = current.current;
+      if (next === previous.present) return;
+      apply({
+        past: [...previous.past, previous.present].slice(-MAX_HISTORY_SIZE),
         present: next,
-        future: newFuture,
-      };
+        future: [],
+      });
+    },
+    [apply],
+  );
+  const undo = useCallback((): TimelineData[] | null => {
+    const previous = current.current;
+    const next = previous.past.at(-1);
+    if (!next) return null;
+    apply({
+      past: previous.past.slice(0, -1),
+      present: next,
+      future: [previous.present, ...previous.future],
     });
-
-    return result;
-  }, []);
-
-  const clearHistory = useCallback(() => {
-    setState((prev) => ({
-      past: [],
-      present: prev.present,
-      future: [],
-    }));
-  }, []);
-
+    return next;
+  }, [apply]);
+  const redo = useCallback((): TimelineData[] | null => {
+    const previous = current.current;
+    const next = previous.future[0];
+    if (!next) return null;
+    apply({
+      past: [...previous.past, previous.present].slice(-MAX_HISTORY_SIZE),
+      present: next,
+      future: previous.future.slice(1),
+    });
+    return next;
+  }, [apply]);
+  const clearHistory = useCallback((): void => {
+    apply({ past: [], present: current.current.present, future: [] });
+  }, [apply]);
   return {
     timeline: state.present,
     canUndo: state.past.length > 0,

@@ -43,7 +43,23 @@ describe('usePlaylistPlaybackEffects', () => {
           isFrozen: false,
           setIsFrozen,
           currentItem: item,
-          currentAnnotation: undefined,
+          currentAnnotation: {
+            freezeDuration: 2,
+            freezeAt: 0,
+            objects: [
+              {
+                id: 'annotation',
+                type: 'arrow',
+                color: '#ffffff',
+                strokeWidth: 2,
+                startX: 0,
+                startY: 0,
+                endX: 10,
+                endY: 10,
+                timestamp: 15,
+              },
+            ],
+          },
           minFreezeDuration: 0.2,
           defaultFreezeDuration: 2,
           annotationTimeTolerance: 0.05,
@@ -69,7 +85,12 @@ describe('usePlaylistPlaybackEffects', () => {
     expect(setCurrentTime).toHaveBeenCalledWith(item.startTime);
 
     video.currentTime = 15;
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(triggerFreezeFrame).not.toHaveBeenCalled();
+    expect(handleItemEnd).not.toHaveBeenCalled();
     rerender({ isPlaying: true });
+    video.dispatchEvent(new Event('timeupdate'));
+    expect(triggerFreezeFrame).toHaveBeenCalledWith(2);
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(video.currentTime).toBe(15);

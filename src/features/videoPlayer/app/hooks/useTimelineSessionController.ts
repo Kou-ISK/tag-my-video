@@ -59,7 +59,9 @@ interface UseTimelineSessionControllerResult {
     items: TimelineData[],
     targetRowId: string,
   ) => string[];
-  synchronizeTimelineActionColors: (colors: ReadonlyMap<string, string>) => void;
+  synchronizeTimelineActionColors: (
+    colors: ReadonlyMap<string, string>,
+  ) => void;
   deleteTimelineDatas: (idList: string[]) => void;
   updateMemo: (id: string, memo: string) => void;
   updateTimelineRange: (id: string, startTime: number, endTime: number) => void;
@@ -101,6 +103,7 @@ export const useTimelineSessionController =
       getSelectedTimelineId,
     } = useTimelineSelection();
 
+    const buttonColorsRef = useRef<ReadonlyMap<string, string>>(new Map());
     const timelineRef = useRef<TimelineData[]>(timeline);
 
     useEffect(() => {
@@ -121,7 +124,9 @@ export const useTimelineSessionController =
     const editing = useTimelineEditing(setTimeline);
 
     useEffect(() => {
-      setTimelineRows((current) => ensureTimelineRows(current, timeline));
+      setTimelineRows((current) =>
+        ensureTimelineRows(current, timeline, buttonColorsRef.current),
+      );
     }, [setTimelineRows, timeline]);
 
     const addTimelineRow = useCallback(
@@ -140,7 +145,10 @@ export const useTimelineSessionController =
             {
               id: ulid(),
               name,
-              color: requestedColor ?? getDefaultTimelineRowColor(name),
+              color:
+                requestedColor ??
+                buttonColorsRef.current.get(name) ??
+                getDefaultTimelineRowColor(name),
             },
           ];
         });
@@ -229,6 +237,7 @@ export const useTimelineSessionController =
 
     const synchronizeTimelineActionColors = useCallback(
       (colors: ReadonlyMap<string, string>): void => {
+        buttonColorsRef.current = colors;
         if (colors.size === 0) return;
 
         setTimelineRows((current) => {

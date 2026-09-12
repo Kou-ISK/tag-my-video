@@ -25,6 +25,7 @@ import {
   setMainWindowRef,
   setFfmpegPath,
   sendPlaylistFileToWindow,
+  closePlaylistWindowsForMainWindow,
 } from './playlistWindow';
 import { registerSettingsWindowHandlers } from './settingsWindow';
 import { applyWindowSecurity } from './windowSecurity';
@@ -41,16 +42,30 @@ import { registerLlamaHandlers } from './ipc/llamaHandlers';
 import { registerLegacyFileAccessHandlers } from './ipc/legacyFileAccessHandlers';
 import { registerMenuStateHandlers } from './ipc/menuStateHandlers';
 import { registerPackageHandlers } from './ipc/packageHandlers';
+import { registerPackageSessionHandlers } from './ipc/packageSessionHandlers';
 import { registerReportHandlers } from './ipc/reportHandlers';
 import { registerSyncHandlers } from './ipc/syncHandlers';
 import { registerWindowEventHandlers } from './ipc/windowEventHandlers';
 import { registerYoutubeEmbedClientIdentity } from './youtubeEmbedIdentity';
 import { registerLoopbackAudioCapture } from './loopbackAudioCapture';
 import {
-  closeTimelineWindow,
+  closeTimelineWindowForMainWindow,
   registerTimelineWindowHandlers,
   setTimelineMainWindowRef,
 } from './timelineWindow';
+import {
+  closePackageSessionWindows,
+  createPackageSession,
+  focusPackageSession,
+  getEmptyPackageSession,
+  getPackageSessions,
+  getPackageSessionForPackagePath,
+  getPackageSessionForWindow,
+  removePackageSession,
+  reservePackageSession,
+} from './packageSessionRegistry';
+import { createExternalOpenQueue } from './packageOpenQueue';
+import { createPackageOpenRouter } from './packageOpenRouter';
 
 if (app?.commandLine) {
   app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -74,22 +89,13 @@ const getResolvedFfmpegPath = (): string => {
 const mainURL = `file:${__dirname}/../../index.html`;
 const preloadPath = path.join(__dirname, 'preload.js');
 
-const pickFileArg = (argv: string[]): string | null => {
-  return (
-    argv.find((arg) => {
-      const ext = path.extname(arg).toLowerCase();
-      return (
-        ext === '.stpl' ||
-        ext === '.stcw' ||
-        ext === '.stpkg' ||
-        ext === '.stad' ||
-        ext === '.json'
-      );
-    }) || null
-  );
-};
-
-let pendingFile: string | null = pickFileArg(process.argv.slice(1));
+const pendingFiles: string[] = process.argv
+  .slice(1)
+  .map((arg) => ({ arg, ext: path.extname(arg).toLowerCase() }))
+  .filter(({ ext }) =>
+    ['.stpl', '.stcw', '.stpkg', '.stad', '.json'].includes(ext),
+  )
+  .map(({ arg }) => arg);
 let mainWindow: BrowserWindow | null = null;
 
 const registerMainIpcHandlers = (): void => {
@@ -163,9 +169,16 @@ const createWindow = async (): Promise<BrowserWindow> => {
   window.on('closed', () => {
     clearTimeout(preloadReadyTimeout);
     ipcMain.removeListener('preload:ready', handlePreloadReady);
-    closeTimelineWindow();
+    closeTimelineWindowForMainWindow(window);
+    closePlaylistWindowsForMainWindow(window);
+    const packageSession = getPackageSessionForWindow(window);
+    if (packageSession) {
+      closePackageSessionWindows(packageSession);
+      removePackageSession(packageSession);
+    }
   });
   mainWindow = window;
+  createPackageSession(window);
   setMainWindowRef(window);
   setAnalysisMainWindowRef(window);
   setCodingPanelMainWindowRef(window);
@@ -187,6 +200,7 @@ const createWindow = async (): Promise<BrowserWindow> => {
 
 registerLegacyFileAccessHandlers({ getMainWindow: () => mainWindow });
 registerPackageHandlers();
+registerPackageSessionHandlers();
 registerSyncHandlers();
 registerMenuStateHandlers();
 registerSettingsHandlers();
@@ -204,8 +218,11 @@ try {
   console.error('Failed to set FFmpeg path:', error);
 }
 
-const handleFileOpen = (filePath: string): void => {
-  if (!mainWindow || mainWindow.isDestroyed()) {
+const handleFileOpen = (
+  filePath: string,
+  targetWindow: BrowserWindow | null = mainWindow,
+): void => {
+  if (!targetWindow || targetWindow.isDestroyed()) {
     console.warn('Main window not ready, queueing file open:', filePath);
     return;
   }
@@ -213,37 +230,134 @@ const handleFileOpen = (filePath: string): void => {
   const ext = path.extname(filePath).toLowerCase();
 
   if (ext === '.stpl' || ext === '.json') {
-    sendPlaylistFileToWindow(filePath);
+    sendPlaylistFileToWindow(filePath, targetWindow);
   } else if (ext === '.stad') {
-    void sendAnalysisDashboardFileToWindow(filePath);
+    void sendAnalysisDashboardFileToWindow(filePath, targetWindow);
   } else if (ext === '.stcw') {
     setPendingCodeWindowExternalOpen(filePath);
-    void openCodingPanelWindow();
-    mainWindow.webContents.send('open-code-window-file', filePath);
+    void openCodingPanelWindow(targetWindow);
+    targetWindow.webContents.send('open-code-window-file', filePath);
   } else if (ext === '.stpkg' || !ext) {
-    mainWindow.webContents.send('open-package-directory', filePath);
+    const send = (): void => {
+      if (!targetWindow.isDestroyed()) {
+        targetWindow.webContents.send('open-package-directory', filePath);
+      }
+    };
+    if (targetWindow.webContents.isLoading()) {
+      targetWindow.webContents.once('did-finish-load', send);
+    } else {
+      send();
+    }
   }
 };
 
-app.on('open-file', (event, filePath) => {
-  event.preventDefault();
-  pendingFile = filePath;
-  if (app.isReady() && mainWindow && !mainWindow.isDestroyed()) {
-    handleFileOpen(filePath);
+const getCurrentMainWindow = (): BrowserWindow | null => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const focusedSession = getPackageSessionForWindow(focusedWindow);
+  if (focusedSession?.mainWindow && !focusedSession.mainWindow.isDestroyed()) {
+    return focusedSession.mainWindow;
   }
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow;
+  return (
+    getPackageSessions().find((session) => !session.mainWindow.isDestroyed())
+      ?.mainWindow ?? null
+  );
+};
+
+const focusWindow = (window: BrowserWindow): void => {
+  const session = getPackageSessionForWindow(window);
+  if (session) {
+    focusPackageSession(session);
+    return;
+  }
+  if (window.isDestroyed()) return;
+  if (window.isMinimized()) window.restore();
+  if (!window.isVisible()) window.show();
+  window.focus();
+};
+
+let initialWindowPromise: Promise<BrowserWindow> | null = null;
+
+const openPackageInSession = createPackageOpenRouter({
+  findByPath: getPackageSessionForPackagePath,
+  findEmpty: getEmptyPackageSession,
+  createWindow,
+  reserve: reservePackageSession,
+  focus: focusPackageSession,
+  sendOpen: handleFileOpen,
+  closeUnusedWindow: (window) => {
+    if (!window.isDestroyed()) window.close();
+  },
 });
 
-app.whenReady().then(async () => {
-  registerLoopbackAudioCapture(session.defaultSession);
-  await createWindow();
-  if (pendingFile) {
-    handleFileOpen(pendingFile);
-    pendingFile = null;
+const routeExternalOpen = async (filePath: string): Promise<void> => {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === '.stpkg' || !extension) {
+    await openPackageInSession(filePath);
+    return;
   }
+
+  let targetWindow = getCurrentMainWindow();
+  if (!targetWindow) {
+    targetWindow = await createWindow();
+  }
+  focusWindow(targetWindow);
+  handleFileOpen(filePath, targetWindow);
+};
+
+const externalOpenQueue = createExternalOpenQueue({
+  route: async (filePath) => {
+    // The initial empty window is shared by the first external package open.
+    // Waiting here also prevents an open-file event during startup from
+    // creating a second unnecessary window.
+    if (initialWindowPromise) await initialWindowPromise;
+    await routeExternalOpen(filePath);
+  },
+  onError: (filePath, error) => {
+    console.error('Failed to route external file open:', filePath, error);
+  },
+});
+for (const filePath of pendingFiles) externalOpenQueue.enqueue(filePath);
+
+const enqueueExternalOpen = (filePath: string): void => {
+  externalOpenQueue.enqueue(filePath);
+  if (app.isReady()) void externalOpenQueue.drain();
+};
+
+const getExternalOpenArguments = (commandLine: string[]): string[] =>
+  commandLine
+    .filter((arg) => !arg.startsWith('-'))
+    .filter((arg) =>
+      ['.stpl', '.stcw', '.stpkg', '.stad', '.json'].includes(
+        path.extname(arg).toLowerCase(),
+      ),
+    );
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  enqueueExternalOpen(filePath);
+});
+
+if (hasSingleInstanceLock) {
+  app.on('second-instance', (_event, commandLine) => {
+    for (const filePath of getExternalOpenArguments(commandLine)) {
+      enqueueExternalOpen(filePath);
+    }
+  });
+}
+
+app.whenReady().then(async () => {
+  if (!hasSingleInstanceLock) return;
+  registerLoopbackAudioCapture(session.defaultSession);
+  initialWindowPromise = createWindow();
+  await initialWindowPromise;
+  void externalOpenQueue.drain();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      void createWindow();
+      initialWindowPromise = createWindow();
     }
   });
 });

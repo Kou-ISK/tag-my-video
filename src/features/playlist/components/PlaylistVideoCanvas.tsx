@@ -17,6 +17,7 @@ type ContentRect = {
 type CanvasSize = { width: number; height: number };
 
 type PlaylistVideoCanvasProps = {
+  annotationsVisible?: boolean;
   currentVideoSource2: string | null;
   viewMode: 'dual' | 'angle1' | 'angle2';
   isDrawingMode: boolean;
@@ -41,6 +42,7 @@ type PlaylistVideoCanvasProps = {
 };
 
 export const PlaylistVideoCanvas = ({
+  annotationsVisible = true,
   currentVideoSource2,
   viewMode,
   isDrawingMode,
@@ -86,6 +88,7 @@ export const PlaylistVideoCanvas = ({
         />
       )}
       <PlaylistAngleLayer
+        annotationsVisible={annotationsVisible}
         boxSx={{
           position: 'absolute',
           top: 0,
@@ -107,6 +110,7 @@ export const PlaylistVideoCanvas = ({
         contentRect={primaryContentRect}
         isDrawingMode={isDrawingMode}
         drawingTarget={drawingTarget}
+        chromaKey={currentAnnotation?.chromaKey?.primary}
         target="primary"
         initialObjects={primaryObjects}
         freezeDuration={
@@ -118,6 +122,7 @@ export const PlaylistVideoCanvas = ({
       />
       {currentVideoSource2 && (
         <PlaylistAngleLayer
+          annotationsVisible={annotationsVisible}
           boxSx={{
             position: 'absolute',
             top: 0,
@@ -140,6 +145,7 @@ export const PlaylistVideoCanvas = ({
           contentRect={secondaryContentRect}
           isDrawingMode={isDrawingMode}
           drawingTarget={drawingTarget}
+          chromaKey={currentAnnotation?.chromaKey?.secondary}
           target="secondary"
           initialObjects={secondaryObjects}
           freezeDuration={

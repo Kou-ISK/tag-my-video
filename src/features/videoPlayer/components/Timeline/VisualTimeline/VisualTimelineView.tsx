@@ -19,6 +19,8 @@ import type {
   TimelineData,
   TimelineRow,
 } from '../../../../../types/timeline/core';
+import { TimelinePlayhead } from './TimelinePlayhead';
+import type { useTimelineSeek } from './hooks/useTimelineSeek';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineDialogs } from './TimelineDialogs';
 import { TimelineEmptyState } from './TimelineEmptyState';
@@ -29,6 +31,7 @@ import { TimelineRowEditorDialog } from './TimelineRowEditorDialog';
 import { TIMELINE_ROW_HEADER_WIDTH_PX } from './domain/timelineCoordinateMapper';
 
 export interface VisualTimelineViewProps {
+  seekHandlers: ReturnType<typeof useTimelineSeek>;
   zoomScale: number;
   canZoomOut: boolean;
   canZoomIn: boolean;
@@ -108,12 +111,13 @@ export interface VisualTimelineViewProps {
 }
 
 export const VisualTimelineView = ({
+  seekHandlers,
+  scrollLeft,
   zoomScale,
   canZoomOut,
   canZoomIn,
   onZoomOut,
   onZoomIn,
-  scrollLeft,
   axisRef,
   maxSec,
   currentTimePosition,
@@ -192,33 +196,6 @@ export const VisualTimelineView = ({
         }}
       >
         <Box
-          sx={{
-            flex: '0 0 auto',
-            zIndex: 5,
-            backgroundColor: 'background.paper',
-            px: 1.5,
-            pt: 0,
-            pb: 0,
-            mb: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <TimelineAxis
-            axisRef={axisRef}
-            maxSec={maxSec}
-            currentTimePosition={currentTimePosition}
-            contentWidth={containerWidth}
-            zoomScale={zoomScale}
-            scrollLeft={scrollLeft}
-            timeMarkers={timeMarkers}
-            timeToPosition={timeToPosition}
-            positionToTime={positionToTime}
-            onSeek={onSeek}
-            formatTime={formatTime}
-          />
-        </Box>
-
-        <Box
           ref={scrollContainerRef}
           sx={{
             position: 'relative',
@@ -227,9 +204,9 @@ export const VisualTimelineView = ({
             maxHeight: '100%',
             overflowY: 'auto',
             overflowX: 'auto',
-            px: 1.5,
+            px: 0,
             pt: 0,
-            pb: 1,
+            pb: 0,
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -249,10 +226,18 @@ export const VisualTimelineView = ({
                 containerWidth > 0
                   ? `${TIMELINE_ROW_HEADER_WIDTH_PX + containerWidth * zoomScale}px`
                   : '100%',
+              minHeight: '100%',
               flexShrink: 0,
             }}
             ref={containerRef}
           >
+            <TimelineAxis
+              axisRef={axisRef}
+              contentWidth={containerWidth * zoomScale}
+              timeMarkers={timeMarkers}
+              timeToPosition={timeToPosition}
+              formatTime={formatTime}
+            />
             {rows.map((row) => (
               <TimelineLane
                 key={row.id}
@@ -273,7 +258,6 @@ export const VisualTimelineView = ({
                 currentTimePosition={currentTimePosition}
                 formatTime={formatTime}
                 firstTeamName={firstTeamName}
-                onSeek={onSeek}
                 maxSec={maxSec}
                 onUpdateTimeRange={onUpdateTimeRange}
                 onMoveItem={handleMoveItems}
@@ -296,6 +280,15 @@ export const VisualTimelineView = ({
               <TimelineEmptyState message="タイムラインが空です。アクションボタンでタグ付けを開始してください。" />
             )}
 
+            <TimelinePlayhead
+              hidden={currentTimePosition < scrollLeft}
+              position={currentTimePosition}
+              maxSec={maxSec}
+              currentTime={positionToTime(currentTimePosition)}
+              formatTime={formatTime}
+              onSeek={onSeek}
+              seekHandlers={seekHandlers}
+            />
             {isSelecting && selectionBox && (
               <TimelineSelectionOverlay selectionBox={selectionBox} />
             )}
@@ -304,6 +297,8 @@ export const VisualTimelineView = ({
       </Box>
 
       <TimelineFooter
+        rowCount={rows.length}
+        selectedCount={selectedIds.length}
         zoomScale={zoomScale}
         canZoomOut={canZoomOut}
         canZoomIn={canZoomIn}

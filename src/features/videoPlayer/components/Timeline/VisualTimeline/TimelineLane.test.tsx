@@ -7,6 +7,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getAppTheme } from '../../../../../theme';
 import type { TimelineData } from '../../../../../types/timeline/core';
+import type { TimelineLaneProps } from './TimelineLane.types';
 import { TimelineLane } from './TimelineLane';
 
 const timelineItem: TimelineData = {
@@ -18,7 +19,7 @@ const timelineItem: TimelineData = {
   color: '#ff0000',
 };
 
-const renderLane = (overrides: Record<string, unknown> = {}): void => {
+const renderLane = (overrides: Partial<TimelineLaneProps> = {}): void => {
   const props = {
     rowId: 'row-attack',
     actionName: 'Attack',
@@ -42,7 +43,6 @@ const renderLane = (overrides: Record<string, unknown> = {}): void => {
     currentTimePosition: 100,
     formatTime: (seconds: number) => String(seconds),
     firstTeamName: 'Attack',
-    onSeek: vi.fn(),
     maxSec: 100,
     contentWidth: 1000,
     zoomScale: 1,
@@ -80,7 +80,7 @@ describe('TimelineLane', () => {
     expect(Number.parseFloat(getComputedStyle(instance).width)).toBeCloseTo(2);
   });
 
-  it('creates an instance by dragging the playhead with Option + Command', () => {
+  it('creates a range from the fixed playhead with Option + Command', () => {
     const onCreateItem = vi.fn();
     renderLane({ onCreateItem });
 
@@ -93,6 +93,33 @@ describe('TimelineLane', () => {
     fireEvent.mouseUp(document);
 
     expect(onCreateItem).toHaveBeenCalledWith('Attack', 10, 60, '#123456');
+  });
+
+  it('lets normal pointer input pass through the line in a lane', () => {
+    const onCreateItem = vi.fn();
+    renderLane({ onCreateItem });
+    const line = screen.getByTestId('timeline-playhead-Attack');
+    expect(getComputedStyle(line).pointerEvents).toBe('none');
+    fireEvent.mouseDown(line, { clientX: 100 });
+    fireEvent.mouseMove(document, { clientX: 600 });
+    fireEvent.mouseUp(document);
+    expect(onCreateItem).not.toHaveBeenCalled();
+  });
+
+  it('cancels a range draft when the edit modifier is released', () => {
+    const onCreateItem = vi.fn();
+    renderLane({ onCreateItem });
+    fireEvent.mouseDown(screen.getByTestId('timeline-playhead-Attack'), {
+      altKey: true,
+      metaKey: true,
+      clientX: 100,
+    });
+    fireEvent.mouseMove(document, { clientX: 600 });
+    expect(screen.getByTestId('timeline-create-preview')).toBeTruthy();
+    fireEvent.keyUp(window, { key: 'Alt', altKey: false, metaKey: true });
+    fireEvent.mouseUp(document);
+    expect(screen.queryByTestId('timeline-create-preview')).toBeNull();
+    expect(onCreateItem).not.toHaveBeenCalled();
   });
 
   it('requires a selected instance plus Option + Command to resize an edge', () => {
@@ -129,7 +156,7 @@ describe('TimelineLane', () => {
     expect(onUpdateTimeRange).toHaveBeenCalledWith('instance-1', 5, 20);
   });
 
-  it('stops an active edge drag when the edit modifier is released', () => {
+  it('discards the resize preview when the edit modifier is released', () => {
     const onUpdateTimeRange = vi.fn();
     renderLane({
       onUpdateTimeRange,
@@ -142,10 +169,54 @@ describe('TimelineLane', () => {
       metaKey: true,
     });
     fireEvent.mouseMove(document, { clientX: 250 });
-    expect(onUpdateTimeRange).toHaveBeenCalledTimes(1);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('150px');
 
     fireEvent.keyUp(window, { key: 'Alt', altKey: false, metaKey: true });
     fireEvent.mouseMove(document, { clientX: 300 });
-    expect(onUpdateTimeRange).toHaveBeenCalledTimes(1);
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('100px');
+  });
+  it('commits a whole resize once and cancels the next gesture with Escape', () => {
+    const onUpdateTimeRange = vi.fn();
+    renderLane({ onUpdateTimeRange, selectedIds: ['instance-1'] });
+    const edge = screen.getByLabelText('終了位置を調整');
+    fireEvent.mouseDown(edge, { altKey: true, metaKey: true });
+    for (const clientX of [210, 230, 250])
+      fireEvent.mouseMove(document, { clientX });
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).toHaveBeenCalledExactlyOnceWith(
+      'instance-1',
+      10,
+      25,
+    );
+    onUpdateTimeRange.mockClear();
+    fireEvent.mouseDown(edge, { altKey: true, metaKey: true });
+    fireEvent.mouseMove(document, { clientX: 300 });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('100px');
+  });
+  it('does not create history for a resize without movement', () => {
+    const onUpdateTimeRange = vi.fn();
+    renderLane({ onUpdateTimeRange, selectedIds: ['instance-1'] });
+    fireEvent.mouseDown(screen.getByLabelText('終了位置を調整'), {
+      altKey: true,
+      metaKey: true,
+    });
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
   });
 });
