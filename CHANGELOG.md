@@ -7,35 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- 再生UIの参照元を2026年版Hudl Sportscode公式動画へ訂正。目盛り付きジョグを廃止し、映像幅に接する黒いフッターと中央のフラットな再生アイコンへ更新。
-
-- 再生コントローラーを矩形ジョグへ変更し、Playlistにクリック可能な描画目印を追加。描画モードをPaintへ改名し、左ツールパレット・ショートカット・描画後の自動選択を導入。
-
-- 描画モードの表示名をTacticsへ変更。位置キーフレーム、映像パターン追跡と再開、平面較正、芝色処理、プリセット、Coachカスタマイズ、動画上の描画書き出しを追加。
-
-- 再生操作を共通ジョグ式コントローラーに整理。
-
-- プロ向けスポーツ分析UIとしてdark/lightテーマ、開始画面、再生バー、Timeline、Playlist、Code Window、分析・設定のchromeを統一。主要ViewのStorybookと一括 `pnpm run verify` を追加。
-
 ### Added
 
-- Studioへビーム・ディスク・選手間リンク・曲線矢印とCoach表示を追加。
-
-- Design System token基盤、shared UI stories、Storybook a11y、UI chromeのDesign System検査を追加。
-
-### Changed
-
-- Onboarding、Playlist描画Toolbar、独立Help Windowをsemantic tokenへ移行し、dark/lightのsurface・focus・overlay階層を統一。
-
-### Added
-
-- 複数 `.stpkg` をPackage Sessionごとの独立したMain Windowで扱い、Finder/Explorerからのopen要求で既存パッケージを復元・focusできるようにした。
+- Paint描画モード: 選手ビーム・ディスク・リンク、位置キーのタイムライン編集、対象範囲を指定する映像追尾、ピッチ較正、芝色処理、素材プリセット、プレゼン表示、動画への描画書き出し。操作・制約は[Paint仕様](docs/tactics.md)を参照。
+- Design Systemのsemantic token、共有UIのStorybook、UI chrome検査、`pnpm run verify`による一括検証。
+- 複数 `.stpkg` をPackage Sessionごとの独立したMain Windowで開き、既存パッケージへの要求ではそのウィンドウを復元・focus。
 
 ### Changed
 
-- Timeline、Analysis、Coding Panel、PlaylistのWindowとIPCをPackage Session単位で分離し、異なるパッケージ間の状態混線を防止した。
+- 起動画面を検索可能な最近の履歴と開く・新規作成の操作へ整理。保存場所の表示、重複ロード防止、持続するエラーと再試行を追加。[起動仕様](docs/start-workspace.md)を正本とする。
+- dark/lightの共通UI、Timelineの連続した行・再生ヘッド、Playlistのnative風リストとメニューを統一。再生バーは角丸・半透明とし、Playlistに描画位置の目印を表示。
+- メイン映像ウィンドウはアングル数に応じた縦横比を保持。Playlistウィンドウは自由な縦横比を維持。
+- Paintの右ペインを折りたたみ可能にし、選手リンクは順次クリックで人数を指定。Delete / Backspaceは選択した位置キー・図形へ作用し、Paint中のクリップ誤削除を防止。
+- Timeline、Analysis、Coding Panel、PlaylistのWindowとIPCをPackage Session単位で分離。
+
+### Fixed
+
+- 起動画面の `.stpkg` ドロップをElectronの `webUtils.getPathForFile` 経由へ変更。
+
+### Documentation
+
+- 起動・Playlist・Paintの現行操作、保存契約、制約、実装責務、検証方法を機能別の正本へ統合し、古いUI説明・型の複製・変更の逐次追記を整理。アプリ内Helpも同期。
 
 ## [0.11.1] - 2026-08-26
 

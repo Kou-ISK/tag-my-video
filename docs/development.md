@@ -286,46 +286,19 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 - 長期判断 → `docs/adr/`
 - user/contributor visible → `CHANGELOG.md`
 
-## UI変更の一括検証
+## UIの変更と確認
 
-`pnpm run verify` はRenderer/Electronの型検査、lint、architecture/design-system/ADR検査、unit tests、アプリbuild、Storybook buildを順に実行する。UI調整をまとめた後に実行できる。`pnpm run storybook` の `Design System/Foundation/Controls` と `Workspace/*` でdark/light、空状態、長い名称、無効操作、狭い幅を確認する。
+UI変更後は `pnpm run verify` でRenderer/Electron型検査、lint、architecture/design-system/ADR検査、テスト、アプリbuild、Storybook buildを実行します。品質ゲートの正本は[testing.md](testing.md)です。
 
-## Native UI / Paint の確認
+| 対象     | Storybook / 確認事項                                                                                                                     | 機能の正本                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| 起動画面 | `Workspace/Start`: 初回、履歴検索、空/該当なし、長い保存先、ロード中、エラー再試行、drop                                                 | [起動画面](start-workspace.md)                   |
+| 再生操作 | `Design System/Composites/Movie Transport`、`Workspace/Transport`: 半透明、送り量のラベル、描画目印                                      | [デザインシステム](design-system.md)             |
+| Timeline | `Workspace/Timeline/Continuous`、Context Menu: ズーム・スクロール後のruler/行/再生線一致、右クリックとキーボード                         | [ユーザーガイド](user-guide.md#タイムライン編集) |
+| Paint    | `Workspace/Playlist/Paint`: Interactive、Empty、Player Graphics、Video Tracking、Keyframe Editing、Inspector Layout、Collapsed Inspector | [Paint](tactics.md)                              |
 
-`pnpm run verify`で型、Electron型、lint、architecture、design-system、ADR、テスト、アプリbuild、Storybook buildを一括検証する。Storybookの `Workspace/Playlist/Paint` はElectron不要の描画fixture、`Workspace/Timeline/Continuous` はrulerと行の共有座標を確認するView story。Paintでは描画・移動・拡縮・レイヤー・Undo/Redoを、Timelineではズームと縦横スクロール後のシーク位置を確認する。映像の再生・ファイル保存・FFmpeg書き出しはElectron実機でも確認する。
+共通してdark/light、600/800/1280px、長い名称、キーボード、空状態・失敗状態を確認します。Paintでは点/描画の削除とUndo、入力欄のBackspace、リンクの連続クリック、追尾の範囲指定→適用→手修正→再追尾、パネル開閉時の状態保持を確認します。時間目盛りの入力は `useStudioRulerInput` でRAFにまとめるため、連続入力と動画側の追従も確認します。
 
-### Movie Controller / Paint の確認
+実機のファイルダイアログ・Finder/Explorerドロップ・保存再読込・Package Session・FFmpeg出力はStorybookと別に確認します。追尾の合成WebMや公開人物映像での結果と、利用者の試合映像での精度は区別して報告します。
 
-Storybook `Design System/Composites/Movie Transport`、`Workspace/Transport`、`Workspace/Playlist/Paint` で確認する。Interactive storyは戦術図のfixture、Video Tracking storyは実際にデコードする合成WebMを使用し、追跡・平面較正・芝色処理・プリセットを操作できる。ビームの高さ、曲線の曲がり、リンク各点のドラッグと選手数、Coachの消去→Undo、明暗テーマと狭い幅を確認する。図形の変更時は `tacticalGeometry.test.ts` と `useStudioGesture.test.tsx` の保存座標・letterbox・1操作1履歴の検証も維持する。
-
-Paintの時間・較正・芝色の純粋計算は `src/shared/tactics`、外部動画の解析は `studio/tracking`、端末プリセットの永続化は `tacticsPreferencesGateway.ts` が担当する。Video Tracking storyでは、結果適用→中間時刻の手修正→再追跡、較正取消、プリセット挿入Undoを確認する。追跡fixtureは320×180・4秒の合成WebMで実動画デコーダーを使う。書き出しはElectronのFFmpeg経路でも、単一/二映像・静止挿入・音声のない素材・芝色処理を確認する。[対応範囲](tactics.md)と[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)を参照。
-
-Paint改修の確認: 左パレット選択→映像へ描画→自動選択→移動、ツールの文字キー、入力欄への文字入力、Esc中止を確認する。Playlistのペン目印をクリックした際、対象時刻へのseekと確定callbackが動くことを確認する。従来の内部studio識別子、Tactics型名、プリセット保存キーは維持する。
-
-再生UIの参照は旧SportsCodeマニュアルから2026年3月版のHudl公式紹介動画へ変更した。参照時期と画面の根拠はdesign-system.mdに記録する。Storybookで黒い映像操作面が明暗両テーマで読めること、Playlistの描画目印と送り操作が動くことを確認する。
-
-Paintの時間軸確認: 再生操作が数値目盛りの上にあること、描画バー選択で開始時刻へseekすること、キーフレームの移動、目盛りと全行の再生線の一致を確認する。選択・描画・選手パレットの選択状態を明暗テーマで確認する。公開製品画像と最新リリースの版番号は同一と推定しない。
-
-再生UI確認: 角丸半透明、明暗テーマ、編集/プレゼンの切替と説明を確認する。Electron上で1/2/3/4映像の比率とサイドバー込みの寸法を確認する。追尾はVideo Tracking storyで実デコード→自動反映→再生中の移動→Undoを確認する。無地の足元マーカーから選手の特徴を拾う回帰テスト、解析中の変更を上書きしないテストを維持する。
-
-Paintの時間目盛りはStudioTimeRulerViewのネイティブrange入力を使用する。useStudioRulerInputで入力値を即時反映し、映像へのseekを描画フレーム単位にまとめ、200回の矢印キー連続入力でも追尾描画が同期することを確認する。
-
-Timeline Context Menu storyで複数選択のPlaylist追加、矢印キー移動、Escape、明暗テーマを確認する。追尾のfeatureTracker.testは部分遮蔽と明るさ変化を含む。公開人物映像での補助確認と、ユーザーの試合映像での精度確認は区別して報告する。
-
-PaintのPlayer Graphics storyで足元の連続クリック→Enter確定→追加・末尾削除→Undoを確認する。Video Tracking storyで対象範囲の指定→追尾→Undo、シーク・選択変更時の未確定範囲の無効化を確認する。
-
-PaintのInspector Layout / Collapsed Inspector storyで右パネルの開閉を確認する。開閉前後の選択・設定保持、キーボード操作、映像幅の拡張、600/800/1280px幅と明暗テーマを確認する。長い追尾操作、動きの操作群、プリセット名で文字の折り返し・横方向のはみ出しがないことを確認する。
-
-Paintの時間軸は狭い領域で中間目盛りラベルを省略し、開始・終了時刻を残す。パネル開閉で目盛りが重ならず、シーク入力と行の座標が変わらないことを確認する。
-
-そのアングルで最初のディスク・リング・ビーム・選手リンクを追加した時に芝色を取得し、選手の背後に合成する設定を描画と同じUndo履歴で保存します。既存描画ではスタイルまたはピッチの「選手の背後に描画」から有効化・調整・解除できます。この設定はアングル内の描画全体に作用し、通常再生と書き出しにも引き継ぎます。色による分離のため、緑のユニフォームや芝以外の床では調整が必要です。
-
-### Paintのキーフレームとキー操作
-
-位置キーは右ペインの時刻一覧ではなく、描画タイムラインの◆から選択します。選択した点は横ドラッグ、または左右キーで時刻変更できます（左右は1/30秒、Shift併用で10/30秒。映像のフレームレートからの算出ではありません）。隣のキーとの順序を保ち、表示区間の外へは移動しません。密集した点はタイムラインを最大16倍に拡大して選択できます。
-
-タイムライン上部には選択中の絶対時刻と基準位置からのX/Y移動量を表示します。数値は入力後にフォーカスを外すと反映します。「位置を削除」またはBackspace/Deleteは選択した点だけを削除します。開始点（相対0秒）は保存契約の基準なので、位置は編集できますが削除・時刻変更はできません。
-
-描画そのものをキャンバスやレイヤー名で選択してBackspace/Deleteを押すと、その描画を削除します。Paint中はPlaylistのクリップ削除・矢印再生・クリップ移動のグローバルホットキーを無効にし、保存・書き出し・Undo/Redo・再生停止は維持します。文字入力欄は通常の文字編集を優先します。再生中や未選択時のBackspaceでクリップを削除しません。編集は既存Undo/Redo履歴へ保存されます。
-
-Storybook `Workspace/Playlist/Paint/Keyframe Editing` で点の選択→時刻変更→位置変更→点削除→Undo、描画選択→削除を確認する。`paintHotkeys.test.tsx` は実際のグローバルホットキー登録を含め、Paint内の削除・入力欄・再生中の削除抑止を検証する。
+ヘルプ本文のUIは `electron/src/helpDocument.ts`、ウィンドウ生成は `helpWindow.ts` に分離します。操作を変更したら該当する機能仕様とアプリ内ヘルプを同期し、変更履歴は正本への入口として要約します。

@@ -1,45 +1,35 @@
 import type { ReactElement } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-
-export const WelcomeHeader = ({
-  show,
-}: {
-  show: boolean;
-}): ReactElement | null =>
-  show ? (
-    <Stack
-      direction="row"
-      spacing={2}
-      alignItems="center"
-      sx={{ pb: 2.5, borderBottom: 1, borderColor: 'divider' }}
+import SportsRugbyOutlined from '@mui/icons-material/SportsRugbyOutlined';
+export const WelcomeHeader = ({ show }: { show: boolean }): ReactElement => (
+  <Stack direction="row" spacing={1.5} alignItems="center">
+    <Box
+      sx={{
+        display: 'grid',
+        placeItems: 'center',
+        width: 44,
+        height: 44,
+        flexShrink: 0,
+        bgcolor: 'action.selected',
+        borderRadius: 1.5,
+        color: 'primary.main',
+      }}
     >
-      <Box
-        sx={{
-          display: 'grid',
-          placeItems: 'center',
-          width: 48,
-          height: 48,
-          border: 1,
-          borderColor: 'primary.main',
-          borderRadius: 1,
-          color: 'primary.main',
-          bgcolor: (theme) => theme.custom.tokens.surface.selected,
-        }}
+      <SportsRugbyOutlined />
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="h5"
+        component="h1"
+        sx={{ fontWeight: 650, overflowWrap: 'anywhere' }}
       >
-        <GraphicEqIcon />
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ overflowWrap: 'anywhere' }}
-        >
-          SporTagLytics
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          映像を読み解き、次のプレーへ。
-        </Typography>
-      </Box>
-    </Stack>
-  ) : null;
+        SporTagLytics
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {show
+          ? '試合映像から、分析を始めましょう。'
+          : '分析の続きを、ここから。'}
+      </Typography>
+    </Box>
+  </Stack>
+);

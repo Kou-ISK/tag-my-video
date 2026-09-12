@@ -1,48 +1,44 @@
 import type { ReactElement } from 'react';
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-
-interface ActionButtonsRowProps {
-  onOpenPackage: () => void;
-  onOpenWizard: () => void;
-}
-
+import { Button, Stack, Typography } from '@mui/material';
+import Add from '@mui/icons-material/Add';
+import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 export const ActionButtonsRow = ({
   onOpenPackage,
   onOpenWizard,
-}: ActionButtonsRowProps): ReactElement => (
-  <Paper
-    variant="outlined"
-    sx={{ p: 2.5, borderTop: 2, borderTopColor: 'primary.main' }}
-  >
-    <Stack spacing={2}>
-      <Box sx={{ color: 'primary.main' }}>
-        <FolderOpenIcon fontSize="large" />
-      </Box>
-      <Box>
-        <Typography variant="h6">分析を開始</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-          試合映像・タグ・分析を、ひとつのパッケージで管理します。
-        </Typography>
-      </Box>
+  disabled = false,
+}: {
+  onOpenPackage: () => void;
+  onOpenWizard: () => void;
+  disabled?: boolean;
+}): ReactElement => (
+  <Stack spacing={1.5}>
+    <Typography variant="overline" color="text.secondary">
+      分析を始める
+    </Typography>
+    <Stack direction={{ xs: 'column', sm: 'row', md: 'column' }} spacing={1.5}>
       <Button
         variant="contained"
-        endIcon={<ArrowForwardIcon />}
+        startIcon={<FolderOpenOutlined />}
         onClick={onOpenPackage}
+        disabled={disabled}
         fullWidth
+        sx={{ justifyContent: 'flex-start', whiteSpace: 'nowrap', py: 1.25 }}
       >
         パッケージを開く
       </Button>
       <Button
         variant="outlined"
-        startIcon={<AddIcon />}
+        startIcon={<Add />}
         onClick={onOpenWizard}
+        disabled={disabled}
         fullWidth
+        sx={{ justifyContent: 'flex-start', whiteSpace: 'nowrap', py: 1.25 }}
       >
         新しいパッケージを作成
       </Button>
     </Stack>
-  </Paper>
+    <Typography variant="body2" color="text.secondary">
+      初めて使う映像は「新しいパッケージを作成」から。試合映像とタグをまとめて管理できます。
+    </Typography>
+  </Stack>
 );

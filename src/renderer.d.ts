@@ -24,6 +24,7 @@ export interface IElectronAPI {
   openFile: () => Promise<string>;
   openVideoFiles: () => Promise<string[]>;
   resolveDroppedVideoFilePath: (file: File) => string;
+  resolveDroppedPackagePath: (file: File) => string;
   openDirectory: () => Promise<string>;
   exportTimeline: (filePath: string, source: unknown) => Promise<void>;
   createPackage: (

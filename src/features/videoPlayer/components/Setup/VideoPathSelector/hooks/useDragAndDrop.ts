@@ -1,100 +1,70 @@
-import { useState, useCallback, DragEvent } from 'react';
-
+import { useCallback, useState } from 'react';
+import type { DragEvent, HTMLAttributes } from 'react';
+import { resolveDroppedPackagePath } from '../gateway/packageGateway';
 export interface DragAndDropState {
   isDragging: boolean;
   isValidDrop: boolean;
 }
-
 export const useDragAndDrop = (
-  onPackageDrop: (packagePath: string) => void,
-) => {
+  onPackageDrop: (path: string) => void,
+  onInvalidDrop: () => void = () => {},
+  disabled = false,
+): {
+  dragState: DragAndDropState;
+  handlers: HTMLAttributes<HTMLDivElement>;
+} => {
   const [dragState, setDragState] = useState<DragAndDropState>({
     isDragging: false,
     isValidDrop: false,
   });
-
-  const validateDrop = useCallback((path: string): boolean => {
-    // パッケージディレクトリかどうかを簡易チェック
-    // 実際の検証はonPackageDrop内で行う
-    return path.length > 0 && !path.includes('.mp4') && !path.includes('.mov');
-  }, []);
-
-  const handleDragEnter = useCallback((e: DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-      const item = e.dataTransfer.items[0];
-      // ディレクトリの場合のみ有効化
-      const isValid = item.kind === 'file';
-
+  const reset = (): void =>
+    setDragState({ isDragging: false, isValidDrop: false });
+  const enter = useCallback(
+    (event: DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (disabled) return;
       setDragState({
         isDragging: true,
-        isValidDrop: isValid,
+        isValidDrop:
+          event.dataTransfer.items.length === 1 &&
+          event.dataTransfer.items[0]?.kind === 'file',
       });
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // ドロップを許可
-    e.dataTransfer.dropEffect = 'copy';
-  }, []);
-
-  const handleDragLeave = useCallback((e: DragEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // 子要素へのドラッグ移動を無視
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    if (
-      x <= rect.left ||
-      x >= rect.right ||
-      y <= rect.top ||
-      y >= rect.bottom
-    ) {
-      setDragState({
-        isDragging: false,
-        isValidDrop: false,
-      });
-    }
-  }, []);
-
-  const handleDrop = useCallback(
-    async (e: DragEvent<HTMLElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setDragState({
-        isDragging: false,
-        isValidDrop: false,
-      });
-
-      // ドロップされたファイル/フォルダを取得
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const file = e.dataTransfer.files[0];
-        // @ts-expect-error - Electron環境では path プロパティが存在する
-        const filePath = file.path as string | undefined;
-
-        if (filePath && validateDrop(filePath)) {
-          onPackageDrop(filePath);
-        }
-      }
     },
-    [onPackageDrop, validateDrop],
+    [disabled],
   );
-
   return {
-    dragState,
+    dragState: disabled ? { isDragging: false, isValidDrop: false } : dragState,
     handlers: {
-      onDragEnter: handleDragEnter,
-      onDragOver: handleDragOver,
-      onDragLeave: handleDragLeave,
-      onDrop: handleDrop,
+      onDragEnter: enter,
+      onDragOver: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.dataTransfer.dropEffect = disabled ? 'none' : 'copy';
+      },
+      onDragLeave: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX <= rect.left ||
+          event.clientX >= rect.right ||
+          event.clientY <= rect.top ||
+          event.clientY >= rect.bottom
+        )
+          reset();
+      },
+      onDrop: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        reset();
+        if (disabled) return;
+        const files = event.dataTransfer.files;
+        const path =
+          files.length === 1 ? resolveDroppedPackagePath(files[0]) : '';
+        if (path) onPackageDrop(path);
+        else onInvalidDrop();
+      },
     },
   };
 };

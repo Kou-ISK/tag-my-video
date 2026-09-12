@@ -91,6 +91,107 @@ describe('VideoPathSelectorView', () => {
   });
 });
 
+describe('startup recent packages and recovery', () => {
+  const packages = [
+    {
+      path: '/Volumes/Archive/final.stpkg',
+      name: '決勝',
+      team1Name: 'Blue',
+      team2Name: 'Red',
+      videoCount: 2,
+      lastOpened: 1788994800000,
+    },
+    {
+      path: '/matches/round4.stpkg',
+      name: '第4節',
+      team1Name: 'Green',
+      team2Name: 'White',
+      videoCount: 1,
+      lastOpened: 1788908400000,
+    },
+  ];
+  const props = {
+    showWelcome: false,
+    dragState,
+    dragHandlers: {},
+    recentPackages: packages,
+    onOpenPackage: vi.fn(),
+    onOpenWizard: vi.fn(),
+    onOpenRecentPackage: vi.fn(),
+    onRemoveRecentPackage: vi.fn(),
+  };
+  it.each(['決勝', 'blue', 'ARCHIVE'])(
+    'filters by name, team or path: %s',
+    (query) => {
+      renderWithProviders(
+        <VideoPathSelectorView {...props} searchQuery={query} />,
+      );
+      expect(screen.getByRole('button', { name: '決勝を開く' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: '第4節を開く' })).toBeNull();
+    },
+  );
+  it('lets users clear a search without matches', () => {
+    const onSearchChange = vi.fn();
+    renderWithProviders(
+      <VideoPathSelectorView
+        {...props}
+        searchQuery="unknown"
+        onSearchChange={onSearchChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '検索をクリア' }));
+    expect(onSearchChange).toHaveBeenCalledWith('');
+  });
+  it('removes history without opening or removing the package file', () => {
+    const onRemove = vi.fn();
+    const onOpen = vi.fn();
+    renderWithProviders(
+      <VideoPathSelectorView
+        {...props}
+        onRemoveRecentPackage={onRemove}
+        onOpenRecentPackage={onOpen}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: '決勝を最近開いたパッケージから削除',
+      }),
+    );
+    expect(onRemove).toHaveBeenCalledWith(packages[0].path);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+  it('disables opening, creating and history actions during loading', () => {
+    renderWithProviders(<VideoPathSelectorView {...props} busy />);
+    for (const name of [
+      'パッケージを開く',
+      '新しいパッケージを作成',
+      '決勝を開く',
+      '決勝を最近開いたパッケージから削除',
+    ]) {
+      expect(
+        screen.getByRole('button', { name }).hasAttribute('disabled'),
+      ).toBe(true);
+    }
+    expect(
+      screen.getByRole('progressbar', { name: 'パッケージの読み込み' }),
+    ).toBeTruthy();
+  });
+  it('keeps error details and offers retry without Electron', () => {
+    const retry = vi.fn();
+    renderWithProviders(
+      <VideoPathSelectorView
+        {...props}
+        error="読み込めません"
+        errorDetails="/offline.stpkg"
+        onRetry={retry}
+      />,
+    );
+    expect(screen.getByRole('alert').textContent).toContain('/offline.stpkg');
+    fireEvent.click(screen.getByRole('button', { name: 'もう一度開く' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+});
+
 describe('CreatePackageWizardView', () => {
   it('disables wizard actions while creating', () => {
     renderWithProviders(

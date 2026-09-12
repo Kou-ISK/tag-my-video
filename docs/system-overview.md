@@ -59,7 +59,7 @@ Packageを扱うWindowは `electron/src/packageSessionRegistry.ts` のPackage Se
 
 ### Typed IPC
 
-IPC contract の正本は `src/types/ipc/` です。Main process は sender window と payload を検証し、preload も inbound payload を guard します。
+Rendererへ公開するIPC contractの正本は `src/renderer.d.ts` です。用途別のpayload型は `src/types/ipc/` などで定義し、公開APIから参照します。Main process は sender window と payload を検証し、preload も inbound payload を guard します。
 
 ## BrowserWindow セキュリティ
 
@@ -274,40 +274,14 @@ pnpm run check:adr
 
 GitHub Actions `quality-check` は `main` / `develop` / `feat**` 宛てpull requestで上記相当の検証を実行します。Model R&DのCIはprivate repository側で管理します。
 
-## 分析ワークスペースの表示境界
+## 開始画面・再生UI・Paintの境界
 
-UIのsemantic tokenとテーマは `src/design-system/` に集約する。開始画面のファイル選択とウィザードは `VideoPathSelector` が、ショートカットガイドは `VideoController` が組み立てる。表示Viewはpropsで再現し、Storybookの `Workspace/*` を実画面の視覚確認に使う。保存・IPC・分析モデルの契約は変更しない。
+UIの正本は `src/design-system/` のsemantic tokenとprops-only Viewです。開始画面の構成は `VideoPathSelector`、開く操作の単一状態源は `useStartPackageOpen`、IPCとロード時移行は `packageGateway` に置きます。初回・履歴・検索・ロード・エラーは[起動画面の仕様](start-workspace.md)を参照してください。
 
-## Playlist Paint
+`MovieTransportView` は再生・送りのcallbackとラベルだけを受け取り、メイン映像・Playlist・Paintから合成します。メイン映像のウィンドウ比率は[ADR 0030](adr/0030-video-window-aspect.md)、Playlistは自由リサイズです。Timelineはrulerと行でスクロール座標を共有し、再生線を1本描画します。初期行色はアクションボタンから引き継ぎ、既存行の色は行モデルが所有します。
 
-Playlistに描画編集用のPaintモードを追加。通常レビューと同じ映像DOMを維持し、アングル別の注釈を既存Playlist履歴・保存経路に反映する。編集状態はwindow-onlyで、図形・静止時間に加え、位置キーフレームとアングル別の平面較正・芝色設定を保存する。描画とPNG出力は共通レンダラーを使用し、書き出しは時刻別のfreezeFramesと、静止挿入前の映像時間に配置するmotionOverlaysを扱う。設計理由は[ADR 0028](adr/0028-playlist-studio-annotation-contract.md)。
+Paintは同じ映像DOMとPlaylist履歴を使い、Window-onlyな選択・ツール・パネル状態と、保存する注釈を分離します。`useStudioEditor` は編集の合成、`useStudioGesture` は描画ジェスチャー、`useStudioKeyframes` は位置キーの選択・時刻編集を所有します。ViewはIPC・永続化・URLを参照しません。
 
-### Paint と再生操作の共有
+追尾は独立デコーダーで解析し、成功時に自動適用、部分結果は明示的に適用/破棄します。開始後の編集を古い結果で上書きしません。表示図形と独立した追尾範囲の判断は[ADR 0031](adr/0031-tracking-target-selection.md)、保存契約は[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)です。
 
-`MovieTransportView` はprops-onlyなshared UIで、再生・送りのコールバックとラベルだけを受け取る。メイン映像、Playlist overlay、Paint transportが合成する。Paintの `tacticalDrawing.ts` はビーム・ディスク・リンク・曲線の純粋canvas rendererで、通常レビューとPNG出力からも共通利用する。リンクの選手座標はDrawingObject.pathに保持し、表示サイズへの変換とジェスチャー完了時の保存を分ける。Coach表示はadapter hookのwindow-only状態で、文書・順序・映像DOMを複製しない。
-
-Paintの動画描画はソース時刻と基準解像度の平行移動キーフレームを正本とし、requestVideoFrameCallbackで再生映像へ同期する。追跡は別のHTMLVideoElementで解析し、結果の明示的適用時だけ既存Undo履歴へ反映する。芝色マスクと平面較正はアングル別の注釈メタデータ。永続化時の不正な拡張データは読込エラーにして無言の欠落を防ぐ。詳細は[ADR 0029](adr/0029-tactics-motion-and-plane-contract.md)。
-
-描画モードの表示名はPaint。PlaylistReviewViewはprops-onlyのツールスロットを持ち、モード有効時だけ左パレットを合成する。ツールによって動画の座標領域を覆わず、ResizeObserverから得た実際の映像領域を引き続き描画の基準にする。
-
-映像操作面はHudl Sportscodeの現行公式動画を参照したフラットな黒いフッターへ更新。再生操作のshared Viewとmedia semantic tokenをメイン・Playlist・Paintで共有し、再生状態やシーク処理は既存controllerを維持する。
-
-Paintは映像直下に再生操作、その下に数値目盛りと連続した描画レイヤーを配置する。左パレットは選択・描画・選手で分類する。バーの選択は対象図形を選び開始時刻へseekし、キーフレームの菱形は24pxの操作領域を持つ。いずれもprops-only Viewの変更で、注釈モデル・保存・追跡・書き出しの契約は維持する。
-
-映像ウィンドウはsharedのuseVideoWindowAspectから映像領域外の幅・高さを測定し、検証付きvideo-window:set-aspect IPCで送信元ウィンドウを制約する。1映像、2映像横並び、3/4映像2×2の比率と実メタデータを使用する。追尾は周辺の特徴点を初期位置に選び、成功結果を既存Undo経路へ自動反映する。部分結果は明示適用、解析中の編集があれば結果を破棄する。
-
-ウィンドウ比率固定の対象はメイン映像のみ。Playlistから寸法制約Hookを除去し、自由リサイズへ戻した。追尾は単一点から複数点・2サイズの模様・往復照合・移動の合意判定へ変更し、最大1280px幅・30Hzで解析する。保存形式とUndo経路は維持する。
-
-Paintの選手リンクは映像上のクリック位置を一時保持し、確定時だけpathを保存する。人数はpathから導出し、追加・末尾削除はlinkedDiscLayoutで計算する。追尾対象はTrackingTargetOverlayViewから正規化座標で指定し、useTacticsTracking内の一時状態として扱う。保存する図形の形とは独立し、解析開始時の映像座標へ変換する。
-
-Paintの編集パネルの開閉状態はuseStudioEditorが保持し、StudioSidebarViewへ渡す。閉じた状態は40pxの再表示用領域を残し、編集中の状態を維持する。ヘッダーとスクロールする設定本文を分離し、縦に長い設定でも開閉操作へアクセスできる。
-
-そのアングルで最初のディスク・リング・ビーム・選手リンクを追加した時に芝色を取得し、選手の背後に合成する設定を描画と同じUndo履歴で保存します。既存描画ではスタイルまたはピッチの「選手の背後に描画」から有効化・調整・解除できます。この設定はアングル内の描画全体に作用し、通常再生と書き出しにも引き継ぎます。色による分離のため、緑のユニフォームや芝以外の床では調整が必要です。
-
-### Paintのキーフレームとキー操作
-
-位置キーは右ペインの時刻一覧ではなく、描画タイムラインの◆から選択します。選択した点は横ドラッグ、または左右キーで時刻変更できます（左右は1/30秒、Shift併用で10/30秒。映像のフレームレートからの算出ではありません）。隣のキーとの順序を保ち、表示区間の外へは移動しません。密集した点はタイムラインを最大16倍に拡大して選択できます。
-
-タイムライン上部には選択中の絶対時刻と基準位置からのX/Y移動量を表示します。数値は入力後にフォーカスを外すと反映します。「位置を削除」またはBackspace/Deleteは選択した点だけを削除します。開始点（相対0秒）は保存契約の基準なので、位置は編集できますが削除・時刻変更はできません。
-
-描画そのものをキャンバスやレイヤー名で選択してBackspace/Deleteを押すと、その描画を削除します。Paint中はPlaylistのクリップ削除・矢印再生・クリップ移動のグローバルホットキーを無効にし、保存・書き出し・Undo/Redo・再生停止は維持します。文字入力欄は通常の文字編集を優先します。再生中や未選択時のBackspaceでクリップを削除しません。編集は既存Undo/Redo履歴へ保存されます。
+通常再生・編集・PNGで共通レンダラーを使用し、動画出力ではソース時刻上のmotion overlayとアングル別の芝色処理を静止挿入より前に合成します。[Paint仕様](tactics.md)に型・上限・実装入口を、[Playlist仕様](playlist-features.md)に文書・順序・Sessionをまとめます。

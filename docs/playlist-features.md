@@ -1,713 +1,87 @@
-# プレイリスト機能 実装ドキュメント
+# Playlistの操作と保存契約
 
-## 概要
+Playlistは、タイムラインで選んだ映像区間を整理し、連続再生・提示・書き出しを行う専用ウィンドウです。描画・位置キー・追尾の操作と制約は[Paint](tactics.md)を正本とします。本書はウィンドウ、再生順、保存、書き出しの契約を扱います。
 
-SporTagLyticsのプレイリスト機能は、タイムライン上の選択したイベントをプレイリストとしてまとめ、専用ウィンドウで連続再生・分析・クリップ書き出しを行える機能です。フリーズフレーム・簡易描画・メモ編集など、詳細な分析を支援する機能を備えています。
+## 作業の流れ
 
-関連 ADR:
+1. タイムラインでインスタンスを選択し、右クリックメニューまたは既定の `Cmd/Ctrl+Shift+P` からPlaylistへ追加します。
+2. PlaylistウィンドウでOrganizerまたはSorterを選び、クリップを整理・確認します。
+3. クリップを選択して再生し、必要に応じてノート、フリーズフレーム、Paintの描画を追加します。
+4. `.stpl` として保存するか、映像クリップを書き出します。
 
-- [0008 Dedicated Sub-Window Runtime and Synchronization](adr/0008-dedicated-sub-window-runtime-and-synchronization.md)
-- [0010 FFmpeg Clip Export Execution Boundary](adr/0010-ffmpeg-clip-export-execution-boundary.md)
-- [0025 Playlist Document Presentation Order](adr/0025-playlist-document-presentation-order.md)
+Organizerは行と行内のクリップ順を編集する面です。Sorterはメタデータを表形式で比較・検索する面です。Sorterの列ソートやフィルターは見えている一覧を変え、文書の再生順を変更しません。再生・書き出しには同じ正規順序を使います。
 
-**更新情報（2026年1月14日）**:
+## 再生と表示
 
-- 複数プレイリストウィンドウの同時表示に対応
-- 未保存変更の確認ダイアログを追加
-- タイムラインから全てのウィンドウへの一括追加機能を実装
-- コントロールUIを改善（ビデオエリアホバー時のみ表示、サイズ縮小）
-- 描画ツールを拡充（ペン/選択/図形/テキスト + 線幅/色調整）
-- 書き出し範囲/アングル/オーバーレイを詳細に指定可能に
+- Playlistの再生バーは、メイン映像と同じ角丸・半透明の共有コントローラーを使います。時間表示、シーク、再生速度、前後移動をまとめて操作できます。
+- シーク領域に描画のある位置を表示し、目印から該当時刻へ移動できます。Paint内では、図形ごとの表示区間と位置キーを下部タイムラインから直接編集します。
+- アングル1、アングル2、2画面の表示に対応し、描画対象のアングルを分けて扱います。
+- Playlistウィンドウの縦横比は自由です。メイン映像ウィンドウの固定縦横比を適用しません。映像とOrganizer/Sorter、Inspectorの作業領域に合わせてサイズを調整できます。
+- フリーズフレームは指定時刻での静止表示と描画を保持します。再生中の図形表示・追尾とは別の編集単位です。
+- Paint中の `Delete` / `Backspace` は位置キーまたは図形へ作用し、クリップは削除しません。文字・数値入力やダイアログでは通常の入力操作を優先します。
 
-## ファイル形式
+## `.stpl` の保存契約
 
-プレイリストは `.stpl` 拡張子のパッケージ形式で保存されます。
+`.stpl` は `playlist.json` を含むディレクトリ型パッケージです。埋め込み保存では `videos/` 以下に切り出した映像を含め、参照保存では元映像へのパスを保持します。
 
-### Playlist Document schema v2（Organizer基盤）
+| 形式        | 内容                 | 持ち運びの条件                               |
+| ----------- | -------------------- | -------------------------------------------- |
+| `embedded`  | 対象区間の映像を内包 | パッケージ内の映像も含めて移動する           |
+| `reference` | 元映像への参照を保持 | 元映像へ同じ場所からアクセスできることが必要 |
 
-`playlist.json` の現行形式は `schemaVersion: 2` です。`rows` が
-Organizer の semantic document state であり、各 item は `rowId` と
-`rowOrder` によって所属行と行内順序を持ちます。再生・書き出し・Organizer
-表示が利用する正規順序は、row の `order` → item の `rowOrder` です。
+埋め込み映像はクリップ先頭を0秒とします。時刻の変換と描画のロード時移行は保存・読込層で行い、View側に旧形式の分岐を持ち込みません。JSONを直接編集する運用は保証せず、アプリの保存・正規化を通してください。
 
-旧形式（`rows` / `rowId` / `rowOrder` を持たない flat `items`）は読み込み時に
-既定行「クリップ」へ移行します。移行では item の既存配列順をそのまま保持し、
-`actionName` による暗黙のグループ化は行いません。正規化は冪等なので、同じ
-ファイルを複数回 load/save しても行や item が増殖しません。
+### 文書の正規順序
 
-Sorter の列 sort、filter、列幅・表示状態、Organizer/Sorter の mode、Inspector
-幅などは window/view state であり、Playlist Documentには保存されません。
-これらの変更は Playlist の dirty state を変更しません。
+現行の `schemaVersion` は **2** です。
 
-### パッケージ構造
+- `rows` がOrganizerの行を表し、各クリップは `rowId` と `rowOrder` を持ちます。
+- 正規順序は行の `order` → 行内の `rowOrder` です。再生・保存・書き出しの呼び出し元は `getPresentationItems` を共通利用します。
+- 行情報のない旧flat形式は既定行「クリップ」へ移行し、元の配列順を保持します。`actionName` による暗黙の再グループ化は行いません。
+- 正規化は冪等であり、繰り返し読み込み・保存しても行やクリップを増殖させません。
 
-```
-MyPlaylist.stpl/              # パッケージディレクトリ（macOSでは単一ファイルに見える）
-├── playlist.json             # プレイリストメタデータ（JSON形式、テキストエディタで閲覧可能）
-└── videos/                   # 映像ファイル（埋め込み形式のみ）
-    ├── パス_01JGXXX123ABC/   # <アクション名>_<itemId>
-    │   ├── angle1.mp4        # プライマリ映像
-    │   └── angle2.mp4        # セカンダリ映像（存在する場合）
-    ├── シュート_01JGXXX456DEF/
-    │   ├── angle1.mp4
-    │   └── angle2.mp4
-    └── ...
-```
+Sorterの列ソート、フィルター、列幅・表示状態、Organizer/Sorterの切替、Inspector幅はウィンドウの表示状態です。文書には保存せず、それだけでは未保存変更にしません。詳細な判断背景は[ADR 0025](adr/0025-playlist-document-presentation-order.md)を参照してください。
 
-### 形式の種類
+描画の座標、位置キー、素材の保存範囲は[Paintのデータ契約](tactics.md)に従います。型定義を本書へ複製せず、`src/types/playlist/core.ts` を参照します。
 
-| 形式         | タイプ      | 説明                                                                    | ファイルサイズ     | 移植性               |
-| ------------ | ----------- | ----------------------------------------------------------------------- | ------------------ | -------------------- |
-| **埋め込み** | `embedded`  | 映像ファイルを `videos/` に内包、FFmpegで各アイテムの動画区間を切り出し | 大容量（映像込み） | 高い（自己完結型）   |
-| **参照**     | `reference` | 外部映像パスを保存                                                      | 軽量（数KB）       | 低い（元映像が必要） |
+## 複数ウィンドウと保存確認
 
-**埋め込み形式の注意点**:
+複数のPlaylistを独立したウィンドウで開けます。同じファイルへの要求は既存ウィンドウをフォーカスします。文書を変更して閉じるときは保存確認を行います。
 
-- 切り出した動画は各アイテムの開始時刻が `0秒` になります
-- 上書き保存時は既存の切り出し動画があれば再生成を省略します
+メインとの同期・コマンド転送はPackage Sessionの所有権に従います。別パッケージの映像・時刻・選択が混線しないよう、Mainが所有するSessionを境界にします。Rendererが任意の他ウィンドウを直接操作する構成にはしません。
 
-### 複数ウィンドウ管理
+## 映像の書き出し
 
-- 同時に複数の `.stpl` ファイルを独立したウィンドウで開くことができます
-- 同じファイルを複数回開こうとした場合は、既存ウィンドウにフォーカスします
-- 新しいウィンドウはカスケード表示されます（前のウィンドウから +50px, +50px ずつオフセット）
+書き出しダイアログで次を指定します。
 
-### ファイルの閲覧・編集
+| 項目     | 選択肢                                                |
+| -------- | ----------------------------------------------------- |
+| 対象     | 全クリップ / 選択中のみ                               |
+| まとめ方 | 1本に連結 / インスタンスごと / アクションごと         |
+| アングル | 全アングルを個別出力 / 単一アングル / 2アングルを合成 |
+| 情報表示 | アクション名・番号・ラベル・メモのオーバーレイ        |
 
-1. **macOS**: 右クリック → 「パッケージの内容を表示」
-2. `playlist.json` をテキストエディタで開く
-3. JSON形式で人間が読める形式で保存されています
+フリーズフレームとPaintの描画も書き出しデータに含めます。動きのサンプル数や書き出し上限は[Paintの制約](tactics.md)に従います。
 
-### プレビュー抑制
+進行状況は専用の進捗ウィンドウに表示します。失敗した場合は元映像、保存先の権限、空き容量を確認し、必要ならエラー詳細を開きます。FFmpeg実行・一時ファイル・キャンセルはMain側の責務であり、RendererのViewから直接扱いません。
 
-- macOSのQuickLookプレビューは無効化されています
-- `com.apple.package` UTIへの準拠により、Finderでは独自アイコンのみ表示
-- ダブルクリックでSporTagLyticsが起動します
+## 実装と検証の正本
 
-## アーキテクチャ
+| 責務                 | 実装                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| 型・保存モデル       | `src/types/playlist/core.ts`                                                         |
+| 正規化・移行・再生順 | `src/shared/playlist/playlistDocument.ts`                                            |
+| UIと操作状態         | `src/features/playlist/components/`、`hooks/playlist/`                               |
+| 描画                 | `src/features/playlist/studio/`、`hooks/annotation/`                                 |
+| Playlist外部依存     | `src/features/playlist/gateway/playlistWindowGateway.ts`                             |
+| 保存・埋め込み映像   | `electron/src/playlistWindow/storage.ts`                                             |
+| ウィンドウ・IPC      | `electron/src/playlistWindow/windowManager.ts`、`handlers.ts`                        |
+| 書き出し要求の構築   | `src/features/playlist/utils/playlistClipExportBuilder.ts`、`src/shared/clipExport/` |
 
-### コンポーネント構成
+Storybookの `Workspace/Playlist` 配下でOrganizer/Sorter、Inspector、Paint、長い名称、dark/light、狭い幅を確認します。保存・移行・再生順はdomain test、削除の対象とキーフレームはhook/component testで確認します。実ファイルの参照・埋め込み保存、閉じる際の保存確認、複数ウィンドウ、動画書き出しはElectron実機で別途検証します。[検証方針](testing.md)も参照してください。
 
-```
-src/
-├── contexts/
-│   └── PlaylistContext.tsx          # プレイリスト状態管理（Context API）
-├── features/
-│   └── playlist/
-│       ├── PlaylistWindowApp.tsx    # プレイリスト専用ウィンドウのメインアプリ
-│       ├── hooks/
-│       │   ├── annotation/                   # 描画関連Hooks
-│       │   └── playlist/                     # プレイリスト関連Hooks
-│       └── components/
-│           ├── AnnotationCanvas.tsx         # 描画キャンバス
-│           ├── PlaylistVideoCanvas.tsx      # 映像＋描画レイヤー
-│           ├── PlaylistAngleLayer.tsx       # 角度別レイヤー描画
-│           ├── PlaylistWindowDialogs.tsx    # 保存/書き出し/ノートダイアログ
-│           └── PlaylistButton.tsx           # プレイリスト追加ボタン（メイン画面用）
-│       └── utils/
-│           ├── viewMode.ts                  # 表示モード判定
-│           └── renderAnnotationPng.ts       # 描画PNG生成
-├── types/
-│   └── Playlist.ts                  # 型定義
+関連する設計判断:
 
-electron/
-└── src/
-    └── playlistWindow.ts             # Electronプレイリストウィンドウ管理（複数ウィンドウ）
-```
-
-### データフロー
-
-1. **メイン → プレイリストウィンドウ**:
-   - `PlaylistSyncData` を IPC 経由で送信
-   - 映像パス、現在時刻、パッケージパスなどを同期
-
-2. **プレイリストウィンドウ → メイン**:
-   - `PlaylistCommand` を IPC 経由で送信
-   - シーク/再生要求をメインプレイヤーに通知
-   - `set-dirty` で未保存状態を同期
-
-3. **状態管理**:
-   - `PlaylistContext` でプレイリスト全体を管理
-   - ウィンドウ単位で未保存状態を管理
-
-## 主要機能
-
-### 1. プレイリスト管理
-
-#### アイテム追加
-
-```typescript
-// タイムラインから複数選択してプレイリストに追加
-const addToPlaylist = (timelineItems: TimelineData[], playlistId?: string) => {
-  const items: PlaylistItem[] = timelineItems.map((td) => ({
-    id: ulid(),
-    timelineItemId: td.id,
-    actionName: td.actionName,
-    startTime: td.startTime,
-    endTime: td.endTime,
-    labels: td.labels,
-    memo: td.memo,
-    videoSource: currentVideoPath,
-    videoSource2: currentVideoPath2,
-    note: '',
-    annotation: null,
-  }));
-  // playlistIdが指定されていれば既存プレイリストに追加、なければ新規作成
-};
-```
-
-- タイムラインの追加は「開いている全てのプレイリストウィンドウ」に配信
-- ウィンドウが存在しない場合は新規ウィンドウを自動作成
-
-#### 順序変更
-
-```typescript
-// @dnd-kit を使用したドラッグ&ドロップ
-<DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-  <SortableContext items={items.map(i => i.id)}>
-    {items.map((item, index) => (
-      <SortableItem key={item.id} item={item} index={index} />
-    ))}
-  </SortableContext>
-</DndContext>
-```
-
-### 2. プレイリスト専用ウィンドウ
-
-#### 基本再生機能
-
-- **連続再生（autoAdvance）**: 自動的に次のアイテムへ移動
-- **ループ再生（loopPlaylist）**: プレイリスト全体を繰り返し再生
-- **前/次ジャンプ**: SkipPrevious/SkipNext ボタン
-- **再生/停止**: PlayArrow/Pause トグル
-- **音量調整**: Slider コンポーネント
-- **表示切替**: `angle1` / `angle2` / `dual`
-- **複数選択**: チェックボックスで複数選択し一括削除
-- **メモ編集**: プレイリスト内のみに保存（タイムラインには反映されない）
-
-```typescript
-const handleItemEnd = useCallback(() => {
-  if (autoAdvance) {
-    handleNext();
-  } else if (loopPlaylist && currentIndex === items.length - 1) {
-    setCurrentIndex(0);
-  }
-}, [autoAdvance, loopPlaylist, currentIndex, items.length]);
-```
-
-#### フリーズフレーム機能
-
-```typescript
-const [isFrozen, setIsFrozen] = useState(false);
-
-const handleToggleFreeze = useCallback(() => {
-  if (videoRef.current) {
-    if (isFrozen) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
-    }
-    setIsFrozen(!isFrozen);
-  }
-}, [isFrozen]);
-```
-
-- 描画のタイムスタンプに到達すると自動で停止
-- フリーズ解除は再生ボタン/Spaceで手動
-- 停止秒数は書き出し時のフリーズ長として利用
-
-### 3. 簡易描画機能
-
-#### 描画オブジェクト
-
-```typescript
-type DrawingObject =
-  | {
-      id: string;
-      type: 'pen';
-      color: string;
-      strokeWidth: number;
-      path: Array<{ x: number; y: number }>;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    }
-  | {
-      id: string;
-      type: 'line';
-      color: string;
-      strokeWidth: number;
-      startX: number;
-      startY: number;
-      endX?: number;
-      endY?: number;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    }
-  | {
-      id: string;
-      type: 'arrow';
-      color: string;
-      strokeWidth: number;
-      startX: number;
-      startY: number;
-      endX?: number;
-      endY?: number;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    }
-  | {
-      id: string;
-      type: 'rectangle';
-      color: string;
-      strokeWidth: number;
-      startX: number;
-      startY: number;
-      endX?: number;
-      endY?: number;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    }
-  | {
-      id: string;
-      type: 'circle';
-      color: string;
-      strokeWidth: number;
-      startX: number;
-      startY: number;
-      endX?: number;
-      endY?: number;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    }
-  | {
-      id: string;
-      type: 'text';
-      color: string;
-      strokeWidth: number;
-      startX: number;
-      startY: number;
-      text: string;
-      fontSize: number;
-      timestamp: number;
-      target?: 'primary' | 'secondary';
-      baseWidth?: number;
-      baseHeight?: number;
-    };
-```
-
-#### 描画モード
-
-```typescript
-const [isDrawingMode, setIsDrawingMode] = useState(false);
-const [drawingTool, setDrawingTool] = useState<'pen' | 'select' | 'rectangle' | 'circle' | 'line' | 'arrow' | 'text'>('pen');
-const [drawColor, setDrawColor] = useState('#FF0000');
-const [strokeWidth, setStrokeWidth] = useState(3);
-
-// Canvasオーバーレイで描画オブジェクトをレンダリング
-<svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: isDrawingMode ? 'auto' : 'none' }}>
-  {currentAnnotation?.objects.map((obj, idx) => (
-    <RenderDrawingObject key={idx} object={obj} />
-  ))}
-</svg>
-```
-
-- **選択ツール**: クリックで選択、ドラッグで移動、Deleteで削除
-- **タイムスタンプ**: 描画した時刻に紐づけて表示/フリーズ判定
-- **デュアルビュー**: メイン/サブどちらに描画するかを切替
-
-#### PNG エクスポート
-
-```typescript
-const renderAnnotationPng = useCallback(
-  async (
-    annotation: ItemAnnotation,
-    targetRect: DOMRect,
-  ): Promise<string | null> => {
-    const canvas = document.createElement('canvas');
-    canvas.width = targetRect.width;
-    canvas.height = targetRect.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    // 描画オブジェクトをCanvasに描画
-    annotation.objects.forEach((obj) => {
-      ctx.strokeStyle = obj.color;
-      ctx.lineWidth = obj.strokeWidth || 2;
-      // ... 描画処理
-    });
-
-    return canvas.toDataURL('image/png');
-  },
-  [],
-);
-```
-
-### 4. クリップ書き出し
-
-#### 書き出しモード
-
-| モード      | 説明                                     |
-| ----------- | ---------------------------------------- |
-| single      | プレイリスト全体を1ファイルに結合        |
-| perInstance | 各アイテムを個別のファイルとして書き出し |
-| perRow      | アクション名ごとにグループ化して書き出し |
-
-#### 書き出し範囲
-
-- `all`: 全アイテム
-- `selected`: 選択中アイテムのみ
-
-#### オーバーレイ設定
-
-```typescript
-interface OverlaySettings {
-  enabled: boolean;
-  showActionName: boolean;
-  showActionIndex: boolean;
-  showLabels: boolean;
-  showMemo: boolean;
-}
-```
-
-#### アングル選択
-
-- `allAngles`: 全アングルを個別に書き出し
-- `single`: 単一アングル
-- `multi`: 2アングルを並列合成
-
-#### FFmpeg統合
-
-```typescript
-const handleExportClips = useCallback(async () => {
-  const result = await window.electronAPI?.playlist?.exportClips({
-    items,
-    mode: exportMode,
-    angleOption,
-    fileName: exportFileName,
-    overlaySettings,
-    videoSources,
-    annotations: itemAnnotations,
-    // ... その他のパラメータ
-  });
-
-  if (result?.success) {
-    alert('プレイリストを書き出しました');
-  } else {
-    alert(result?.error || '書き出しに失敗しました');
-  }
-}, [
-  exportMode,
-  angleOption,
-  exportFileName,
-  overlaySettings,
-  items,
-  itemAnnotations,
-]);
-```
-
-- 書き出し中は専用の進捗ウィンドウが表示されます
-- メインウィンドウやプレイリストウィンドウには進捗バーを出さず、書き出し中も通常操作を継続できます
-
-### 5. デュアルビュー
-
-```typescript
-const [isDualView, setIsDualView] = useState(false);
-
-// 2映像を並列表示
-{isDualView && secondaryVideoSource ? (
-  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-    <video ref={videoRef} src={currentVideoSource} />
-    <video ref={secondaryVideoRef} src={secondaryVideoSource} />
-  </Box>
-) : (
-  <video ref={videoRef} src={currentVideoSource} />
-)}
-```
-
-- プライマリ/セカンダリ映像を個別に描画可能
-- `drawingTarget` で描画対象を切替
-- `angle1` / `angle2` / `dual` の表示モードに対応
-
-### 6. メイン↔プレイリストウィンドウ連携
-
-#### メイン → プレイリスト（同期）
-
-```typescript
-// PlaylistContext.tsx
-const syncToWindow = useCallback(
-  (
-    currentTime: number,
-    videoPath: string | null,
-    videoPath2?: string | null,
-    packagePath?: string,
-  ) => {
-    if (!window.electronAPI?.playlist || !isWindowOpen) return;
-    const syncData: PlaylistSyncData = {
-      state,
-      videoPath,
-      videoPath2: videoPath2 || null,
-      videoSources: [videoPath, videoPath2].filter(Boolean),
-      currentTime,
-      packagePath,
-    };
-    window.electronAPI.playlist.syncToWindow(syncData);
-  },
-  [state, isWindowOpen],
-);
-```
-
-#### プレイリスト → メイン（コマンド）
-
-```typescript
-// PlaylistWindowApp.tsx
-const handlePlayItem = useCallback(
-  (itemId: string) => {
-    const item = items.find((i) => i.id === itemId);
-    if (!item) return;
-    window.electronAPI?.playlist?.sendCommand({
-      type: 'play-item',
-      itemId: item.id,
-    });
-  },
-  [items],
-);
-```
-
-## Electron側実装
-
-### playlistWindow.ts
-
-```typescript
-const playlistWindows = new Map<string, PlaylistWindowInfo>();
-
-export function createPlaylistWindow(filePath?: string): BrowserWindow {
-  const windowId = filePath || generateWindowId();
-
-  if (playlistWindows.has(windowId)) {
-    const info = playlistWindows.get(windowId)!;
-    if (!info.window.isDestroyed()) {
-      info.window.focus();
-      return info.window;
-    }
-    playlistWindows.delete(windowId);
-  }
-
-  const offset = playlistWindows.size * 50;
-
-  const window = new BrowserWindow({
-    width: 450,
-    height: 700,
-    x: 100 + offset,
-    y: 100 + offset,
-    minWidth: 350,
-    minHeight: 400,
-    title: filePath ? path.basename(filePath, '.stpl') : 'プレイリスト',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      sandbox: false,
-    },
-  });
-
-  const mainURL = `file:${path.join(__dirname, '../../index.html')}#/playlist`;
-  window.loadURL(mainURL);
-  window.setMenuBarVisibility(false);
-
-  playlistWindows.set(windowId, {
-    window,
-    filePath: filePath || null,
-    isDirty: false,
-  });
-
-  window.on('close', async (e) => {
-    const info = playlistWindows.get(windowId);
-    if (!info || !info.isDirty) return;
-    e.preventDefault();
-    window.webContents.send('playlist:request-save');
-  });
-
-  window.on('closed', () => {
-    playlistWindows.delete(windowId);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('playlist:window-closed', windowId);
-    }
-  });
-
-  return window;
-}
-```
-
-### IPC ハンドラー
-
-```typescript
-export function registerPlaylistHandlers(): void {
-  ipcMain.handle('playlist:open-window', (_event, filePath?: string) => {
-    createPlaylistWindow(filePath);
-  });
-
-  ipcMain.handle('playlist:close-window', () => {
-    closePlaylistWindow();
-  });
-
-  ipcMain.handle('playlist:is-window-open', () => {
-    return isPlaylistWindowOpen();
-  });
-
-  ipcMain.handle('playlist:get-open-count', () => {
-    return getOpenWindowCount();
-  });
-
-  ipcMain.handle('playlist:add-item-to-all-windows', (_event, item) => {
-    addItemToAllWindows(item);
-  });
-
-  ipcMain.on('playlist:sync-to-window', (_event, data: PlaylistSyncData) => {
-    syncToPlaylistWindow(data);
-  });
-
-  ipcMain.on('playlist:command', (_event, command: PlaylistCommand) => {
-    if (command?.type === 'set-dirty') {
-      // windowごとの未保存状態更新
-    }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('playlist:command', command);
-    }
-  });
-
-  ipcMain.handle('playlist:save-file', async (_event, playlist) => {
-    // 保存処理
-  });
-
-  ipcMain.handle('playlist:save-file-as', async (_event, playlist) => {
-    // 名前を付けて保存
-  });
-
-  ipcMain.handle('playlist:load-file', async (_event, filePath?: string) => {
-    // 読み込み処理
-  });
-}
-```
-
-## 型定義
-
-### Playlist.ts
-
-```typescript
-export interface PlaylistItem {
-  id: string;
-  timelineItemId: string | null;
-  actionName: string;
-  startTime: number;
-  endTime: number;
-  labels?: SCLabel[];
-  memo?: string;
-  note?: string;
-  videoSource?: string;
-  videoSource2?: string;
-  annotation?: ItemAnnotation | null;
-}
-
-export interface Playlist {
-  id: string;
-  name: string;
-  description?: string;
-  type: 'reference' | 'embedded';
-  items: PlaylistItem[];
-  sourcePackagePath?: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface PlaylistState {
-  playlists: Playlist[];
-  activePlaylistId: string | null;
-  playingItemId: string | null;
-  loopMode: 'none' | 'single' | 'all';
-}
-
-export interface PlaylistSyncData {
-  state: PlaylistState;
-  videoPath: string | null;
-  videoPath2: string | null;
-  videoSources: string[];
-  currentTime: number;
-  packagePath?: string;
-}
-
-export type PlaylistCommand =
-  | { type: 'seek'; time: number }
-  | { type: 'play-item'; itemId: string }
-  | { type: 'update-state'; state: PlaylistState }
-  | { type: 'add-items'; items: PlaylistItem[] }
-  | { type: 'request-sync' }
-  | { type: 'save-playlist'; playlist: Playlist; filePath?: string }
-  | { type: 'load-playlist'; filePath: string }
-  | { type: 'set-dirty'; isDirty: boolean }
-  | { type: 'get-dirty' };
-```
-
-## 使用例
-
-### プレイリストに追加
-
-1. メイン画面のタイムラインで複数イベントを選択
-2. 右クリック → 「プレイリストに追加」
-3. 開いている全てのプレイリストウィンドウに追加（ウィンドウが無い場合は自動で新規作成）
-
-選択中のイベントは `Cmd+Shift+P` でもプレイリストに追加できます。
-
-### 専用ウィンドウで再生
-
-1. プレイリストボタンからウィンドウを開く
-2. 連続再生/ループ再生を設定
-3. アイテムをクリックして再生
-
-### フリーズフレーム＆描画
-
-1. Brush アイコンで描画モード切替（再生は一時停止）
-2. 図形/テキストツールで注釈を追加
-3. 「完了」を押すまで描画モードを維持し、描画を終了して再生を再開
-4. 再生中、描画した時刻に到達すると自動でフリーズ
-
-- 保存した描画・フリーズ設定はプレイリスト読み込み時に復元されます
-
-### クリップ書き出し
-
-1. プレイリストウィンドウの「書き出し」ボタン
-2. モード（1ファイル/インスタンスごと/アクションごと）を選択
-3. オーバーレイ設定を調整
-4. 書き出し実行（FFmpegで処理）
-
-## 制限事項
-
-1. **フリーズ解除**: 再生中の自動フリーズは手動解除（再生ボタン/Space）で復帰します
-2. **FFmpeg依存**: クリップ書き出しには、検証済みsourceからbuildして同梱するFFmpeg/FFprobeが必須
-3. **同期精度**: メイン↔プレイリスト間の時刻同期は IPC 経由のため、若干の遅延が発生する可能性あり
-4. **参照パス切れ**: 参照形式は元動画が移動/削除されると再生できません
-5. **メモの扱い**: タイムラインの `memo` とプレイリスト内の `note` は別管理です
-
-## 今後の拡張案
-
-- **クラウド同期**: プレイリストをクラウドストレージに保存
-- **共有機能**: プレイリストをチーム内で共有
-- **高度な描画**: レイヤー管理、グループ化、パスアニメーション
-- **AI分析連携**: 選択したイベントに対する自動分析・レポート生成
-- **スナップショット**: フリーズフレーム＋描画を自動的にスナップショットとして保存
-
-## 関連ドキュメント
-
-- [system-overview.md](./system-overview.md): 全体アーキテクチャ
-- [requirement.md](./requirement.md): 機能要件
-- [core.ts](../src/types/playlist/core.ts): playlist 型定義
-- [PlaylistProvider.tsx](../src/features/playlist/PlaylistProvider.tsx): playlist provider 実装
-- [PlaylistWindowApp.tsx](../src/features/playlist/PlaylistWindowApp.tsx): 専用ウィンドウ実装
+- [ADR 0008: Dedicated Sub-Window Runtime and Synchronization](adr/0008-dedicated-sub-window-runtime-and-synchronization.md)
+- [ADR 0010: FFmpeg Clip Export Execution Boundary](adr/0010-ffmpeg-clip-export-execution-boundary.md)
+- [ADR 0025: Playlist Document Presentation Order](adr/0025-playlist-document-presentation-order.md)

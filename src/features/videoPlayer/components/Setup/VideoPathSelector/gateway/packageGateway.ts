@@ -283,3 +283,9 @@ export const toPackageLoadErrorMessage = (error: unknown): string => {
       return 'パッケージの読み込み中にエラーが発生しました。';
   }
 };
+
+export const resolveDroppedPackagePath = (file: File): string => {
+  const path =
+    globalThis.window.electronAPI?.resolveDroppedPackagePath?.(file) ?? '';
+  return /\.stpkg$/i.test(path) ? path : '';
+};

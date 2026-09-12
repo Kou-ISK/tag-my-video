@@ -1,183 +1,118 @@
-import React from 'react';
+import type { ReactElement } from 'react';
 import {
-  Card,
-  CardActionArea,
-  CardContent,
-  Typography,
-  Chip,
-  Stack,
   Box,
+  ButtonBase,
   IconButton,
-  alpha,
+  Stack,
   Tooltip,
+  Typography,
 } from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import CloseIcon from '@mui/icons-material/Close';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import FolderOutlined from '@mui/icons-material/FolderOutlined';
+import Close from '@mui/icons-material/Close';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import type { RecentPackage } from './types';
-
-interface RecentPackageCardProps {
-  package: RecentPackage;
-  onOpen: (path: string) => void;
-  onRemove: (path: string) => void;
-}
-
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return 'たった今';
-  if (minutes < 60) return `${minutes}分前`;
-  if (hours < 24) return `${hours}時間前`;
-  if (days < 7) return `${days}日前`;
-  return new Date(timestamp).toLocaleDateString('ja-JP');
-};
-
-export const RecentPackageCard: React.FC<RecentPackageCardProps> = ({
+export const RecentPackageCard = ({
   package: pkg,
   onOpen,
   onRemove,
-}) => {
-  const handleClick = (): void => {
-    onOpen(pkg.path);
-  };
-
-  const handleRemove = (event: React.MouseEvent): void => {
-    event.stopPropagation();
-    onRemove(pkg.path);
-  };
-
-  return (
-    <Card
-      variant="outlined"
+  disabled = false,
+}: {
+  package: RecentPackage;
+  onOpen: (path: string) => void;
+  onRemove: (path: string) => void;
+  disabled?: boolean;
+}): ReactElement => (
+  <Box
+    component="li"
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      borderBottom: 1,
+      borderColor: 'divider',
+      minWidth: 0,
+      '&:last-child': { borderBottom: 0 },
+      '&:hover': { bgcolor: 'action.hover' },
+      '&:focus-within': { bgcolor: 'action.selected' },
+    }}
+  >
+    <ButtonBase
+      disabled={disabled}
+      onClick={() => onOpen(pkg.path)}
+      aria-label={`${pkg.name}を開く`}
       sx={{
-        position: 'relative',
-        height: '100%',
-        transition: 'border-color 0.2s ease-in-out',
-        '&:hover': {
-          borderColor: 'primary.main',
+        p: 1.5,
+        gap: 1.5,
+        flex: 1,
+        minWidth: 0,
+        justifyContent: 'flex-start',
+        textAlign: 'left',
+        '&.Mui-focusVisible': {
+          outline: '2px solid',
+          outlineColor: 'primary.main',
+          outlineOffset: -2,
         },
       }}
     >
-      <CardActionArea
-        onClick={handleClick}
+      <Box
         sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'stretch',
-          justifyContent: 'flex-start',
+          width: 40,
+          height: 44,
+          flexShrink: 0,
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: 'action.selected',
+          borderRadius: 1,
+          color: 'primary.main',
         }}
       >
-        <Box
-          sx={{
-            width: 58,
-            flexShrink: 0,
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+        <FolderOutlined />
+      </Box>
+      <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          component="span"
+          variant="subtitle2"
+          noWrap
+          title={pkg.name}
         >
-          <FolderIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-        </Box>
-
-        <CardContent sx={{ flexGrow: 1, minWidth: 0, width: '100%', p: 1.75 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 700,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              pr: 3,
-            }}
-          >
-            {pkg.name}
-          </Typography>
-
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ mt: 1, mb: 1, flexWrap: 'wrap', gap: 0.5 }}
-          >
-            <Chip
-              label={pkg.team1Name}
-              size="small"
-              variant="outlined"
-              sx={{
-                fontSize: '0.75rem',
-                maxWidth: '45%',
-                '& .MuiChip-label': {
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                },
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{ alignSelf: 'center', fontWeight: 600 }}
-            >
-              vs
-            </Typography>
-            <Chip
-              label={pkg.team2Name}
-              size="small"
-              variant="outlined"
-              sx={{
-                fontSize: '0.75rem',
-                maxWidth: '45%',
-                '& .MuiChip-label': {
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                },
-              }}
-            />
-          </Stack>
-
-          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <VideoLibraryIcon
-                sx={{ fontSize: 16, color: 'text.secondary' }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {pkg.videoCount}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <AccessTimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" color="text.secondary">
-                {formatRelativeTime(pkg.lastOpened)}
-              </Typography>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </CardActionArea>
-
-      <Tooltip title="最近開いたパッケージから削除">
+          {pkg.name}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          noWrap
+          title={`${pkg.team1Name} / ${pkg.team2Name}`}
+        >
+          {pkg.team1Name} / {pkg.team2Name}
+        </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          title={pkg.path}
+        >
+          {pkg.path}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {pkg.videoCount}映像 · 最終利用{' '}
+          {new Date(pkg.lastOpened).toLocaleDateString('ja-JP')}
+        </Typography>
+      </Stack>
+      <ChevronRight
+        sx={{ fontSize: 18, color: 'text.secondary', flexShrink: 0 }}
+      />
+    </ButtonBase>
+    <Tooltip title="履歴から除く（ファイルは削除しません）">
+      <span>
         <IconButton
-          size="small"
+          disabled={disabled}
           aria-label={`${pkg.name}を最近開いたパッケージから削除`}
-          onClick={handleRemove}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            bgcolor: (theme) => alpha(theme.palette.background.paper, 0.9),
-            '&:hover': {
-              bgcolor: (theme) => theme.custom.tokens.surface.hover,
-              color: 'error.main',
-            },
-          }}
+          onClick={() => onRemove(pkg.path)}
+          size="small"
+          sx={{ mr: 1 }}
         >
-          <CloseIcon fontSize="small" />
+          <Close fontSize="small" />
         </IconButton>
-      </Tooltip>
-    </Card>
-  );
-};
+      </span>
+    </Tooltip>
+  </Box>
+);

@@ -67,6 +67,12 @@ src/features/<feature>/
 
 Feature外から参照する場合は `src/features/<feature>/index.ts` を公開面にします。
 
+## 起動画面とヘルプの配置
+
+開始画面は `src/features/videoPlayer/components/Setup/` に置きます。`VideoPathSelectorView` はprops-onlyな構成、配下のcomponentsは履歴行・開始操作・状態表示、hooksは入力とロード購読、gatewayはIPC・永続化を担当します。開く要求の状態は `useStartPackageOpen` に集約します。詳細は[起動画面](start-workspace.md)。
+
+Paintの操作・位置キー・追尾は `src/features/playlist/studio/`、共通の注釈計算は `src/shared/tactics/` に置きます。[Paintの実装入口](tactics.md#実装と検証の入口)を参照してください。アプリ内ヘルプの本文・HTML生成は `electron/src/helpDocument.ts`、BrowserWindowとセキュリティ設定は `electron/src/helpWindow.ts` に分離します。
+
 ## Video Player Feature
 
 Video runtimeは `src/features/videoPlayer/` にまとまります。
