@@ -156,7 +156,7 @@ describe('TimelineLane', () => {
     expect(onUpdateTimeRange).toHaveBeenCalledWith('instance-1', 5, 20);
   });
 
-  it('stops an active edge drag when the edit modifier is released', () => {
+  it('discards the resize preview when the edit modifier is released', () => {
     const onUpdateTimeRange = vi.fn();
     renderLane({
       onUpdateTimeRange,
@@ -169,10 +169,54 @@ describe('TimelineLane', () => {
       metaKey: true,
     });
     fireEvent.mouseMove(document, { clientX: 250 });
-    expect(onUpdateTimeRange).toHaveBeenCalledTimes(1);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('150px');
 
     fireEvent.keyUp(window, { key: 'Alt', altKey: false, metaKey: true });
     fireEvent.mouseMove(document, { clientX: 300 });
-    expect(onUpdateTimeRange).toHaveBeenCalledTimes(1);
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('100px');
+  });
+  it('commits a whole resize once and cancels the next gesture with Escape', () => {
+    const onUpdateTimeRange = vi.fn();
+    renderLane({ onUpdateTimeRange, selectedIds: ['instance-1'] });
+    const edge = screen.getByLabelText('終了位置を調整');
+    fireEvent.mouseDown(edge, { altKey: true, metaKey: true });
+    for (const clientX of [210, 230, 250])
+      fireEvent.mouseMove(document, { clientX });
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).toHaveBeenCalledExactlyOnceWith(
+      'instance-1',
+      10,
+      25,
+    );
+    onUpdateTimeRange.mockClear();
+    fireEvent.mouseDown(edge, { altKey: true, metaKey: true });
+    fireEvent.mouseMove(document, { clientX: 300 });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
+    expect(
+      getComputedStyle(screen.getByTestId('timeline-instance-instance-1'))
+        .width,
+    ).toBe('100px');
+  });
+  it('does not create history for a resize without movement', () => {
+    const onUpdateTimeRange = vi.fn();
+    renderLane({ onUpdateTimeRange, selectedIds: ['instance-1'] });
+    fireEvent.mouseDown(screen.getByLabelText('終了位置を調整'), {
+      altKey: true,
+      metaKey: true,
+    });
+    fireEvent.mouseUp(document);
+    expect(onUpdateTimeRange).not.toHaveBeenCalled();
   });
 });

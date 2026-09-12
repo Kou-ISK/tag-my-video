@@ -32,6 +32,16 @@ export const StudioKeyframePointView = ({
   const [offset, setOffset] = useState(0);
   const drag = useRef<{ x: number; width: number } | null>(null);
   const moved = useRef(false);
+  const cancelDrag = (): void => {
+    setOffset(0);
+    drag.current = null;
+    moved.current = true;
+  };
+  useEffect(() => {
+    setOffset(0);
+    drag.current = null;
+    moved.current = true;
+  }, [enabled, time]);
   return (
     <ButtonBase
       ref={button}
@@ -75,16 +85,19 @@ export const StudioKeyframePointView = ({
               ((event.clientX - start.x) / Math.max(1, start.width)) * duration,
           );
       }}
-      onPointerCancel={() => {
-        setOffset(0);
-        drag.current = null;
-        moved.current = true;
-      }}
+      onPointerCancel={cancelDrag}
+      onBlur={cancelDrag}
       onLostPointerCapture={() => {
         setOffset(0);
         drag.current = null;
       }}
       onKeyDown={(event) => {
+        if (event.key === 'Escape' && drag.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          cancelDrag();
+          return;
+        }
         if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
           event.preventDefault();
           event.stopPropagation();

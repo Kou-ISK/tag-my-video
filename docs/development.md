@@ -271,7 +271,9 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 3. `develop -> main` PR
 4. main PR品質ゲート
 5. merge後のmain commitへrelease tag
-6. package/release assets作成
+6. package/release assets作成。同じバージョンの公開済みタグ・DMGを上書きしません（[ADR 0032](adr/0032-immutable-release-artifacts.md)）。
+
+配布前に `pnpm audit` / `pnpm audit --prod` も確認します。lockfileを固定してインストールし、UIのゲートとStorybook buildをReleaseでも実行します。
 
 `main` への直接push/mergeは行いません。Event detection model packはアプリreleaseと独立できます。
 

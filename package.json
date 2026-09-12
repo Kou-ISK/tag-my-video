@@ -1,6 +1,6 @@
 {
   "name": "sportaglytics",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "Sports video tagging and analytics application",
   "private": true,
   "packageManager": "pnpm@9.1.0",
@@ -99,7 +99,7 @@
     "storybook": "10.5.10",
     "typescript": "^5.4.5",
     "vite": "^7.3.6",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "wait-on": "^9.1.0"
   },
   "repository": "https://github.com/Kou-ISK/sportaglytics.git",
@@ -112,14 +112,21 @@
       "brace-expansion@5": "5.0.9",
       "esbuild": "0.28.1",
       "form-data": "4.0.6",
-      "js-yaml": "4.3.1",
+      "js-yaml": "4.3.2",
       "nanoid": "3.3.18",
       "postcss": "8.5.23",
       "shell-quote": "1.9.0",
       "tar": "7.5.21",
       "tmp": "0.2.7",
       "undici": "6.28.0",
-      "ws": "8.21.0"
+      "ws": "8.21.0",
+      "browserslist": "4.28.9",
+      "baseline-browser-mapping": "2.11.0",
+      "@humanfs/node": "0.16.8",
+      "@xmldom/xmldom@0.8": "0.8.15",
+      "@xmldom/xmldom@0.9": "0.9.12",
+      "fast-uri": "3.1.6",
+      "joi@18": "18.2.5"
     }
   }
 }

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-13
+
 ### Added
 
 - Paint描画モード: 選手ビーム・ディスク・リンク、位置キーのタイムライン編集、対象範囲を指定する映像追尾、ピッチ較正、芝色処理、素材プリセット、プレゼン表示、動画への描画書き出し。操作・制約は[Paint仕様](docs/tactics.md)を参照。
@@ -22,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Timeline、Analysis、Coding Panel、PlaylistのWindowとIPCをPackage Session単位で分離。
 
 ### Fixed
+
+- Timelineの伸縮を1操作1履歴へ変更し、Esc取消とUndo/Redoの保存同期を改善。
+- Paintの位置数値の空欄・未変更入力による意図しない保存を防止し、Enter確定・Esc取消と位置キードラッグの取消を追加。
+- 依存関係の監査指摘を修正したバージョンへ更新。Releaseでlockfile固定、UI検査、公開タグ・DMGの上書き防止を適用。
 
 - Timelineのアクション選択・長さ変更で再生位置が移動する動作を廃止し、ドラッグシークを上部つまみに限定。空白クリックでは選択IDとフォーカス枠を解除。
 - 起動画面の `.stpkg` ドロップをElectronの `webUtils.getPathForFile` 経由へ変更。

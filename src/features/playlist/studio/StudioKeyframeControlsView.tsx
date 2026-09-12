@@ -1,5 +1,6 @@
+import { StudioNumberFieldView } from './StudioNumberFieldView';
 import type { ReactElement } from 'react';
-import { Button, Stack, TextField, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import type { StudioKeyframeControls } from './useStudioKeyframes';
 export const StudioKeyframeControlsView = ({
   controls,
@@ -33,29 +34,23 @@ export const StudioKeyframeControlsView = ({
       </Button>
       {key ? (
         <>
-          <TextField
+          <StudioNumberFieldView
             key={`${key.objectId}:${key.time}`}
             label="キーフレーム時刻（秒）"
-            type="number"
-            size="small"
-            defaultValue={Number(key.absoluteTime.toFixed(3))}
+            value={Number(key.absoluteTime.toFixed(3))}
             disabled={!controls.enabled || key.time === 0}
-            slotProps={{ htmlInput: { step: 1 / 30 } }}
-            onBlur={(event) => controls.onMove(Number(event.target.value))}
-            sx={{ width: 155 }}
+            step={1 / 30}
+            onCommit={controls.onMove}
+            width={155}
           />
           {(['x', 'y'] as const).map((axis) => (
-            <TextField
+            <StudioNumberFieldView
               key={`${key.objectId}:${key.time}:${axis}:${key[axis]}`}
               label={`${axis.toUpperCase()}移動量`}
-              size="small"
-              type="number"
-              defaultValue={Number(key[axis].toFixed(2))}
+              value={Number(key[axis].toFixed(2))}
               disabled={!controls.enabled}
-              onBlur={(event) =>
-                controls.onPositionChange(axis, Number(event.target.value))
-              }
-              sx={{ width: 88 }}
+              onCommit={(value) => controls.onPositionChange(axis, value)}
+              width={88}
             />
           ))}
           <Button

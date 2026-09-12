@@ -217,6 +217,14 @@ export const CollapsedInspector: Story = {
 };
 
 export const KeyframeEditing: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '◆をドラッグしてEscで取消。数値はEnter/blurで確定、空欄とEscは保存しません。',
+      },
+    },
+  },
   render: () => (
     <StudioFixture
       initialObjects={[

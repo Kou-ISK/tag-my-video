@@ -139,7 +139,7 @@ Timelineへ追加されたeventは、manual/autodetectedを問わず同一data m
 ### Editing
 
 - create/update/delete
-- range edit（開始/終了時刻の変更で再生位置を移動しない）
+- range edit（再生位置を移動せず、確定時に1操作1履歴。Escで未確定の変更を取消）
 - row create/rename/color/reorder/delete
 - instance move/copy
 - multi-select、空白クリックで選択とフォーカス枠を解除

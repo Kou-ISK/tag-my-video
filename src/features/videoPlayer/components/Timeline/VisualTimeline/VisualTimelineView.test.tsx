@@ -68,7 +68,7 @@ describe('timeline editing and seeking', () => {
   it.each(['開始位置を調整', '終了位置を調整'])(
     'changes %s while keeping playback fixed',
     (label) => {
-      const item = screen.getByTestId('timeline-instance-row-0-0');
+      const item = screen.getByTestId('timeline-instance-row-0-1');
       fireEvent.click(item);
       const edge = item.querySelector(`[aria-label="${label}"]`);
       if (!edge) throw new Error('Missing resize handle');

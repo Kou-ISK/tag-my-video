@@ -114,6 +114,7 @@ export const useStudioKeyframes = ({
         !object?.motion ||
         !key ||
         !Number.isFinite(value) ||
+        key[axis] === value ||
         Math.abs(value) > 100000
       )
         return;
