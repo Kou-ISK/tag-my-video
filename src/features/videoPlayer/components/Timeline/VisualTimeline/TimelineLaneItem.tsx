@@ -80,6 +80,7 @@ export const TimelineLaneItem: React.FC<TimelineLaneItemProps> = ({
 
   return (
     <Tooltip
+      disableInteractive
       title={
         <Stack spacing={0.5}>
           <Typography variant="caption">{item.actionName}</Typography>

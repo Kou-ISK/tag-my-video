@@ -30,13 +30,13 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
   contentWidth,
   zoomScale,
   containerRef,
-  isDraggingPlayhead,
   isEditModifierPressed,
   isTeam1,
   draftRange,
   onLaneDragOver,
   onLaneDrop,
-  onPlayheadMouseDown,
+  onRangeCreateMouseDown,
+  onCreateItem,
   onEdgeMouseDown,
 }) => {
   const theme = useTheme();
@@ -186,7 +186,8 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
         )}
 
         <Box
-          onMouseDown={onPlayheadMouseDown}
+          onMouseDown={onRangeCreateMouseDown}
+          onClick={(event) => event.stopPropagation()}
           data-testid={`timeline-playhead-${actionName}`}
           sx={{
             position: 'absolute',
@@ -196,15 +197,11 @@ export const TimelineLaneView: React.FC<TimelineLaneViewProps> = ({
             width: 12,
             transform: 'translateX(-6px)',
             backgroundColor: 'transparent',
-            zIndex:
-              isEditModifierPressed || isDraggingPlayhead
-                ? theme.custom.zIndex.timelinePlayhead
-                : theme.custom.zIndex.timelineItem,
-            cursor: isEditModifierPressed
-              ? 'col-resize'
-              : isDraggingPlayhead
-                ? 'grabbing'
-                : 'grab',
+            pointerEvents:
+              isEditModifierPressed && onCreateItem ? 'auto' : 'none',
+            // インスタンスのstacking contextより下に置き、赤線と端が重なっても端の編集を優先する。
+            zIndex: theme.custom.zIndex.workSurface,
+            cursor: 'col-resize',
           }}
         />
       </Box>

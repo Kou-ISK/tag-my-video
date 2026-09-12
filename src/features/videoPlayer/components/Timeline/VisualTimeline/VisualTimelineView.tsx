@@ -237,7 +237,6 @@ export const VisualTimelineView = ({
               timeMarkers={timeMarkers}
               timeToPosition={timeToPosition}
               formatTime={formatTime}
-              seekHandlers={seekHandlers}
             />
             {rows.map((row) => (
               <TimelineLane
@@ -259,7 +258,6 @@ export const VisualTimelineView = ({
                 currentTimePosition={currentTimePosition}
                 formatTime={formatTime}
                 firstTeamName={firstTeamName}
-                onSeek={onSeek}
                 maxSec={maxSec}
                 onUpdateTimeRange={onUpdateTimeRange}
                 onMoveItem={handleMoveItems}

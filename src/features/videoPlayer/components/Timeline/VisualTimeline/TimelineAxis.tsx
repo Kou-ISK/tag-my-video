@@ -1,6 +1,5 @@
 import type { ReactElement, RefObject } from 'react';
 import { Box, Typography } from '@mui/material';
-import type { useTimelineSeek } from './hooks/useTimelineSeek';
 import { TIMELINE_ROW_HEADER_WIDTH_PX } from './domain/timelineCoordinateMapper';
 
 export interface TimelineAxisProps {
@@ -9,7 +8,6 @@ export interface TimelineAxisProps {
   timeMarkers: number[];
   timeToPosition: (time: number) => number;
   formatTime: (time: number) => string;
-  seekHandlers: ReturnType<typeof useTimelineSeek>;
 }
 
 export const TimelineAxis = ({
@@ -18,7 +16,6 @@ export const TimelineAxis = ({
   timeMarkers,
   timeToPosition,
   formatTime,
-  seekHandlers,
 }: TimelineAxisProps): ReactElement => (
   <Box
     data-testid="timeline-ruler"
@@ -55,13 +52,12 @@ export const TimelineAxis = ({
     <Box
       ref={axisRef}
       data-testid="timeline-time-origin"
-      {...seekHandlers}
       sx={{
         width: contentWidth,
         flexShrink: 0,
         position: 'relative',
         touchAction: 'none',
-        cursor: 'crosshair',
+        cursor: 'default',
         overflow: 'hidden',
       }}
     >

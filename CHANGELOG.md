@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Timelineのアクション選択・長さ変更で再生位置が移動する動作を廃止し、ドラッグシークを上部つまみに限定。空白クリックでは選択IDとフォーカス枠を解除。
 - 起動画面の `.stpkg` ドロップをElectronの `webUtils.getPathForFile` 経由へ変更。
 
 ### Documentation

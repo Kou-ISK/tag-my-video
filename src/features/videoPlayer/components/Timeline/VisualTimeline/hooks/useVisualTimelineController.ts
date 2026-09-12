@@ -109,11 +109,12 @@ export const useVisualTimelineController = ({
 
   const suppressClearRef = React.useRef(false);
   const handleSelectionApplied = useCallback((): void => {
+    setFocusedItemId(null);
     suppressClearRef.current = true;
     globalThis.setTimeout(() => {
       suppressClearRef.current = false;
     }, 0);
-  }, []);
+  }, [setFocusedItemId]);
 
   const laneRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const getLaneBounds = useCallback(
@@ -303,9 +304,18 @@ export const useVisualTimelineController = ({
       if (event.defaultPrevented || event.button !== 0) return;
       if (isSelecting || selectionBox || suppressClearRef.current) return;
       onSelectionChange([]);
+      setFocusedItemId(null);
+      setHoveredItemId(null);
       rowInteractions.clearRowSelection();
     },
-    [isSelecting, onSelectionChange, rowInteractions, selectionBox],
+    [
+      isSelecting,
+      onSelectionChange,
+      rowInteractions,
+      selectionBox,
+      setFocusedItemId,
+      setHoveredItemId,
+    ],
   );
 
   const dialogsProps = {

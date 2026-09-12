@@ -139,10 +139,11 @@ Timelineへ追加されたeventは、manual/autodetectedを問わず同一data m
 ### Editing
 
 - create/update/delete
-- range edit
+- range edit（開始/終了時刻の変更で再生位置を移動しない）
 - row create/rename/color/reorder/delete
 - instance move/copy
-- multi-select
+- multi-select、空白クリックで選択とフォーカス枠を解除
+- タイムラインのドラッグによるシークは上部のつまみだけで受け付ける
 - memo/label edit
 - Undo/Redo
 - playlist追加

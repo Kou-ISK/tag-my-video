@@ -1,24 +1,31 @@
 import { useCallback, useState } from 'react';
-import { TimelineData } from '../../../../../../types/timeline/core';
+import type { Dispatch, SetStateAction, MouseEvent } from 'react';
+import type { TimelineData } from '../../../../../../types/timeline/core';
 
 interface UseTimelineSelectionParams {
   timeline: TimelineData[];
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
-  onSeek: (time: number) => void;
+}
+
+interface TimelineSelectionState {
+  hoveredItemId: string | null;
+  setHoveredItemId: Dispatch<SetStateAction<string | null>>;
+  focusedItemId: string | null;
+  setFocusedItemId: Dispatch<SetStateAction<string | null>>;
+  handleItemClick: (event: MouseEvent, id: string) => void;
 }
 
 export const useTimelineSelection = ({
   timeline,
   selectedIds,
   onSelectionChange,
-  onSeek,
-}: UseTimelineSelectionParams) => {
+}: UseTimelineSelectionParams): TimelineSelectionState => {
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
 
   const handleItemClick = useCallback(
-    (event: React.MouseEvent, id: string) => {
+    (event: MouseEvent, id: string): void => {
       event.stopPropagation();
 
       // 複数選択（Shift/Ctrl/Cmd）
@@ -34,14 +41,13 @@ export const useTimelineSelection = ({
         return;
       }
 
-      // 単独選択 + シーク
+      // 単独選択。再生位置の操作は上部つまみまたは明示的なジャンプに限定する。
       const item = timeline.find((entry) => entry.id === id);
       if (!item) return;
       onSelectionChange([id]);
       setFocusedItemId(id);
-      onSeek(item.startTime);
     },
-    [onSeek, onSelectionChange, selectedIds, timeline],
+    [onSelectionChange, selectedIds, timeline],
   );
 
   return {

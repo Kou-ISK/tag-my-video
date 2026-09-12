@@ -8,10 +8,17 @@ import { VisualTimelineView } from './VisualTimelineView';
 import { useVisualTimelineController } from './hooks/useVisualTimelineController';
 import { reviewRows, reviewTimeline } from '../../../fixtures/timelineReview';
 const TimelineFixture = (): ReactElement => {
+  const [timeline, setTimeline] = useState(reviewTimeline);
   const [time, setTime] = useState(45);
   const [selected, setSelected] = useState<string[]>([]);
   const props = useVisualTimelineController({
-    timeline: reviewTimeline,
+    timeline,
+    onUpdateTimeRange: (id, startTime, endTime) =>
+      setTimeline((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, startTime, endTime } : item,
+        ),
+      ),
     rows: reviewRows,
     maxSec: 120,
     currentTime: time,
