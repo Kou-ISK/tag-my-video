@@ -1,4 +1,5 @@
 import React from 'react';
+import { CreatePackageWizard } from './VideoPathSelector/CreatePackageWizard';
 import { VideoPathSelectorView } from './VideoPathSelectorView';
 import type { VideoPathSelectorProps } from './VideoPathSelector/types';
 import { useVideoPathSelectorController } from './VideoPathSelector/hooks/useVideoPathSelectorController';
@@ -15,7 +16,7 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
 }) => {
   const {
     handlePackageCreated,
-    handlePackageLoaded,
+    handleOpenPackage,
     handleOpenWizard,
     handleCloseWizard,
     handleRecentPackageOpen,
@@ -33,14 +34,19 @@ export const VideoPathSelector: React.FC<VideoPathSelectorProps> = ({
   });
 
   return (
-    <VideoPathSelectorView
-      {...viewProps}
-      onPackageLoaded={handlePackageLoaded}
-      onOpenWizard={handleOpenWizard}
-      onCloseWizard={handleCloseWizard}
-      onPackageCreated={handlePackageCreated}
-      onOpenRecentPackage={handleRecentPackageOpen}
-      onRemoveRecentPackage={removeRecentPackage}
-    />
+    <>
+      <VideoPathSelectorView
+        {...viewProps}
+        onOpenPackage={handleOpenPackage}
+        onOpenWizard={handleOpenWizard}
+        onOpenRecentPackage={handleRecentPackageOpen}
+        onRemoveRecentPackage={removeRecentPackage}
+      />
+      <CreatePackageWizard
+        open={viewProps.wizardOpen}
+        onClose={handleCloseWizard}
+        onPackageCreated={handlePackageCreated}
+      />
+    </>
   );
 };

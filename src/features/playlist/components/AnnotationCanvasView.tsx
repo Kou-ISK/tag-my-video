@@ -1,10 +1,11 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import type { DrawingToolType } from '../../../types/playlist/core';
 import { AnnotationTextInputOverlay } from './AnnotationTextInputOverlay';
 import { AnnotationToolbar } from './AnnotationToolbar';
 
 interface AnnotationCanvasViewProps {
+  renderError?: string;
   containerRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   width: number;
@@ -40,6 +41,7 @@ interface AnnotationCanvasViewProps {
 }
 
 export const AnnotationCanvasView = ({
+  renderError,
   containerRef,
   canvasRef,
   width,
@@ -82,6 +84,15 @@ export const AnnotationCanvasView = ({
         overflow: 'hidden',
       }}
     >
+      {renderError && (
+        <Typography
+          role="alert"
+          color="error"
+          sx={{ position: 'absolute', top: 0, left: 0 }}
+        >
+          {renderError}
+        </Typography>
+      )}
       <canvas
         ref={canvasRef}
         width={width}

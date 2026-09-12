@@ -19,6 +19,9 @@
 
 ## User Documentation
 
+- [起動画面とパッケージを開く操作](start-workspace.md): 履歴検索、ドロップ、読み込み状態と復旧。
+- [Paint](tactics.md): 描画、追尾範囲、位置キー、ホットキー、芝色・平面・素材、保存と制約。
+
 - [ユーザーガイド](user-guide.md): パッケージ作成、タグ付け、分析、プレイリスト、エクスポート。
 - [Privacy and Data Handling](privacy-and-data-handling.md): ローカル保存、外部送信、AI 分析時のデータ境界。
 - [Homebrew quickstart](homebrew-quickstart.md): Homebrew Cask での導入。
@@ -33,6 +36,7 @@
 - [デザインシステム](design-system.md): MUI theme と shared UI の運用。
 - [Architecture exceptions](architecture-exceptions.md): `AGENTS.md` からの一時例外台帳。
 - [ADR](adr/README.md): 長期的な設計判断。
+- [Release artifactの不変性](adr/0032-immutable-release-artifacts.md): 公開済みタグとDMGを保持する配布契約。
 - [Docs Impact Matrix](documentation-guide.md#docs-impact-matrix): 実装変更時に同時更新する docs の対応表。
 - [ADR Operations](documentation-guide.md#adr-operations): ADR の採番、命名、更新 lifecycle。
 
@@ -64,3 +68,8 @@ AI agent は次の順で参照してください。
 7. [ADR Operations](documentation-guide.md#adr-operations): ADR の採番、命名、更新 lifecycle。
 
 設計・ユーザー影響・ドキュメント運用が変わる変更では、[Docs Impact Matrix](documentation-guide.md#docs-impact-matrix) に従って同期してください。
+
+- [Playlist Studio annotation contract (ADR 0028)](adr/0028-playlist-studio-annotation-contract.md)
+
+- [Paintの機能範囲と公式調査](tactics.md)
+- [Tactics motion and plane contract (ADR 0029)](adr/0029-tactics-motion-and-plane-contract.md)

@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDragAndDrop } from './useDragAndDrop';
-import { usePackageDropLoader } from './usePackageDropLoader';
+import { useStartPackageOpen } from './useStartPackageOpen';
+import type { StartStatusProps } from '../components/StartStatusView';
 import { useRecentPackages } from './useRecentPackages';
 import { useRecentPackageRegistration } from './useRecentPackageRegistration';
 import { useNotification } from '../../../../../../contexts/NotificationContext';
 import { isOnboardingCompleted } from '../../../../../../shared/onboarding/onboardingStorage';
 import type { PackageLoadResult, VideoPathSelectorProps } from '../types';
 
-interface VideoPathSelectorController {
+interface VideoPathSelectorController extends StartStatusProps {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  handleOpenPackage: () => void;
   showWelcome: boolean;
   wizardOpen: boolean;
   dragState: ReturnType<typeof useDragAndDrop>['dragState'];
@@ -33,6 +37,7 @@ export const useVideoPathSelectorController = ({
   setSyncData,
   setMediaAngles,
 }: VideoPathSelectorProps): VideoPathSelectorController => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -103,20 +108,22 @@ export const useVideoPathSelectorController = ({
     [handlePackageLoaded, notify],
   );
 
-  const { handlePackageDrop } = usePackageDropLoader({
-    onPackageLoaded: handlePackageLoaded,
-  });
-  const { dragState, handlers: dragHandlers } =
-    useDragAndDrop(handlePackageDrop);
-
-  const handleRecentPackageOpen = useCallback(
-    (path: string) => {
-      void handlePackageDrop(path);
-    },
-    [handlePackageDrop],
+  const opener = useStartPackageOpen(handlePackageLoaded);
+  const { dragState, handlers: dragHandlers } = useDragAndDrop(
+    (path) => void opener.open(path),
+    opener.reportInvalidDrop,
+    opener.busy || wizardOpen,
   );
 
   return {
+    searchQuery,
+    onSearchChange: setSearchQuery,
+    busy: opener.busy,
+    error: opener.error,
+    errorDetails: opener.errorDetails,
+    onRetry: opener.retry,
+    onDismissError: opener.dismissError,
+    handleOpenPackage: () => void opener.open(),
     showWelcome,
     wizardOpen,
     dragState,
@@ -126,7 +133,7 @@ export const useVideoPathSelectorController = ({
     handlePackageCreated,
     handleOpenWizard: () => setWizardOpen(true),
     handleCloseWizard: () => setWizardOpen(false),
-    handleRecentPackageOpen,
+    handleRecentPackageOpen: (path) => void opener.open(path),
     removeRecentPackage,
   };
 };

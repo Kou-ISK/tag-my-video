@@ -21,7 +21,8 @@ export const buildPalette = (mode: DesignSystemMode): PaletteOptions => {
     },
     primary: {
       main: tokens.interactive.primary,
-      contrastText: primitiveColors.white,
+      contrastText:
+        mode === 'dark' ? primitiveColors.ink : primitiveColors.white,
     },
     secondary: {
       main: primitiveColors.neonGreen,

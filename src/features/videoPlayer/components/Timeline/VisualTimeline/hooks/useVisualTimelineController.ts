@@ -9,6 +9,7 @@ import { useTimelineGlobalShortcuts } from './useTimelineGlobalShortcuts';
 import { useTimelineInteractions } from './useTimelineInteractions';
 import { useTimelineRangeSelection } from './useTimelineRangeSelection';
 import { useTimelineRowInteractions } from './useTimelineRowInteractions';
+import { useTimelineSeek } from './useTimelineSeek';
 import { useTimelineViewport } from './useTimelineViewport';
 
 export const useVisualTimelineController = ({
@@ -52,6 +53,11 @@ export const useVisualTimelineController = ({
     currentTimePosition,
     scrollLeft,
   } = useTimelineViewport({ maxSec, currentTime });
+  const seekHandlers = useTimelineSeek(
+    clientXToContentX,
+    positionToTime,
+    onSeek,
+  );
   const axisRef = React.useRef<HTMLDivElement>(null);
   const rowInteractions = useTimelineRowInteractions({
     rows,
@@ -103,11 +109,12 @@ export const useVisualTimelineController = ({
 
   const suppressClearRef = React.useRef(false);
   const handleSelectionApplied = useCallback((): void => {
+    setFocusedItemId(null);
     suppressClearRef.current = true;
     globalThis.setTimeout(() => {
       suppressClearRef.current = false;
     }, 0);
-  }, []);
+  }, [setFocusedItemId]);
 
   const laneRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const getLaneBounds = useCallback(
@@ -297,9 +304,18 @@ export const useVisualTimelineController = ({
       if (event.defaultPrevented || event.button !== 0) return;
       if (isSelecting || selectionBox || suppressClearRef.current) return;
       onSelectionChange([]);
+      setFocusedItemId(null);
+      setHoveredItemId(null);
       rowInteractions.clearRowSelection();
     },
-    [isSelecting, onSelectionChange, rowInteractions, selectionBox],
+    [
+      isSelecting,
+      onSelectionChange,
+      rowInteractions,
+      selectionBox,
+      setFocusedItemId,
+      setHoveredItemId,
+    ],
   );
 
   const dialogsProps = {
@@ -345,6 +361,7 @@ export const useVisualTimelineController = ({
   } satisfies VisualTimelineViewProps['dialogsProps'];
 
   return {
+    seekHandlers,
     zoomScale,
     canZoomOut,
     canZoomIn,

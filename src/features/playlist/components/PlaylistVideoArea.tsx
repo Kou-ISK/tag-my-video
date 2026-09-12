@@ -71,6 +71,7 @@ type PlaylistVideoAreaProps = {
   onVideoAreaInteraction: () => void;
   showControls: boolean;
   height?: string | number;
+  studioOverlay?: React.ReactNode;
 };
 
 export const PlaylistVideoArea = ({
@@ -120,6 +121,7 @@ export const PlaylistVideoArea = ({
   onVideoAreaInteraction,
   showControls,
   height = '100%',
+  studioOverlay,
 }: PlaylistVideoAreaProps) => {
   return (
     <Box
@@ -136,6 +138,7 @@ export const PlaylistVideoArea = ({
     >
       {currentVideoSource ? (
         <PlaylistVideoCanvas
+          annotationsVisible={!studioOverlay}
           currentVideoSource2={currentVideoSource2}
           viewMode={viewMode}
           isDrawingMode={isDrawingMode}
@@ -159,7 +162,9 @@ export const PlaylistVideoArea = ({
         <PlaylistVideoPlaceholder isEmpty={!hasItems} />
       )}
 
-      {showControls && !isDrawingMode && (
+      {studioOverlay}
+
+      {showControls && !isDrawingMode && !studioOverlay && (
         <PlaylistVideoControlsOverlay
           visible={controlsVisible}
           currentTime={currentTime}

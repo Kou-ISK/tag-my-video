@@ -1,4 +1,8 @@
-import { createTheme, type ThemeOptions } from '@mui/material/styles';
+import {
+  createTheme,
+  type Theme,
+  type ThemeOptions,
+} from '@mui/material/styles';
 import { buildComponents } from './components';
 import { buildPalette } from './palette';
 import '../theme/types';
@@ -6,7 +10,10 @@ import { densityTokens } from '../tokens/density';
 import { elevationTokens } from '../tokens/elevation';
 import { motionTokens } from '../tokens/motion';
 import { primitiveShape, primitiveSpacing } from '../tokens/primitive';
-import { createSemanticTokens, type DesignSystemMode } from '../tokens/semantic';
+import {
+  createSemanticTokens,
+  type DesignSystemMode,
+} from '../tokens/semantic';
 import { fontFamilies, typographyScale } from '../tokens/typography';
 import { zIndexTokens } from '../tokens/zIndex';
 
@@ -21,7 +28,17 @@ export const buildThemeOptions = (mode: DesignSystemMode): ThemeOptions => {
       fontFamily: fontFamilies.ui,
       display: typographyScale.display,
       heading: typographyScale.heading,
-      h6: { fontWeight: 700 },
+      fontSize: 14,
+      h4: { fontSize: '1.8rem', fontWeight: 750, letterSpacing: '-0.04em' },
+      h5: { fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.025em' },
+      h6: { fontSize: '1rem', fontWeight: 700 },
+      body1: typographyScale.body,
+      subtitle2: { fontSize: '0.8125rem', fontWeight: 650 },
+      overline: {
+        fontSize: '0.6875rem',
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+      },
       sectionTitle: typographyScale.sectionTitle,
       body2: typographyScale.bodyCompact,
       bodyCompact: typographyScale.bodyCompact,
@@ -36,11 +53,11 @@ export const buildThemeOptions = (mode: DesignSystemMode): ThemeOptions => {
     custom: {
       controllerButton: {
         color: tokens.content.primary,
-        borderRadius: primitiveShape.radiusLg,
+        borderRadius: `${primitiveShape.radiusMd}px`,
       },
       controllerPresetButton: {
         color: tokens.content.primary,
-        borderRadius: primitiveShape.radiusLg,
+        borderRadius: `${primitiveShape.radiusMd}px`,
         flexDirection: 'column',
       },
       tokens,
@@ -74,7 +91,7 @@ export const buildThemeOptions = (mode: DesignSystemMode): ThemeOptions => {
   };
 };
 
-export const getAppTheme = (mode: DesignSystemMode = 'dark') =>
+export const getAppTheme = (mode: DesignSystemMode = 'dark'): Theme =>
   createTheme(buildThemeOptions(mode));
 
 export { createSemanticTokens } from '../tokens/semantic';

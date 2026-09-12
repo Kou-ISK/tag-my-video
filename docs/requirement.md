@@ -15,21 +15,25 @@
 
 ### 1.3 技術基準
 
-| Category | Technology |
-| --- | --- |
-| Frontend | React 19 |
-| Language | TypeScript 5.4 strict |
-| Desktop | Electron 43 |
-| UI | Material UI 7 |
-| Video | Video.js 8 |
-| Package manager | pnpm 9 |
-| Build | Vite |
+| Category        | Technology            |
+| --------------- | --------------------- |
+| Frontend        | React 19              |
+| Language        | TypeScript 5.4 strict |
+| Desktop         | Electron 43           |
+| UI              | Material UI 7         |
+| Video           | Video.js 8            |
+| Package manager | pnpm 9                |
+| Build           | Vite                  |
 
 実装規約の正本は `AGENTS.md` とする。
 
 ---
 
 ## 2. 機能要件
+
+### 起動画面
+
+既存パッケージ・新規作成・単一`.stpkg`ドロップへ到達できること。履歴を名称・チーム・保存場所で検索でき、読み込み状態・失敗・再試行を同じ画面で扱う。履歴削除はファイル削除と分離する。操作と上限は[起動画面](start-workspace.md)を正本とする。
 
 ## 2.1 映像再生
 
@@ -135,10 +139,11 @@ Timelineへ追加されたeventは、manual/autodetectedを問わず同一data m
 ### Editing
 
 - create/update/delete
-- range edit
+- range edit（再生位置を移動せず、確定時に1操作1履歴。Escで未確定の変更を取消）
 - row create/rename/color/reorder/delete
 - instance move/copy
-- multi-select
+- multi-select、空白クリックで選択とフォーカス枠を解除
+- タイムラインのドラッグによるシークは上部のつまみだけで受け付ける
 - memo/label edit
 - Undo/Redo
 - playlist追加
@@ -218,12 +223,12 @@ Product UIへ出るmodel/event classは最低runtime基準を満たすものだ�
 
 Minimum per class:
 
-| Metric | Requirement |
-| --- | ---: |
-| Recall | >= 0.95 |
-| unseen evaluation matches | >= 5 |
-| Precision | 0〜1の有限値として記録 |
-| confidence threshold | 0〜1の有限値 |
+| Metric                    |            Requirement |
+| ------------------------- | ---------------------: |
+| Recall                    |                >= 0.95 |
+| unseen evaluation matches |                   >= 5 |
+| Precision                 | 0〜1の有限値として記録 |
+| confidence threshold      |           0〜1の有限値 |
 
 Precisionの固定最低値や秒単位の厳密なevent onsetをruntime gateにしない。
 
@@ -343,6 +348,12 @@ AI Analysis:
 - drawing / freeze frame / memo
 - clip export
 - multi-window support
+- Organizer / Sorter / Paintの切替と共通の文書順序
+- Paintの位置キー編集、範囲指定による追尾、クリックによる2〜15点の選手リンク
+- Paint内でBackspace/Deleteの対象を点/描画に限定し、クリップ削除を防ぐ
+- 芝色のアングル別合成、手動平面較正、端末内プリセット
+
+制限と保存契約は[Playlist](playlist-features.md)と[Paint](tactics.md)を正本とする。
 
 ---
 

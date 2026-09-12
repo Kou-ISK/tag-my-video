@@ -3,6 +3,14 @@ import { primitiveColors } from './primitive';
 export type DesignSystemMode = 'dark' | 'light';
 
 export interface SemanticTokens {
+  media: {
+    surface: string;
+    foreground: string;
+    muted: string;
+    hover: string;
+    disabled: string;
+    accent: string;
+  };
   surface: {
     canvas: string;
     work: string;
@@ -55,9 +63,12 @@ export const createSemanticTokens = (
   mode: DesignSystemMode,
 ): SemanticTokens => {
   const dark = mode === 'dark';
-  const contentPrimary = dark ? primitiveColors.white : primitiveColors.black;
+  const primary = dark
+    ? primitiveColors.signalBlue
+    : primitiveColors.signalBlueLight;
+  const contentPrimary = dark ? primitiveColors.textCool : primitiveColors.ink;
   const contentSecondary = dark
-    ? '#E0E0E0'
+    ? primitiveColors.textMuted
     : primitiveColors.neutral600;
   const contentDisabled = dark
     ? rgba(primitiveColors.white, 0.5)
@@ -71,11 +82,17 @@ export const createSemanticTokens = (
   const hover = dark
     ? rgba(primitiveColors.white, 0.08)
     : rgba(primitiveColors.black, 0.05);
-  const selected = dark
-    ? rgba(primitiveColors.neonBlue, 0.16)
-    : rgba(primitiveColors.neonBlue, 0.12);
+  const selected = dark ? rgba(primary, 0.16) : rgba(primary, 0.12);
 
   return {
+    media: {
+      surface: primitiveColors.black,
+      foreground: primitiveColors.textCool,
+      muted: primitiveColors.neutral400,
+      hover: primitiveColors.charcoalRaised,
+      disabled: primitiveColors.neutral600,
+      accent: primitiveColors.signalBlue,
+    },
     surface: {
       canvas: dark ? primitiveColors.nearBlack : primitiveColors.neutral100,
       work: dark ? primitiveColors.charcoal : primitiveColors.white,
@@ -95,16 +112,12 @@ export const createSemanticTokens = (
     border: {
       subtle: borderSubtle,
       strong: borderStrong,
-      focus: primitiveColors.neonBlue,
+      focus: primary,
     },
     interactive: {
-      primary: primitiveColors.neonBlue,
-      hover: dark
-        ? rgba(primitiveColors.neonBlue, 0.22)
-        : rgba(primitiveColors.neonBlue, 0.14),
-      pressed: dark
-        ? rgba(primitiveColors.neonBlue, 0.32)
-        : rgba(primitiveColors.neonBlue, 0.22),
+      primary,
+      hover: dark ? rgba(primary, 0.22) : rgba(primary, 0.14),
+      pressed: dark ? rgba(primary, 0.32) : rgba(primary, 0.22),
       selected,
       disabled: contentDisabled,
     },

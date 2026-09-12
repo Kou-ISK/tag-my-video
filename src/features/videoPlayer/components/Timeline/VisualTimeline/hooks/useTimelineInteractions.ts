@@ -41,7 +41,6 @@ export const useTimelineInteractions = ({
     timeline,
     selectedIds,
     onSelectionChange,
-    onSeek,
   });
 
   // Context menu

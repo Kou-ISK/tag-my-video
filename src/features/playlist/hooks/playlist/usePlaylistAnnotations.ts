@@ -1,11 +1,12 @@
+import type { ChromaKey } from '../../../../shared/tactics/chromaKey';
 import { useCallback, useMemo } from 'react';
 import type {
   AnnotationTarget,
   DrawingObject,
   ItemAnnotation,
   PlaylistItem,
+  PitchCalibration,
 } from '../../../../types/playlist/core';
-import type { AnnotationCanvasRef } from '../../components/AnnotationCanvas';
 
 interface UsePlaylistAnnotationsParams {
   currentItem: PlaylistItem | null;
@@ -21,13 +22,18 @@ interface UsePlaylistAnnotationsParams {
 
 interface UsePlaylistAnnotationsResult {
   currentAnnotation: ItemAnnotation | null;
-  persistCanvasObjects: (
-    ref: React.RefObject<AnnotationCanvasRef | null>,
+  handleChromaKeyChange: (
+    key: ChromaKey | undefined,
+    target: AnnotationTarget,
+  ) => void;
+  handlePitchCalibrationChange: (
+    calibration: PitchCalibration | undefined,
     target: AnnotationTarget,
   ) => void;
   handleAnnotationObjectsChange: (
     objects: DrawingObject[],
     target?: AnnotationTarget,
+    grassKey?: ChromaKey,
   ) => void;
   handleFreezeDurationChange: (freezeDuration: number) => void;
 }
@@ -75,62 +81,19 @@ export const usePlaylistAnnotations = ({
     };
   }, [currentItem, defaultFreezeDuration, itemAnnotations]);
 
-  const persistCanvasObjects = useCallback(
-    (
-      ref: React.RefObject<AnnotationCanvasRef | null>,
-      target: AnnotationTarget,
-    ) => {
-      if (!currentItem || !ref.current) return;
-      const objects = ref.current.getObjects();
-      const currentAnn = itemAnnotations[currentItem.id] || {
-        objects: [],
-        freezeDuration: defaultFreezeDuration,
-        freezeAt: 0,
-      };
-      const normalized = objects.map((obj) => ({
-        ...obj,
-        target: obj.target || target,
-      }));
-      const otherObjects = currentAnn.objects.filter(
-        (obj) => (obj.target || 'primary') !== target,
-      );
-      const mergedObjects = [...normalized, ...otherObjects];
-      const newAnnotation = {
-        ...currentAnn,
-        objects: mergedObjects,
-        freezeDuration: currentAnn.freezeDuration ?? defaultFreezeDuration,
-      };
-      setItemAnnotations((prev) => ({
-        ...prev,
-        [currentItem.id]: newAnnotation,
-      }));
-      setItemsWithHistory((prev) =>
-        prev.map((item) =>
-          item.id === currentItem.id
-            ? { ...item, annotation: newAnnotation }
-            : item,
-        ),
-      );
-      setHasUnsavedChanges(true);
-    },
-    [
-      currentItem,
-      defaultFreezeDuration,
-      itemAnnotations,
-      setHasUnsavedChanges,
-      setItemAnnotations,
-      setItemsWithHistory,
-    ],
-  );
-
   const handleAnnotationObjectsChange = useCallback(
-    (objects: DrawingObject[], target: AnnotationTarget = 'primary') => {
+    (
+      objects: DrawingObject[],
+      target: AnnotationTarget = 'primary',
+      grassKey?: ChromaKey,
+    ) => {
       if (!currentItem) return;
-      const currentAnn = itemAnnotations[currentItem.id] || {
-        objects: [],
-        freezeDuration: defaultFreezeDuration,
-        freezeAt: 0,
-      };
+      const currentAnn = itemAnnotations[currentItem.id] ||
+        currentItem.annotation || {
+          objects: [],
+          freezeDuration: defaultFreezeDuration,
+          freezeAt: 0,
+        };
 
       const normalizedObjects = objects.map((obj) => {
         let adjustedTimestamp = obj.timestamp;
@@ -154,6 +117,9 @@ export const usePlaylistAnnotations = ({
       const newAnnotation: ItemAnnotation = {
         ...currentAnn,
         objects: mergedObjects,
+        ...(grassKey
+          ? { chromaKey: { ...currentAnn.chromaKey, [target]: grassKey } }
+          : {}),
         freezeDuration: Math.max(
           minFreezeDuration,
           currentAnn.freezeDuration ?? defaultFreezeDuration,
@@ -186,11 +152,12 @@ export const usePlaylistAnnotations = ({
   const handleFreezeDurationChange = useCallback(
     (freezeDuration: number) => {
       if (!currentItem) return;
-      const currentAnn = itemAnnotations[currentItem.id] || {
-        objects: [],
-        freezeDuration: defaultFreezeDuration,
-        freezeAt: 0,
-      };
+      const currentAnn = itemAnnotations[currentItem.id] ||
+        currentItem.annotation || {
+          objects: [],
+          freezeDuration: defaultFreezeDuration,
+          freezeAt: 0,
+        };
       const effectiveDuration =
         freezeDuration > 0
           ? Math.max(minFreezeDuration, freezeDuration)
@@ -223,9 +190,67 @@ export const usePlaylistAnnotations = ({
     ],
   );
 
+  const handlePitchCalibrationChange = (
+    calibration: PitchCalibration | undefined,
+    target: AnnotationTarget,
+  ): void => {
+    if (!currentItem) return;
+    const currentAnn = itemAnnotations[currentItem.id] ||
+      currentItem.annotation || {
+        objects: [],
+        freezeDuration: defaultFreezeDuration,
+        freezeAt: 0,
+      };
+    const annotation = {
+      ...currentAnn,
+      pitchCalibration: {
+        ...currentAnn.pitchCalibration,
+        [target]: calibration,
+      },
+    };
+    setItemAnnotations((previous) => ({
+      ...previous,
+      [currentItem.id]: annotation,
+    }));
+    setItemsWithHistory((previous) =>
+      previous.map((item) =>
+        item.id === currentItem.id ? { ...item, annotation } : item,
+      ),
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  const handleChromaKeyChange = (
+    key: ChromaKey | undefined,
+    target: AnnotationTarget,
+  ): void => {
+    if (!currentItem) return;
+    const currentAnn = itemAnnotations[currentItem.id] ||
+      currentItem.annotation || {
+        objects: [],
+        freezeDuration: defaultFreezeDuration,
+        freezeAt: 0,
+      };
+    const annotation = {
+      ...currentAnn,
+      chromaKey: { ...currentAnn.chromaKey, [target]: key },
+    };
+    setItemAnnotations((previous) => ({
+      ...previous,
+      [currentItem.id]: annotation,
+    }));
+    setItemsWithHistory((previous) =>
+      previous.map((item) =>
+        item.id === currentItem.id ? { ...item, annotation } : item,
+      ),
+    );
+    setHasUnsavedChanges(true);
+  };
+
   return {
     currentAnnotation,
-    persistCanvasObjects,
+    handleChromaKeyChange,
+    handlePitchCalibrationChange,
     handleAnnotationObjectsChange,
     handleFreezeDurationChange,
   };

@@ -1,42 +1,18 @@
 import { useCallback } from 'react';
-import type { AnnotationTarget } from '../../../../types/playlist/core';
-import type { AnnotationCanvasRef } from '../../components/AnnotationCanvas';
-
-interface UsePlaylistDrawingModeToggleParams {
+import type { Dispatch, SetStateAction } from 'react';
+interface Params {
   isDrawingMode: boolean;
-  setIsDrawingMode: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
-  persistCanvasObjects: (
-    ref: React.RefObject<AnnotationCanvasRef | null>,
-    target: AnnotationTarget,
-  ) => void;
-  annotationCanvasRefPrimary: React.RefObject<AnnotationCanvasRef | null>;
-  annotationCanvasRefSecondary: React.RefObject<AnnotationCanvasRef | null>;
+  setIsDrawingMode: Dispatch<SetStateAction<boolean>>;
+  setIsPlaying: Dispatch<SetStateAction<boolean>>;
 }
-
+// Completed gestures already commit through onObjectsChange. Re-reading hidden
+// canvases here could overwrite the other angle or rebase embedded times twice.
 export const usePlaylistDrawingModeToggle = ({
   isDrawingMode,
   setIsDrawingMode,
   setIsPlaying,
-  persistCanvasObjects,
-  annotationCanvasRefPrimary,
-  annotationCanvasRefSecondary,
-}: UsePlaylistDrawingModeToggleParams) => {
-  return useCallback(() => {
-    if (isDrawingMode) {
-      persistCanvasObjects(annotationCanvasRefPrimary, 'primary');
-      persistCanvasObjects(annotationCanvasRefSecondary, 'secondary');
-    }
+}: Params): (() => void) =>
+  useCallback(() => {
     setIsDrawingMode(!isDrawingMode);
-    if (!isDrawingMode) {
-      setIsPlaying(false);
-    }
-  }, [
-    annotationCanvasRefPrimary,
-    annotationCanvasRefSecondary,
-    isDrawingMode,
-    persistCanvasObjects,
-    setIsDrawingMode,
-    setIsPlaying,
-  ]);
-};
+    if (!isDrawingMode) setIsPlaying(false);
+  }, [isDrawingMode, setIsDrawingMode, setIsPlaying]);

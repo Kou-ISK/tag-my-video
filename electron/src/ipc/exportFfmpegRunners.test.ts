@@ -90,3 +90,37 @@ describe('runFfmpegSingle', () => {
     expect(args).not.toContain('copy');
   });
 });
+
+it('keeps Studio overlays on their own frames after inserted pauses', async () => {
+  mockedRunFfmpegProcess.mockClear();
+  const progress = vi.fn();
+  await runFfmpegSingle({
+    getFfmpegPath,
+    sourcePath: '/source.mp4',
+    clip: {
+      startTime: 0,
+      endTime: 10,
+      freezeFrames: [
+        { time: 0, duration: 2, primary: '/first.png' },
+        { time: 5, duration: 3, primary: '/second.png' },
+      ],
+    },
+    outputPath: '/out.mp4',
+    overlayEnabled: false,
+    overlayLines: [],
+    getJapaneseFontPath,
+    escapeDrawtext,
+    onProgress: progress,
+  });
+  const args = mockedRunFfmpegProcess.mock.calls[0][1];
+  const filters = args[args.indexOf('-filter_complex') + 1];
+  expect(filters).toContain('tpad=start_mode=clone:start_duration=2');
+  expect(filters).toContain('trim=end=7');
+  expect(filters).toContain('between(t,0,2)');
+  expect(filters).toContain('between(t,7,10)');
+  expect(args).toContain('/first.png');
+  expect(args).toContain('/second.png');
+  expect(mockedRunFfmpegProcess.mock.calls[0][2]).toMatchObject({
+    durationSeconds: 15,
+  });
+});

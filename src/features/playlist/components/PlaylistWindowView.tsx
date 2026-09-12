@@ -1,3 +1,12 @@
+import { StudioToolsView } from '../studio/StudioToolsView';
+import { PitchCalibrationOverlayView } from '../studio/PitchCalibrationOverlayView';
+import { TacticsTimelineView } from '../studio/TacticsTimelineView';
+import { PlaylistReviewView } from './PlaylistReviewView';
+import { StudioCoachView } from '../studio/StudioCoachView';
+import { StudioCanvasView } from '../studio/StudioCanvasView';
+import { StudioSidebarView } from '../studio/StudioSidebarView';
+import { StudioTransportView } from '../studio/StudioTransportView';
+import { StudioClipsView } from '../studio/StudioClipsView';
 import React from 'react';
 import { Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -15,9 +24,7 @@ type PlaylistWindowViewProps = {
   controller: PlaylistWindowController;
 };
 
-export const PlaylistWindowView = ({
-  controller,
-}: PlaylistWindowViewProps) => {
+export const PlaylistWindowView = ({ controller }: PlaylistWindowViewProps) => {
   const theme = useTheme();
 
   return (
@@ -39,34 +46,91 @@ export const PlaylistWindowView = ({
         sx={{
           display: 'flex',
           minHeight: 220,
-          flex: `0 0 ${controller.shell.workspaceRatio * 100}%`,
+          flex: controller.studio.active
+            ? 1
+            : `0 0 ${controller.shell.workspaceRatio * 100}%`,
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ minWidth: 0, flex: 1, display: 'flex' }}>
-          <PlaylistVideoArea {...controller.videoArea} />
-        </Box>
-        {controller.shell.inspectorVisible ? (
-          <PlaylistClipInspector {...controller.inspector} />
-        ) : null}
+        <PlaylistReviewView
+          onKeyDown={
+            controller.studio.active
+              ? controller.studio.sidebar.onKeyDown
+              : undefined
+          }
+          tools={
+            controller.studio.active &&
+            !controller.studio.coachMode && (
+              <StudioToolsView
+                tool={controller.studio.sidebar.tool}
+                onChange={controller.studio.sidebar.onToolChange}
+                disabled={!controller.studio.sidebar.enabled}
+              />
+            )
+          }
+          media={
+            <PlaylistVideoArea
+              {...controller.videoArea}
+              studioOverlay={
+                controller.studio.active ? (
+                  <>
+                    <StudioCanvasView {...controller.studio.canvas} />
+                    <PitchCalibrationOverlayView
+                      pitch={controller.studio.pitch}
+                      width={controller.studio.canvas.width}
+                      height={controller.studio.canvas.height}
+                      contentRect={controller.studio.contentRect}
+                    />
+                  </>
+                ) : undefined
+              }
+            />
+          }
+          transport={
+            controller.studio.active ? (
+              <>
+                <StudioTransportView {...controller.studio.transport} />
+                {controller.studio.coachMode && (
+                  <StudioCoachView {...controller.studio.coach} />
+                )}
+                {!controller.studio.coachMode && (
+                  <TacticsTimelineView {...controller.studio.timeline} />
+                )}
+              </>
+            ) : undefined
+          }
+          inspector={
+            controller.studio.active ? (
+              controller.studio.coachMode ? null : (
+                <StudioSidebarView {...controller.studio.sidebar} />
+              )
+            ) : controller.shell.inspectorVisible ? (
+              <PlaylistClipInspector {...controller.inspector} />
+            ) : null
+          }
+        />
       </Box>
 
-      <PlaylistWorkspaceSplitter
-        onRatioChange={controller.shell.onWorkspaceRatioChange}
-      />
+      {!controller.studio.active && (
+        <PlaylistWorkspaceSplitter
+          onRatioChange={controller.shell.onWorkspaceRatioChange}
+        />
+      )}
 
       <Box
         component="section"
         data-testid="playlist-workspace"
         aria-label={`${controller.shell.workspaceMode} workspace`}
         sx={{
-          minHeight: 160,
-          flex: 1,
+          minHeight: controller.studio.active ? 108 : 160,
+          flex: controller.studio.active ? '0 0 108px' : 1,
           overflow: 'auto',
           bgcolor: theme.palette.background.default,
         }}
       >
-        {controller.shell.workspaceMode === 'sorter' ? (
+        {controller.studio.active ? (
+          <StudioClipsView {...controller.studio.clips} />
+        ) : controller.shell.workspaceMode === 'sorter' ? (
           <PlaylistSorterView {...controller.sorter} />
         ) : controller.shell.workspaceMode === 'organizer' ? (
           <PlaylistOrganizerView {...controller.organizer} />

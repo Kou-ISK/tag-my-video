@@ -89,9 +89,6 @@ export const usePlaylistWindowInteractionRuntime = (
     isDrawingMode: core.isDrawingMode,
     setIsDrawingMode: core.setIsDrawingMode,
     setIsPlaying: core.setIsPlaying,
-    persistCanvasObjects: runtime.annotations.persistCanvasObjects,
-    annotationCanvasRefPrimary: core.annotationCanvasRefPrimary,
-    annotationCanvasRefSecondary: core.annotationCanvasRefSecondary,
   });
 
   usePlaylistSaveRequest({
@@ -120,19 +117,23 @@ export const usePlaylistWindowInteractionRuntime = (
     stopReversePlayback,
     handlePrevious: playback.handlePrevious,
     handleNext: playback.handleNext,
-    handleDeleteSelected: selection.deleteSelected,
+    handleDeleteSelected: () => {
+      if (core.workspaceMode !== 'studio') selection.deleteSelected();
+    },
     handleUndo: runtime.handleUndo,
     handleRedo: runtime.handleRedo,
     handleSavePlaylist: runtime.saveFlow.handleSavePlaylist,
     loadedFilePath: core.loadedFilePath,
     setSaveDialogOpen: core.setSaveDialogOpen,
     setExportDialogOpen: exportState.setExportDialogOpen,
-    setViewMode: core.setViewMode,
+    setViewMode: (value) => {
+      if (core.workspaceMode !== 'studio') core.setViewMode(value);
+    },
     setIsPlaying: core.setIsPlaying,
     videoRef: core.videoRef,
     videoRef2: core.videoRef2,
   });
-  const playlistHotkeys = usePlaylistHotkeys();
+  const playlistHotkeys = usePlaylistHotkeys(core.workspaceMode === 'studio');
 
   useGlobalHotkeys(
     playlistHotkeys,

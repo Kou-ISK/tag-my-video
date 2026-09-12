@@ -1,6 +1,6 @@
-# SporTagLytics Design System (NEON / Dark-first)
+# SporTagLytics Design System (Native Analysis / Dark-first)
 
-このドキュメントは SporTagLytics の UI 実装における単一の参照点です。実装上の色・タイポグラフィ・spacing の正本は MUI theme (`src/theme.ts`) とし、本書は「どのトークンを、どの意味で使うか」を定義します。
+このドキュメントは SporTagLytics の UI 実装における単一の参照点です。実装上の色・タイポグラフィ・spacing の正本は semantic token と MUI theme (`src/design-system/`; `src/theme.ts` は互換export) とし、本書は「どのトークンを、どの意味で使うか」を定義します。
 
 SporTagLytics はスポーツ分析者が長時間操作する desktop application です。装飾性よりも、映像・Timeline・Code Window といった作業対象の視認性、情報密度、操作の安定性を優先します。
 
@@ -26,20 +26,23 @@ SporTagLytics はスポーツ分析者が長時間操作する desktop applicati
 
 ### Palette (dark)
 
-- `primary`: `#1E90FF` (Electric Blue)
+- `primary`: `#64A9FF` (Signal Blue; light は `#0067CE`)
 - `secondary`: `#00FF85` (Neon Green)
 - `team1`: `#1E90FF`
 - `team2`: `#FF6F61`
-- `background.default`: `#0D0D0D`
-- `background.paper`: `#121212`
-- `text.primary`: `#FFFFFF`
-- `text.secondary`: `#E0E0E0`
+- `background.default`: `#18181B`
+- `background.paper`: `#242426`
+- `text.primary`: `#F5F5F7`
+- `text.secondary`: `#B3B3BA`
 - `text.disabled`: `rgba(255,255,255,0.5)`
 - `divider`: `rgba(255,255,255,0.12)`
 
+- `surface.raised`: `#303034`。canvas → work → raised の明度を段階的に上げる。
+- チームのデータ色は従来どおり。操作のSignal Blueと分離する。
+
 ### Typography
 
-- Font: `Inter`, `Noto Sans JP`, `system-ui`, `sans-serif`
+- Font: `-apple-system`, `BlinkMacSystemFont`, `system-ui`, `Inter`, `Noto Sans JP`, `sans-serif`
 - 本文・UIラベルは日本語を基本とする。
 - `button` は `textTransform: none`, `fontWeight: 700`。
 - 数値を連続比較する Timeline 時刻・倍率などは tabular numerals を優先する。
@@ -47,10 +50,10 @@ SporTagLytics はスポーツ分析者が長時間操作する desktop applicati
 ### Shape / spacing / elevation
 
 - `spacing(1) = 8px` を基準とする。
-- `shape.borderRadius = 12px` を標準 radius とする。
+- `shape.borderRadius = 8px` を標準 radius とする。
 - Toolbar / Footer の高さは 32–40px 程度を基準とし、分析画面を不必要に圧迫しない。
 - application の標準 shadow は `none`。意味のない drop shadow は追加しない。
-- 小さな group control 内では 12px radius をそのまま重ねず、外枠が shape を所有して内部 control は連続した形状にしてよい。
+- 小さな group control 内では 8px radius をそのまま重ねず、外枠が shape を所有して内部 control は連続した形状にしてよい。
 
 ### Custom tokens (`theme.custom`)
 
@@ -148,7 +151,7 @@ Error UI は次の順序で情報を出します。
 
 ## Help as discovery layer
 
-SporTagLytics は熟練者の速度を優先するため、すべての interaction を常時 UI に露出しません。その代わりアプリ内ヘルプを高度操作の正本とします。
+SporTagLytics は熟練者の速度を優先するため、すべての interaction を常時 UI に露出しません。高度操作は機能別仕様書を正本とし、アプリ内ヘルプに検索できる操作の要約を掲載します。変更時には両方を同期します。
 
 Help に必ず含めるもの:
 
@@ -168,7 +171,7 @@ Help に必ず含めるもの:
    - 文字: `theme.typography` / `theme.typography.fontFamily` を利用。
    - 余白: 8px scale を基準とする。
 2. **共通 Surface**
-   - Paper / Card: `background.paper`, `divider`, radius 12。
+   - Paper / Card: `background.paper`, `divider`, radius 8。
    - 一般操作に team color や error color を装飾目的で使わない。
 3. **State / accessibility**
    - hover だけで操作可能性を伝えず、focus-visible でも状態を確認できるようにする。
@@ -191,3 +194,44 @@ Storybook を導入・利用する場合は `ThemeProvider` + `CssBaseline` を�
 - UI の用語を追加する場合は Terminology の原則に従う。
 - UI から意図的に隠す高度操作を追加・変更した場合は同じ変更で Help を更新する。
 - ダークモードを基準に設計し、ライトモードでも foreground / background / divider が theme 依存で成立することを確認する。
+
+## Native Analysis の作業画面
+
+Sportscodeの映像・コード・Timeline中心の作業モデルを参考に、角を抑えたパネル、細い境界、コンパクトな操作列で構成する。macOSに馴染むニュートラルなsurfaceとシステムフォントを使用し、常時発光や装飾的アニメーションを増やさない。
+
+- 開始画面は開始操作と最近のパッケージを横並びにし、狭い幅では縦並びにする。履歴なし・有効／無効dropも明示する。
+- 再生時刻は等幅の専用領域、速度presetは選択状態を明示する。ライトモードでも固定白文字を使わない。
+- Timelineは行名を左揃えにし、行色は薄い背景、選択は輪郭と状態で示す。クリップ本体は保存された色を不透明で表示し、文字は背景とのコントラストに応じた白／黒を選ぶ。Footerに行数と選択件数を表示する。
+- Playlistは未保存を文字で表示し、長い名称を省略、操作列は必要に応じて折り返す。
+- `Workspace/*` storiesで開始画面、再生バー、Timeline行とFooter、Code Window、分析Toolbar、Playlist、設定Headerを確認する。
+- ファイル選択・ウィザードとShortcutGuideの外部イベント購読は組み立て側が所有し、対象Viewへcallbackまたはslotを渡す。
+
+## Native Playlist と Paint
+
+- ニュートラルなグレー、システムフォント、控えめな角丸、連続した分割ペインを使用する。青は操作・選択・focusに限定し、ネオンや色付きの背景で分析対象を競わせない。
+- Playlist の Organizer / Sorter / Paint は同じツールバーから切り替える。Paint は映像、編集インスペクタ、下部クリップ列で構成する。
+- Timeline の行間余白は0。rulerと行を同じスクロールコンテンツに配置し、再生位置線はコンテンツ全体に1本だけ描画する。シークのドラッグ領域は上部つまみだけとし、目盛りと行内の線はシークを受け付けない。行内は修飾キーによる区間作成時だけ操作可能とし、端の編集ハンドルを優先する。伸縮はローカルプレビューとし、pointer終了で1回確定、Escで取消する。Paintの数値入力もEnter/blurで確定・Escで取消し、空欄を0へ変換しない。空白クリックでは選択とフォーカス枠を同時に解除する。アクションのツールチップは情報表示専用とし、下の行・空白・つまみへのポインター入力を遮らない。
+- 初期行色はアクションボタンの色を引き継ぐ。既存の行色は行モデルが所有する。
+- Paint の図形色・線幅・不透明度は注釈データであり、UI chromeのsemantic tokenとは区別する。描画ツール、プロパティ、レイヤー、再生操作は独立したprops-only Viewで構成する。
+
+### 再生操作・Paintの配置
+
+`MovieTransportView` と `mediaChromeSx` を共通使用します。再生操作面は角丸、82%不透明のmedia色、背景ぼかしで構成します。Playlistでは映像端から8px離し、内側のボタン群は透明にします。時刻は等幅表示とし、送り量は呼び出し元の実際の秒数でラベルを付けます。
+
+Paintは左にツール、右に設定、映像下部に再生→目盛り→描画行を置きます。タブ名はスタイル・動き・ピッチ・素材、説明時の簡略表示はプレゼンです。位置キーは24pxの操作領域に菱形を描き、選択を色と輪郭で示します。操作・上限の正本は[Paint](tactics.md)です。
+
+選手リンクは足元のクリックで点を追加します。人数のプルダウンは使いません。ディスクの陰影・光沢は注釈データの描画表現であり、UI chromeのsurface/elevationとは区別します。
+
+固定操作ラベルはボタン内で改行せず、操作群をwrapとgapで段分けします。可変長の素材名・レイヤー名は一行省略します。右パネルの開閉操作はスクロール本文の外に置き、aria-expanded/aria-controlsを付けます。
+
+右クリックメニューは共通Menu/MenuItem tokenを使い、13px相当の文字、30pxの行、17pxのアイコン、細い境界と控えめな角丸を統一します。ListItemTextは親の文字サイズを継承し、hoverとキーボードfocusは同じ選択色を使います。
+
+### 起動画面
+
+製品名は初回案内の完了後も表示します。開く・新規作成・dropの操作面と、検索可能な履歴を分け、狭い幅では縦に並べます。履歴はコンパクトな行に名称・チーム・保存場所・最終利用を示します。読み込み中と再試行可能なエラーは同じ画面に表示します。状態と操作の正本は[起動画面](start-workspace.md)です。
+
+### 参照資料の扱い
+
+2026-09-10に確認した[Hudl Sportscode製品ページ](https://www.hudl.com/products/sportscode)の `HSC_explainer_video_202603` と[Hudl Studio製品ページ](https://www.hudl.com/products/studio)は操作配置の参考資料です。公開画像を特定版の実行画面と断定せず、その後のユーザー指定（角丸・半透明、クリックによるリンク作成）を現行仕様へ反映しています。参照時の試行過程や旧デザインを実装規約として併記しません。
+
+映像操作面の `mediaChromeSx` は、ライトテーマでも子のボタン・文字・入力に `media.foreground` を明示します。中間のMUIコンポーネントが持つ通常画面用の文字色を継承させず、暗い半透明面上の可読性を保ちます。

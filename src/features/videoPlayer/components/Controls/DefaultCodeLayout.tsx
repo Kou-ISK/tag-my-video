@@ -12,7 +12,12 @@ type DefaultCodeLayoutProps = {
   getActionLabels: (
     action: ActionDefinition,
   ) => { groupName: string; options: string[] }[];
-  onActionClick: (teamName: string, action: ActionDefinition) => void;
+  onActionClick: (
+    teamName: string,
+    action: ActionDefinition,
+    originalName?: string,
+    color?: string,
+  ) => void;
   renderLabelGroup: (
     actionName: string,
     groupName: string,

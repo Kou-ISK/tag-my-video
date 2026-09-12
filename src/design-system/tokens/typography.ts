@@ -1,8 +1,20 @@
-import { primitiveColors } from './primitive';
-
 export const fontFamilies = {
-  ui: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'].join(', '),
-  mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'].join(', '),
+  ui: [
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'system-ui',
+    'Inter',
+    'Noto Sans JP',
+    'sans-serif',
+  ].join(', '),
+  mono: [
+    'ui-monospace',
+    'SFMono-Regular',
+    'Menlo',
+    'Monaco',
+    'Consolas',
+    'monospace',
+  ].join(', '),
 } as const;
 
 export const typographyScale = {
@@ -22,7 +34,7 @@ export const typographyScale = {
   },
   numeric: {
     fontVariantNumeric: 'tabular-nums',
-    color: primitiveColors.neutral600,
+    fontFamily: fontFamilies.mono,
   },
 } as const;
 

@@ -4,11 +4,11 @@
 
 ## 開発環境
 
-| ツール | バージョン |
-| --- | --- |
-| Node.js | 22.12以上 |
-| pnpm | 9.1.0以上 |
-| Git | 最新版 |
+| ツール  | バージョン |
+| ------- | ---------- |
+| Node.js | 22.12以上  |
+| pnpm    | 9.1.0以上  |
+| Git     | 最新版     |
 
 通常のElectron開発・配布にPython runtimeは不要です。Event modelのtraining/evaluationは別private R&D repositoryで管理します。
 
@@ -179,12 +179,12 @@ Model manifestにはschema/version/id、`status: verified | experimental`、supp
 
 Verified event class単位:
 
-| Metric | Minimum |
-| --- | ---: |
-| Recall | 0.95 |
-| unseen evaluation matches | 5 |
-| Precision | 0〜1の有限値 |
-| confidence threshold | 0〜1の有限値 |
+| Metric                    |      Minimum |
+| ------------------------- | -----------: |
+| Recall                    |         0.95 |
+| unseen evaluation matches |            5 |
+| Precision                 | 0〜1の有限値 |
+| confidence threshold      | 0〜1の有限値 |
 
 Precision単独でmodelを昇格させません。秒単位の厳密なevent onsetも主目的ではありません。
 
@@ -271,7 +271,9 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 3. `develop -> main` PR
 4. main PR品質ゲート
 5. merge後のmain commitへrelease tag
-6. package/release assets作成
+6. package/release assets作成。同じバージョンの公開済みタグ・DMGを上書きしません（[ADR 0032](adr/0032-immutable-release-artifacts.md)）。
+
+配布前に `pnpm audit` / `pnpm audit --prod` も確認します。lockfileを固定してインストールし、UIのゲートとStorybook buildをReleaseでも実行します。
 
 `main` への直接push/mergeは行いません。Event detection model packはアプリreleaseと独立できます。
 
@@ -285,3 +287,20 @@ Model training/evaluationのdebuggingはprivate R&D repositoryで行います。
 - build/script → `development.md`, `testing.md`
 - 長期判断 → `docs/adr/`
 - user/contributor visible → `CHANGELOG.md`
+
+## UIの変更と確認
+
+UI変更後は `pnpm run verify` でRenderer/Electron型検査、lint、architecture/design-system/ADR検査、テスト、アプリbuild、Storybook buildを実行します。品質ゲートの正本は[testing.md](testing.md)です。
+
+| 対象     | Storybook / 確認事項                                                                                                                                                   | 機能の正本                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| 起動画面 | `Workspace/Start`: 初回、履歴検索、空/該当なし、長い保存先、ロード中、エラー再試行、drop                                                                               | [起動画面](start-workspace.md)                   |
+| 再生操作 | `Design System/Composites/Movie Transport`、`Workspace/Transport`: 半透明、送り量のラベル、描画目印                                                                    | [デザインシステム](design-system.md)             |
+| Timeline | `Workspace/Timeline/Continuous`、Context Menu: ズーム・スクロール後のruler/行/再生線一致、つまみのみのシーク、端の編集・空白クリック・範囲選択、右クリックとキーボード | [ユーザーガイド](user-guide.md#タイムライン編集) |
+| Paint    | `Workspace/Playlist/Paint`: Interactive、Empty、Player Graphics、Video Tracking、Keyframe Editing、Inspector Layout、Collapsed Inspector                               | [Paint](tactics.md)                              |
+
+共通してdark/light、600/800/1280px、長い名称、キーボード、空状態・失敗状態を確認します。Paintでは点/描画の削除とUndo、入力欄のBackspace、リンクの連続クリック、追尾の範囲指定→適用→手修正→再追尾、パネル開閉時の状態保持を確認します。時間目盛りの入力は `useStudioRulerInput` でRAFにまとめるため、連続入力と動画側の追従も確認します。
+
+実機のファイルダイアログ・Finder/Explorerドロップ・保存再読込・Package Session・FFmpeg出力はStorybookと別に確認します。追尾の合成WebMや公開人物映像での結果と、利用者の試合映像での精度は区別して報告します。
+
+ヘルプ本文のUIは `electron/src/helpDocument.ts`、ウィンドウ生成は `helpWindow.ts` に分離します。操作を変更したら該当する機能仕様とアプリ内ヘルプを同期し、変更履歴は正本への入口として要約します。

@@ -8,6 +8,7 @@ import {
 
 export type AppBridgeFsKeys =
   | 'setWindowTitle'
+  | 'setVideoWindowAspect'
   | 'bindPackageSession'
   | 'releasePackageSession'
   | 'exportClipsWithOverlay'
@@ -30,6 +31,8 @@ export const createAppBridgeFsApi = (
   ipcRenderer: IpcRenderer,
 ): Pick<IElectronAPI, AppBridgeFsKeys> => {
   return {
+    setVideoWindowAspect: (layout) =>
+      ipcRenderer.send('video-window:set-aspect', layout),
     setWindowTitle: (title: string) => {
       ipcRenderer.send('set-window-title', title);
     },
@@ -69,7 +72,10 @@ export const createAppBridgeFsApi = (
       };
       ipcRenderer.on(EXPORT_PROGRESS_WINDOW_CHANNELS.sync, wrapped);
       return () =>
-        ipcRenderer.removeListener(EXPORT_PROGRESS_WINDOW_CHANNELS.sync, wrapped);
+        ipcRenderer.removeListener(
+          EXPORT_PROGRESS_WINDOW_CHANNELS.sync,
+          wrapped,
+        );
     },
     requestExportProgressWindowState: async () => {
       const state = await ipcRenderer.invoke(
@@ -82,13 +88,19 @@ export const createAppBridgeFsApi = (
       filters: { name: string; extensions: string[] }[],
     ) => {
       try {
-        return await ipcRenderer.invoke('save-file-dialog', defaultPath, filters);
+        return await ipcRenderer.invoke(
+          'save-file-dialog',
+          defaultPath,
+          filters,
+        );
       } catch (error) {
         console.error('Error in saveFileDialog:', error);
         return null;
       }
     },
-    openFileDialog: async (filters: { name: string; extensions: string[] }[]) => {
+    openFileDialog: async (
+      filters: { name: string; extensions: string[] }[],
+    ) => {
       try {
         return await ipcRenderer.invoke('open-file-dialog', filters);
       } catch (error) {
@@ -142,7 +154,11 @@ export const createAppBridgeFsApi = (
     },
     writeBinaryFile: async (filePath: string, base64Content: string) => {
       try {
-        return await ipcRenderer.invoke('write-binary-file', filePath, base64Content);
+        return await ipcRenderer.invoke(
+          'write-binary-file',
+          filePath,
+          base64Content,
+        );
       } catch (error) {
         console.error('Error in writeBinaryFile:', error);
         return false;
@@ -163,7 +179,11 @@ export const createAppBridgeFsApi = (
     },
     writePdfFileFromHtml: async (filePath: string, html: string) => {
       try {
-        return await ipcRenderer.invoke('write-pdf-file-from-html', filePath, html);
+        return await ipcRenderer.invoke(
+          'write-pdf-file-from-html',
+          filePath,
+          html,
+        );
       } catch (error) {
         console.error('Error in writePdfFileFromHtml:', error);
         return false;
@@ -171,7 +191,11 @@ export const createAppBridgeFsApi = (
     },
     printAnalysisReportPdf: async (filePath: string, payload: unknown) => {
       try {
-        return await ipcRenderer.invoke('analysis-report:print-pdf', filePath, payload);
+        return await ipcRenderer.invoke(
+          'analysis-report:print-pdf',
+          filePath,
+          payload,
+        );
       } catch (error) {
         console.error('Error in printAnalysisReportPdf:', error);
         return false;

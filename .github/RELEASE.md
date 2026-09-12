@@ -93,13 +93,13 @@ git tag v<version>
 git push origin v<version>
 ```
 
-The workflow creates or replaces `v<version>` release assets based on `package.json`.
+The workflow validates that the version/tag agree and the tagged commit belongs to `main`. Releases are immutable: publication uses `gh release create --verify-tag` and fails if that release already exists. Never delete or replace published tags/DMGs; corrections use a new version. See [ADR 0032](../docs/adr/0032-immutable-release-artifacts.md).
 
 ## Manual Release Dispatch
 
 1. Open GitHub Actions.
 2. Select `Release`.
-3. Click `Run workflow`.
+3. Select `main` at the version/tag commit, then click `Run workflow`. The matching version tag must already exist.
 4. Enter a version matching `package.json`.
 5. Watch security audit, quality gates, build/preload/media-tool verification, Electron E2E, macOS package, SHA256, release, and Homebrew update steps.
 
@@ -141,4 +141,4 @@ The workflow creates or replaces `v<version>` release assets based on `package.j
 
 - Confirm `HOMEBREW_TAP_TOKEN` is valid and has access to `Kou-ISK/homebrew-tap`.
 - Confirm the tap repository exists and has `Casks/` writable by the token.
-- Re-run the workflow after fixing the secret, or manually update the cask using the SHA256 values from the workflow log.
+- Retry only the failed Homebrew step after fixing the secret, or update the cask using the published DMGs and their SHA256 values. Do not repackage or replace an already published release.

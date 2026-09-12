@@ -4,6 +4,8 @@ import Remove from '@mui/icons-material/Remove';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 
 interface TimelineFooterProps {
+  rowCount?: number;
+  selectedCount?: number;
   zoomScale: number;
   canZoomOut: boolean;
   canZoomIn: boolean;
@@ -13,6 +15,8 @@ interface TimelineFooterProps {
 }
 
 export const TimelineFooter = ({
+  rowCount,
+  selectedCount,
   zoomScale,
   canZoomOut,
   canZoomIn,
@@ -46,6 +50,16 @@ export const TimelineFooter = ({
         </Tooltip>
       )}
 
+      {rowCount !== undefined && (
+        <Typography variant="caption" color="text.secondary">
+          {rowCount} 行
+        </Typography>
+      )}
+      {!!selectedCount && (
+        <Typography variant="caption" color="primary.main">
+          {selectedCount} 件選択
+        </Typography>
+      )}
       <Box sx={{ flex: 1 }} />
 
       <Box
@@ -84,6 +98,7 @@ export const TimelineFooter = ({
             textAlign: 'center',
             color: 'text.secondary',
             fontVariantNumeric: 'tabular-nums',
+            fontFamily: (theme) => theme.custom.typography.fontFamilyMono,
             userSelect: 'none',
           }}
         >

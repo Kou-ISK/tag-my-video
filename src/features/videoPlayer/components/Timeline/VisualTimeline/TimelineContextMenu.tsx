@@ -12,7 +12,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 
-interface TimelineContextMenuProps {
+export interface TimelineContextMenuProps {
   anchorPosition: { top: number; left: number } | null;
   onClose: () => void;
   onEdit: () => void;
@@ -67,7 +67,7 @@ export const TimelineContextMenu: React.FC<TimelineContextMenuProps> = ({
       slotProps={{
         paper: {
           sx: {
-            minWidth: 200,
+            minWidth: 224,
           },
         },
       }}
@@ -110,9 +110,17 @@ export const TimelineContextMenu: React.FC<TimelineContextMenuProps> = ({
 
       <Divider />
 
-      <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+      <MenuItem
+        onClick={handleDelete}
+        sx={{
+          color: (theme) =>
+            theme.palette.mode === 'dark'
+              ? theme.palette.error.light
+              : theme.palette.error.dark,
+        }}
+      >
         <ListItemIcon>
-          <DeleteIcon fontSize="small" color="error" />
+          <DeleteIcon fontSize="small" />
         </ListItemIcon>
         <ListItemText primary="削除" />
       </MenuItem>

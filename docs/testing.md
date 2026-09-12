@@ -20,18 +20,18 @@ ADR変更時:
 pnpm run check:adr
 ```
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm exec tsc --noEmit` | renderer/shared TypeScript |
-| `pnpm exec tsc -p electron/tsconfig.json` | Electron main/preload TypeScript |
-| `pnpm run lint` | ESLint zero warnings |
-| `pnpm run check:architecture` | Feature-First / Electron boundary |
-| `pnpm run check:adr` | ADR filename/index consistency |
-| `pnpm run test:run` | Vitest one-shot |
-| `pnpm run test:ci` | serialized Vitest CI run |
-| `pnpm run check:preload` | preload bundle sanity |
-| `pnpm run report:architecture-health` | architecture report |
-| `pnpm run report:large-files` | soft file-size report |
+| Command                                   | Purpose                           |
+| ----------------------------------------- | --------------------------------- |
+| `pnpm exec tsc --noEmit`                  | renderer/shared TypeScript        |
+| `pnpm exec tsc -p electron/tsconfig.json` | Electron main/preload TypeScript  |
+| `pnpm run lint`                           | ESLint zero warnings              |
+| `pnpm run check:architecture`             | Feature-First / Electron boundary |
+| `pnpm run check:adr`                      | ADR filename/index consistency    |
+| `pnpm run test:run`                       | Vitest one-shot                   |
+| `pnpm run test:ci`                        | serialized Vitest CI run          |
+| `pnpm run check:preload`                  | preload bundle sanity             |
+| `pnpm run report:architecture-health`     | architecture report               |
+| `pnpm run report:large-files`             | soft file-size report             |
 
 GitHub Actions `quality-check` は `main` / `develop` / `feat**` 宛てpull requestでfrozen install、lint、renderer/electron typecheck、architecture、ADR、Vitestを実行します。Model training/evaluationのCIは別private R&D repositoryの責務です。
 
@@ -124,3 +124,20 @@ pnpm run test:e2e:timeline-rows
 - model training/evaluation codeをpublic app repositoryへ再混在させない
 - private source-identifying fixtureをpublic CIへ入れない
 - license不適格modelを精度だけでproduction昇格させない
+
+## UI一括ゲート
+
+`pnpm run verify` で型検査、lint、architecture/design-system/ADR、unit tests、アプリとStorybookのbuildを実行する。Storybook buildの成功は操作試験・a11y試験の成功を意味しない。`Workspace/*` storiesで表示と操作を別途確認し、Electronの実ファイル・映像操作はアプリで試験する。
+
+## 起動画面と仕様の同期
+
+`Workspace/Start` では初回・履歴あり・検索一致なし・読込中・エラー・dropをdark/lightと600/800/1280pxで確認する。fixtureは検索・履歴削除を実際に操作できる状態を持たせる。
+
+- View: 名前・チーム・保存場所での検索、履歴削除と開く操作の分離、読込中の無効化、エラー詳細と再試行。
+- Hook: 同時ロードの抑止、ダイアログ取消、失敗後の再試行、nativeイベントの購読解除。
+- Drop: preloadで取得した単一 `.stpkg` だけを開き、複数・不正・読込中のdropを抑止。
+- 実機: OSダイアログ、Finder/Explorerのdrop、外付けドライブ、旧形式移行、Session復元。fixtureやunit testでは実ファイル操作を確認したことにしない。
+
+仕様を変えたときは[起動](start-workspace.md)・[Playlist](playlist-features.md)・[Paint](tactics.md)の該当正本とアプリ内Helpを更新する。CHANGELOGへの追記だけでは仕様同期を完了しない。コードの型・IPC定義を文書へ丸写しせず、実装参照が存在すること、旧UI名と廃止経路の説明が残っていないこともレビューする。
+
+Timelineの伸縮は連続mousemove中に保存せず、mouseupで1回確定し、1回のUndo/Redoで範囲全体を復元することを確認します。Esc・modifier release・blurでは元の範囲へ戻し、再生ヘッドを移動させません。Paintでは位置数値の空欄、Enter、Esc、未変更blurと、◆ドラッグのEsc取消を確認します。
