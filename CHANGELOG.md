@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- ライトモードの映像再生バーで、編集モード切替と時刻の文字色が暗くなる問題を共通media chromeで修正。
+
 - Timelineの伸縮を1操作1履歴へ変更し、Esc取消とUndo/Redoの保存同期を改善。
 - Paintの位置数値の空欄・未変更入力による意図しない保存を防止し、Enter確定・Esc取消と位置キードラッグの取消を追加。
 - 依存関係の監査指摘を修正したバージョンへ更新。Releaseでlockfile固定、UI検査、公開タグ・DMGの上書き防止を適用。

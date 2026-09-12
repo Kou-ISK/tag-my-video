@@ -233,3 +233,5 @@ Paintは左にツール、右に設定、映像下部に再生→目盛り→描
 ### 参照資料の扱い
 
 2026-09-10に確認した[Hudl Sportscode製品ページ](https://www.hudl.com/products/sportscode)の `HSC_explainer_video_202603` と[Hudl Studio製品ページ](https://www.hudl.com/products/studio)は操作配置の参考資料です。公開画像を特定版の実行画面と断定せず、その後のユーザー指定（角丸・半透明、クリックによるリンク作成）を現行仕様へ反映しています。参照時の試行過程や旧デザインを実装規約として併記しません。
+
+映像操作面の `mediaChromeSx` は、ライトテーマでも子のボタン・文字・入力に `media.foreground` を明示します。中間のMUIコンポーネントが持つ通常画面用の文字色を継承させず、暗い半透明面上の可読性を保ちます。

@@ -7,8 +7,8 @@ export const mediaChromeSx = (theme: Theme): SystemStyleObject<Theme> => ({
   backdropFilter: 'blur(16px)',
   borderRadius: 2,
   color: theme.custom.tokens.media.foreground,
-  '& .MuiIconButton-root, & .MuiTypography-root, & .MuiInputBase-root, & .MuiInputLabel-root, & .MuiSelect-icon, & .MuiInputAdornment-root, & .MuiToggleButton-root':
-    { color: 'inherit' },
+  '& .MuiButton-root, & .MuiToggleButtonGroup-root, & .MuiIconButton-root, & .MuiTypography-root, & .MuiInputBase-root, & .MuiInputLabel-root, & .MuiSelect-icon, & .MuiInputAdornment-root, & .MuiToggleButton-root':
+    { color: theme.custom.tokens.media.foreground },
   '& .MuiIconButton-root:hover, & .MuiToggleButton-root:hover': {
     bgcolor: theme.custom.tokens.media.hover,
   },
