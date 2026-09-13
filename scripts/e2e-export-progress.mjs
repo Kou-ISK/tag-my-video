@@ -1,3 +1,4 @@
+import { fixtureH264Encoder } from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -31,7 +32,7 @@ execFileSync(ffmpegPath, [
   '-i',
   'sine=frequency=880:sample_rate=48000:duration=30',
   '-c:v',
-  'h264_videotoolbox',
+  fixtureH264Encoder,
   '-b:v',
   '8M',
   '-pix_fmt',

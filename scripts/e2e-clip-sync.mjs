@@ -1,3 +1,4 @@
+import { fixtureH264Encoder, primaryModifier } from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -24,7 +25,7 @@ const fixturePaths = ['a.mp4', 'b.mp4', 'c.mp4'].map((name, index) => {
     '-i',
     `color=c=${['red', 'blue', 'green'][index]}:s=160x90:d=0.5`,
     '-c:v',
-    'h264_videotoolbox',
+    fixtureH264Encoder,
     '-pix_fmt',
     'yuv420p',
     '-y',
@@ -244,7 +245,7 @@ try {
 
   await page.getByRole('button', { name: 'パッケージを作成…' }).click();
   await page.locator('#video_0').waitFor({ timeout: 30_000 });
-  await page.keyboard.press('Meta+Shift+T');
+  await page.keyboard.press(`${primaryModifier}+Shift+T`);
   await page.getByText('クリップ単位シンク').waitFor();
   assert.equal(
     await page.getByRole('combobox').count(),
@@ -387,7 +388,7 @@ try {
   await page.locator('iframe[src*="dQw4w9WgXcQ"]').waitFor({
     timeout: 30_000,
   });
-  await page.keyboard.press('Meta+Shift+T');
+  await page.keyboard.press(`${primaryModifier}+Shift+T`);
   await page.getByText('クリップ単位シンク').waitFor();
   assert.equal(await page.getByRole('combobox').count(), 2);
 

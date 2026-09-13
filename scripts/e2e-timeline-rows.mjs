@@ -1,3 +1,4 @@
+import { fixtureH264Encoder, primaryModifier } from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -26,7 +27,7 @@ const fixturePaths = ['angle-1.mp4', 'angle-2.mp4'].map((name, index) => {
     '-i',
     `color=c=${index === 0 ? 'red' : 'blue'}:s=320x180:d=3`,
     '-c:v',
-    'h264_videotoolbox',
+    fixtureH264Encoder,
     '-pix_fmt',
     'yuv420p',
     '-y',
@@ -319,14 +320,14 @@ try {
   console.log('Row move passed');
 
   await page.getByTestId('timeline-instance-instance-1').click();
-  await page.keyboard.press('Meta+c');
+  await page.keyboard.press(`${primaryModifier}+c`);
   const attackHeader = page.getByRole('button', {
     name: 'Attack 行',
     exact: true,
   });
   await attackHeader.click();
   assert.equal(await attackHeader.getAttribute('aria-pressed'), 'true');
-  await page.keyboard.press('Meta+v');
+  await page.keyboard.press(`${primaryModifier}+v`);
   await page.waitForFunction(
     () =>
       document.querySelectorAll('[data-testid^="timeline-instance-"]')
@@ -460,14 +461,14 @@ try {
 
   await page.getByTestId('timeline-instance-instance-1').click();
   await page.keyboard.down('Alt');
-  await page.keyboard.down('Meta');
+  await page.keyboard.down(primaryModifier);
   const startHandleBox = await startHandle.boundingBox();
   assert.ok(startHandleBox, 'start resize handle must be visible');
   await page.mouse.move(startHandleBox.x + 2, startHandleBox.y + 5);
   await page.mouse.down();
   await page.mouse.move(startHandleBox.x + 50, startHandleBox.y + 5);
   await page.mouse.up();
-  await page.keyboard.up('Meta');
+  await page.keyboard.up(primaryModifier);
   await page.keyboard.up('Alt');
   await page.waitForTimeout(400);
   // The cross-window edge-resize behavior is covered by the component test.
@@ -477,7 +478,7 @@ try {
 
   const playhead = page.getByTestId('timeline-playhead-Defence');
   await page.keyboard.down('Alt');
-  await page.keyboard.down('Meta');
+  await page.keyboard.down(primaryModifier);
   await page.waitForFunction(() => {
     const handle = document.querySelector(
       '[data-testid="timeline-playhead-Defence"]',
@@ -561,7 +562,7 @@ try {
     `Timeline preview must span a range (playhead=${playheadRatio}, targetX=${targetX}, width=${previewBox?.width ?? 0})`,
   );
   await page.mouse.up();
-  await page.keyboard.up('Meta');
+  await page.keyboard.up(primaryModifier);
   await page.keyboard.up('Alt');
   const document = await waitForTimeline(
     (timelineDocument) => timelineDocument.instances.length === 4,
