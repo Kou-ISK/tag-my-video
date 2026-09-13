@@ -107,9 +107,9 @@ const fetchAndExtract = async (source, temporaryDirectory) => {
   await run('tar', [
     ...(platform === 'win32' ? ['--force-local'] : []),
     '-xf',
-    archive,
+    archive.replaceAll('\\', '/'),
     '-C',
-    temporaryDirectory,
+    temporaryDirectory.replaceAll('\\', '/'),
   ]);
   return join(temporaryDirectory, source.directory);
 };
