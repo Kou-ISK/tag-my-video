@@ -1,16 +1,13 @@
+import { getElectronLaunchOptions } from './e2e-electron-launch.mjs';
 import { fixtureH264Encoder, primaryModifier } from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { _electron as electron } from 'playwright';
 
-const require = createRequire(import.meta.url);
-const electronPath = require('electron');
 const { ffmpegPath, ffprobePath } = await import('./media-tool-paths.mjs');
-const repositoryPath = path.resolve(import.meta.dirname, '..');
 const workPath = await fs.mkdtemp(path.join(os.tmpdir(), 'sportaglytics-e2e-'));
 const profilePath = path.join(workPath, 'profile');
 const packagePath = path.join(workPath, 'e2e-sync.stpkg');
@@ -33,18 +30,9 @@ const fixturePaths = ['a.mp4', 'b.mp4', 'c.mp4'].map((name, index) => {
   ]);
   return outputPath;
 });
-const { ELECTRON_RUN_AS_NODE: _electronRunAsNode, ...electronEnvironment } =
-  process.env;
 
 const launch = async (extraArgs = []) =>
-  electron.launch({
-    executablePath: electronPath,
-    args: [repositoryPath, `--user-data-dir=${profilePath}`, ...extraArgs],
-    env: {
-      ...electronEnvironment,
-      NODE_ENV: 'test',
-    },
-  });
+  electron.launch(getElectronLaunchOptions(profilePath, extraArgs));
 
 const waitForWindowHash = async (app, hash, timeoutMs = 10_000) => {
   const deadline = Date.now() + timeoutMs;

@@ -1,16 +1,17 @@
-import { fixtureH264Encoder, primaryModifier } from './e2e-platform.mjs';
+import { getElectronLaunchOptions } from './e2e-electron-launch.mjs';
+import {
+  fixtureH264Encoder,
+  primaryModifier,
+  primaryModifierEvent,
+} from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { _electron as electron } from 'playwright';
 
-const require = createRequire(import.meta.url);
-const electronPath = require('electron');
 const { ffmpegPath } = await import('./media-tool-paths.mjs');
-const repositoryPath = path.resolve(import.meta.dirname, '..');
 const workPath = await fs.mkdtemp(
   path.join(os.tmpdir(), 'sportaglytics-timeline-rows-e2e-'),
 );
@@ -35,8 +36,6 @@ const fixturePaths = ['angle-1.mp4', 'angle-2.mp4'].map((name, index) => {
   ]);
   return outputPath;
 });
-const { ELECTRON_RUN_AS_NODE: _electronRunAsNode, ...electronEnvironment } =
-  process.env;
 
 const launch = (args = []) =>
   electron.launch({
@@ -497,7 +496,7 @@ try {
   });
   assert.ok(playheadBox, 'Timeline playhead must be visible');
   const hitTarget = await page.evaluate(
-    ({ x, y }) => {
+    ({ x, y, modifiers }) => {
       const element = document.elementFromPoint(x, y);
       return {
         testId: element?.getAttribute('data-testid') ?? '',
@@ -534,19 +533,19 @@ try {
   await page.getByTestId('timeline-create-preview').waitFor();
   await page.mouse.move(targetX, laneBox.y + 8, { steps: 4 });
   await page.evaluate(
-    ({ x, y }) => {
+    ({ x, y, modifiers }) => {
       document.dispatchEvent(
         new MouseEvent('mousemove', {
           bubbles: true,
           buttons: 1,
           altKey: true,
-          metaKey: true,
+          ...modifiers,
           clientX: x,
           clientY: y,
         }),
       );
     },
-    { x: targetX, y: laneBox.y + 8 },
+    { x: targetX, y: laneBox.y + 8, modifiers: primaryModifierEvent },
   );
   await page.waitForFunction(() => {
     const preview = document.querySelector(

@@ -12,7 +12,7 @@ jobs:
   windows:
     name: Windows media and desktop
     runs-on: windows-2025
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,6 +45,14 @@ jobs:
         with:
           path: .cache/media-tools
           key: windows-x64-media-${{ hashFiles('scripts/build-media-tools.mjs', 'scripts/media-tools/**') }}
+      - uses: actions/cache@v4
+        with:
+          path: .cache/llama
+          key: windows-x64-llama-${{ hashFiles('scripts/build-windows-llama.mjs') }}
+      - name: Build self-contained Windows AI runtime
+        run: pnpm run llama:build:windows
+      - name: Prepare Japanese font
+        run: pnpm run fonts:prepare
       - name: Windows quality gates
         run: |
           pnpm run typecheck
