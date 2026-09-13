@@ -1,11 +1,22 @@
+import {
+  getKeyboardPlatform,
+  usesAppleKeyboard,
+  formatShortcutLabel,
+} from '../../../utils/platformShortcut';
+import { parseElectronKey } from '../../../hooks/globalHotkeyUtils';
 import type { HotkeyConfig } from '../../../types/settings/coreTypes';
 import { FORBIDDEN_HOTKEYS } from './hotkeySettings.constants';
 
-export const formatKeyCombo = (event: KeyboardEvent): string => {
+export const formatKeyCombo = (
+  event: KeyboardEvent,
+  platform = getKeyboardPlatform(),
+): string => {
   const keys: string[] = [];
-  if (event.metaKey) keys.push('Command');
-  if (event.ctrlKey) keys.push('Control');
-  if (event.altKey) keys.push('Option');
+  if (event.metaKey)
+    keys.push(usesAppleKeyboard(platform) ? 'CommandOrControl' : 'Meta');
+  if (event.ctrlKey)
+    keys.push(usesAppleKeyboard(platform) ? 'Control' : 'CommandOrControl');
+  if (event.altKey) keys.push('Alt');
   if (event.shiftKey) keys.push('Shift');
 
   if (event.key && !['Meta', 'Control', 'Alt', 'Shift'].includes(event.key)) {
@@ -22,16 +33,21 @@ export const getHotkeyConflictWarning = (params: {
   editingId: string;
   hotkeys: HotkeyConfig[];
 }): string | null => {
-  if (FORBIDDEN_HOTKEYS.has(params.keyCombo)) {
-    return `"${params.keyCombo}" はシステムで使用されているため設定できません`;
+  const platform = getKeyboardPlatform();
+  const signature = (key: string): string =>
+    JSON.stringify(parseElectronKey(key, platform));
+  const keySignature = signature(params.keyCombo);
+  const label = formatShortcutLabel(params.keyCombo, platform);
+  if ([...FORBIDDEN_HOTKEYS].some((key) => signature(key) === keySignature)) {
+    return `"${label}" はシステムで使用されているため設定できません`;
   }
 
   const duplicate = params.hotkeys.find(
     (hotkey) =>
-      hotkey.key === params.keyCombo && hotkey.id !== params.editingId,
+      signature(hotkey.key) === keySignature && hotkey.id !== params.editingId,
   );
   if (duplicate) {
-    return `"${params.keyCombo}" は既に「${duplicate.label}」に割り当てられています`;
+    return `"${label}" は既に「${duplicate.label}」に割り当てられています`;
   }
 
   return null;

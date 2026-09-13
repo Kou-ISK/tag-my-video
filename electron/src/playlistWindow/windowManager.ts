@@ -1,3 +1,4 @@
+import { getRendererUrl } from '../rendererUrl';
 import { BrowserWindow, dialog } from 'electron';
 import * as path from 'path';
 import type {
@@ -66,7 +67,7 @@ export const createPlaylistWindow = (
   });
   applyWindowSecurity(window);
 
-  const mainURL = `file:${path.join(__dirname, '../../../index.html')}#/playlist`;
+  const mainURL = getRendererUrl('/playlist');
   window.loadURL(mainURL);
   window.setMenuBarVisibility(false);
 

@@ -1,17 +1,15 @@
+import { getElectronLaunchOptions } from './e2e-electron-launch.mjs';
+import { fixtureH264Encoder } from './e2e-platform.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { createRequire } from 'node:module';
 import { _electron as electron } from 'playwright';
 
-const require = createRequire(import.meta.url);
-const electronPath = require('electron');
 const { ffmpegPath } = await import('./media-tool-paths.mjs');
-const repositoryPath = path.resolve(import.meta.dirname, '..');
 const workPath = await fs.mkdtemp(
-  path.join(os.tmpdir(), 'sportaglytics-export-progress-e2e-'),
+  path.join(os.tmpdir(), 'sportaglytics-export-日本語 #50%-'),
 );
 const profilePath = path.join(workPath, 'profile');
 const sourcePath = path.join(workPath, 'source.mp4');
@@ -31,7 +29,7 @@ execFileSync(ffmpegPath, [
   '-i',
   'sine=frequency=880:sample_rate=48000:duration=30',
   '-c:v',
-  'h264_videotoolbox',
+  fixtureH264Encoder,
   '-b:v',
   '8M',
   '-pix_fmt',
@@ -43,16 +41,7 @@ execFileSync(ffmpegPath, [
   sourcePath,
 ]);
 
-const { ELECTRON_RUN_AS_NODE: _electronRunAsNode, ...electronEnvironment } =
-  process.env;
-const electronApp = await electron.launch({
-  executablePath: electronPath,
-  args: [repositoryPath, `--user-data-dir=${profilePath}`],
-  env: {
-    ...electronEnvironment,
-    NODE_ENV: 'test',
-  },
-});
+const electronApp = await electron.launch(getElectronLaunchOptions(profilePath));
 
 try {
   const mainPage = await electronApp.firstWindow();
@@ -82,7 +71,7 @@ try {
           clips: [
             {
               id: 'progress-clip',
-              actionName: 'Progress clip',
+              actionName: '得点シーン #1 — 日本語字幕',
               startTime: 0,
               endTime: 30,
             },
